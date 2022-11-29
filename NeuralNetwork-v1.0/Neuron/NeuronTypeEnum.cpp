@@ -1,5 +1,6 @@
 enum NeuronTypeEnum {
     INPUT,
     HIDDEN,
-    OUTPUT
+    OUTPUT,
+    NEURON_TYPE_NOT_DEFINED
 };

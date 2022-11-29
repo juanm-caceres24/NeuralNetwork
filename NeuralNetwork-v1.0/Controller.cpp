@@ -1,12 +1,12 @@
-#include "Controller.h"
-
-#include <iostream>
+#include <Controller.h>
 
 using namespace std;
 
+// constructors
+
 /*
- * constructor de la clase sin argumentos
+ * constructor without parameters
  */
-Controller::Controller(void) {
+Controller :: Controller(void) {
     
 }
