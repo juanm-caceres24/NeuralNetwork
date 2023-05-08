@@ -1,6 +1,6 @@
-package src.activation_functions.impl;
+package src.activation_function.impl;
 
-import src.activation_functions.ActivationFunction;
+import src.activation_function.ActivationFunction;
 
 public class None implements ActivationFunction {
 
