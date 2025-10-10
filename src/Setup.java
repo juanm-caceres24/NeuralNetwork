@@ -33,6 +33,7 @@ public class Setup {
         1, // h_Ls
         1  // o_L
     };
+    private static Double LEARNING_RATE = 0.01;
     private static Integer NUMBER_OF_INPUTS = BIASES[0].length;
     private static Integer NUMBER_OF_OUTPUTS = BIASES[BIASES.length - 1].length;
     private static Integer NUMBER_OF_HIDDEN_LAYERS = BIASES.length - 2;
@@ -50,6 +51,8 @@ public class Setup {
     public static Double[][][] getWeights() { return WEIGHTS; }
 
     public static Integer[] getActivationFunctions() { return ACTIVATION_FUNCTIONS; }
+
+    public static Double getLearningRate() { return LEARNING_RATE; }
 
     public static Integer getNumberOfInputs() { return NUMBER_OF_INPUTS; }
 

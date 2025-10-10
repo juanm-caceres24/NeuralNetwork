@@ -16,6 +16,8 @@ public class Network {
      */
 
     private ArrayList<Layer> layers;
+    private ArrayList<Neuron> neurons;
+    private Double learningRate;
 
     /*
      * CONSTRUCTORS
@@ -23,14 +25,16 @@ public class Network {
 
     public Network() {
         this.layers = new ArrayList<>();
-        this.initializeNetwork();
+        this.neurons = new ArrayList<>();
+        this.learningRate = Setup.getLearningRate();
+        this.createNetwork();
     }
 
     /*
      * METHODS
      */
 
-    public void initializeNetwork() {
+    public void createNetwork() {
         Integer activationFunctionIndex;
         Integer neuronId = 0;
         Integer layerId = 0;
@@ -59,13 +63,15 @@ public class Network {
                         backwardWeights.add(Setup.getWeights()[i - 1][k][j]);
                     }
                 }
-                neurons.add(new Neuron(
-                    neuronId,
-                    Setup.getBiases()[i][j],
-                    this.getActivationFunction(Setup.getActivationFunctions()[activationFunctionIndex]),
-                    forwardWeights,
-                    backwardWeights
-                ));
+                Neuron neuronTmp = new Neuron(
+                        neuronId,
+                        Setup.getBiases()[i][j],
+                        this.getActivationFunction(Setup.getActivationFunctions()[activationFunctionIndex]),
+                        forwardWeights,
+                        backwardWeights
+                );
+                this.neurons.add(neuronTmp);
+                neurons.add(neuronTmp);
                 neuronId++;
             }
             Layer layer = new Layer(
@@ -105,4 +111,8 @@ public class Network {
      */
 
     public ArrayList<Layer> getLayers() { return layers; }
+
+    public ArrayList<Neuron> getNeurons() { return neurons; }
+
+    public Double getLearningRate() { return learningRate; }
 }
