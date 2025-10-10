@@ -2,7 +2,7 @@ package src.models;
 
 import java.util.ArrayList;
 
-import src.activationfunction.ActivationFunction;
+import src.activation_function.ActivationFunction;
 
 public class Neuron {
 

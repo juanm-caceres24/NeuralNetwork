@@ -3,8 +3,8 @@ package src;
 import src.models.Layer;
 import src.models.Network;
 import src.models.Neuron;
-import src.userinterface.UserInterface;
-import src.userinterface.impl.Console;
+import src.user_interface.UserInterface;
+import src.user_interface.impl.Console;
 
 public class Controller {
 

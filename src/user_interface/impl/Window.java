@@ -1,7 +1,7 @@
-package src.userinterface.impl;
+package src.user_interface.impl;
 
 import src.models.Network;
-import src.userinterface.UserInterface;
+import src.user_interface.UserInterface;
 
 public class Window implements UserInterface {
 

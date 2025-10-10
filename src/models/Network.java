@@ -3,11 +3,11 @@ package src.models;
 import java.util.ArrayList;
 
 import src.Setup;
-import src.activationfunction.ActivationFunction;
-import src.activationfunction.impl.None;
-import src.activationfunction.impl.ReLu;
-import src.activationfunction.impl.Sigmoid;
-import src.activationfunction.impl.TanH;
+import src.activation_function.ActivationFunction;
+import src.activation_function.impl.None;
+import src.activation_function.impl.ReLu;
+import src.activation_function.impl.Sigmoid;
+import src.activation_function.impl.TanH;
 
 public class Network {
 

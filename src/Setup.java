@@ -7,9 +7,9 @@ public class Setup {
      */
 
     private static Double[] INPUT_VALUES = {
-        10000.0, // N0
-        -400.0, // N1
-        -3.0, // N2
+        0.37, // N0
+        1.00, // N1
+        0.92, // N2
     };
     private static Double[][] BIASES = {
     //    N0   N1   N2   N3

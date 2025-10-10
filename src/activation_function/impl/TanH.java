@@ -1,6 +1,6 @@
-package src.activationfunction.impl;
+package src.activation_function.impl;
 
-import src.activationfunction.ActivationFunction;
+import src.activation_function.ActivationFunction;
 
 public class TanH implements ActivationFunction {
 

@@ -1,4 +1,4 @@
-package src.userinterface;
+package src.user_interface;
 
 public interface UserInterface  {
 
