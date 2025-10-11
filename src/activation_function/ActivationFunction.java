@@ -7,4 +7,5 @@ public interface ActivationFunction {
      */
     
     public abstract Double activate(Double value);
+    public abstract Double derivative(Double value);
 }

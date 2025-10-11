@@ -18,4 +18,10 @@ public class TanH implements ActivationFunction {
     public Double activate(Double value) {
         return Math.tanh(value);
     }
+
+    @Override
+    public Double derivative(Double value) {
+        Double activatedValue = this.activate(value);
+        return 1 - Math.pow(activatedValue, 2);
+    }
 }

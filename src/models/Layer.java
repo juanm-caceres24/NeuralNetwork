@@ -40,8 +40,17 @@ public class Layer{
             inputs.add(neuron.getValue());
         }
         for (Neuron neuron : this.neurons) {
-            neuron.calcuateValue(inputs);
-            neuron.applyActivationFunction();
+            neuron.calculateValue(inputs);
+        }
+    }
+
+    public void backPropagate() {
+        ArrayList<Double> inputs = new ArrayList<>();
+        for (Neuron neuron : this.nextLayer.getNeurons()) {
+            inputs.add(neuron.getDelta());
+        }
+        for (Neuron neuron : this.neurons) {
+            neuron.calculateDelta(inputs);
         }
     }
 
@@ -50,12 +59,8 @@ public class Layer{
      */
 
     public Integer getLayerId() { return layerId; }
-
     public ArrayList<Neuron> getNeurons() { return neurons; }
-
     public Layer getNextLayer() { return nextLayer; }
-
     public void setNextLayer(Layer nextLayer) { this.nextLayer = nextLayer; }
-
     public Layer getPreviousLayer() { return previousLayer; }
 }

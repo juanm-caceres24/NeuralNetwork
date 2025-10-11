@@ -18,4 +18,10 @@ public class Sigmoid implements ActivationFunction {
     public Double activate(Double value) {
         return 1 / (1 + Math.pow(Math.E, - value));
     }
+
+    @Override
+    public Double derivative(Double value) {
+        Double activatedValue = this.activate(value);
+        return activatedValue * (1 - activatedValue);
+    }
 }

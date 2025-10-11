@@ -48,6 +48,5 @@ public class Controller {
      */
 
     public UserInterface getUserInterface() { return userInterface; }
-
     public Network getNetwork() { return network; }
 }

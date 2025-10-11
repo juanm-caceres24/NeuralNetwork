@@ -18,4 +18,9 @@ public class None implements ActivationFunction {
     public Double activate(Double value) {
         return value;
     }
+
+    @Override
+    public Double derivative(Double value) {
+        return 1.0;
+    }
 }

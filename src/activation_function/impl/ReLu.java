@@ -18,4 +18,9 @@ public class ReLu implements ActivationFunction {
     public Double activate(Double value) {
         return Math.max(0, value);
     }
+
+    @Override
+    public Double derivative(Double value) {
+        return value > 0 ? 1.0 : 0.0;
+    }
 }

@@ -111,8 +111,6 @@ public class Network {
      */
 
     public ArrayList<Layer> getLayers() { return layers; }
-
     public ArrayList<Neuron> getNeurons() { return neurons; }
-
     public Double getLearningRate() { return learningRate; }
 }
