@@ -105,9 +105,13 @@ public class Network {
     }
 
     public void predict() {
+        forward(Setup.getInputValues());
+    }
+
+    public void forward(Double[] inputValues) {
         // Load input values into the input layer
         for (Neuron neuron : this.layers.get(0).getNeurons()) {
-            neuron.setValue(Setup.getInputValues()[neuron.getNeuronId()]);
+            neuron.setValue(inputValues[neuron.getNeuronId()]);
         }
         // Propagate values through the network
         for (Layer layer : this.layers) {

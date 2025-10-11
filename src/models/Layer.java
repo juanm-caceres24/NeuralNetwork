@@ -40,7 +40,7 @@ public class Layer{
             inputs.add(neuron.getValue());
         }
         for (Neuron neuron : this.neurons) {
-            neuron.calculateValue(inputs);
+            neuron.calculateForward(inputs);
         }
     }
 
@@ -50,7 +50,7 @@ public class Layer{
             inputs.add(neuron.getDelta());
         }
         for (Neuron neuron : this.neurons) {
-            neuron.calculateDelta(inputs);
+            neuron.calculateBackward(inputs);
         }
     }
 

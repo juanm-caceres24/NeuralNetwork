@@ -44,7 +44,7 @@ public class Neuron {
      * METHODS
      */
 
-    public void calculateValue(ArrayList<Double> inputs) {
+    public void calculateForward(ArrayList<Double> inputs) {
         z = bias;
         for (int i = 0; i < inputs.size(); i++) {
             z += inputs.get(i) * backwardWeights.get(i);
@@ -52,7 +52,7 @@ public class Neuron {
         value = activationFunction.activate(z);
     }
 
-    public void calculateDelta(ArrayList<Double> inputs) {
+    public void calculateBackward(ArrayList<Double> inputs) {
         Double sum = 0.0;
         for (int i = 0; i < inputs.size(); i++) {
             sum += inputs.get(i) * forwardWeights.get(i);

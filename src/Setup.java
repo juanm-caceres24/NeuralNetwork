@@ -30,8 +30,8 @@ public class Setup {
     };
     private static Integer[] ACTIVATION_FUNCTIONS = {
         0, // i_L
-        2, // h_Ls
-        2  // o_L
+        1, // h_Ls
+        1  // o_L
     };
     private static Double[][] TRAINING_INPUTS = {
         { 0.0, 0.0, 0.0 },
@@ -53,9 +53,9 @@ public class Setup {
         { 0.0, 0.0 },
         { 1.0, 1.0 }
     };
-    private static Double LEARNING_RATE = 0.001;
-    private static Integer EPOCHS = 25000;
-    private static Integer BATCH_SIZE = 3;
+    private static Double LEARNING_RATE = 20.0;
+    private static Integer EPOCHS = 50000;
+    private static Integer BATCH_SIZE = 4;
     private static Integer NUMBER_OF_INPUTS = BIASES[0].length;
     private static Integer NUMBER_OF_OUTPUTS = BIASES[BIASES.length - 1].length;
     private static Integer NUMBER_OF_HIDDEN_LAYERS = BIASES.length - 2;

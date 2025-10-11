@@ -42,7 +42,7 @@ public class Trainer {
                     YBatch[j] = Setup.getTrainingOutputs()[i + j];
                 }
                 for (int j = 0; j < XBatch.length; j++) {
-                    this.forward(XBatch[j]);
+                    network.forward(XBatch[j]);
                     this.backward(YBatch[j]);
                     this.applyGradients(learningRate, (double) XBatch.length);
                 }
@@ -50,40 +50,20 @@ public class Trainer {
         }
     }
 
-    private void forward(Double[] x) {
-        // Set input layer values
-        Layer inputLayer = network.getLayers().get(0);
-        for (int i = 0; i < inputLayer.getNeurons().size(); i++) {
-            inputLayer.getNeurons().get(i).setValue(x[i]);
-        }
-        // Feedforward through the network
-        for (int i = 1; i < network.getLayers().size(); i++) {
-            network.getLayers().get(i).feedForward();
-        }
-    }
-
     private void backward(Double[] y) {
         List<Layer> layers = network.getLayers();
         Layer outputLayer = layers.get(layers.size() - 1);
-
-        // 1) obtener predicciones actuales
         Double[] predicted = new Double[outputLayer.getNeurons().size()];
         for (int i = 0; i < predicted.length; i++) {
             predicted[i] = outputLayer.getNeurons().get(i).getValue();
         }
-
-        // 2) dL/dy usando la Loss
         Double[] dLoss = loss.derivative(predicted, y);
-
-        // 3) delta salida = dL/dy * activation'(z)
         for (int j = 0; j < outputLayer.getNeurons().size(); j++) {
             Neuron neuron = outputLayer.getNeurons().get(j);
             Double dz = neuron.getActivationFunction().derivative(neuron.getZ());
             neuron.setDelta(dLoss[j] * dz);
         }
-
-        // 4) backpropagate a capas ocultas (desde la última oculta hacia la primera)
-        for (int l = layers.size() - 2; l > 0; l--) { // salta capa de entrada (índice 0)
+        for (int l = layers.size() - 2; l > 0; l--) {
             Layer layer = layers.get(l);
             Layer nextLayer = layer.getNextLayer();
             for (int j = 0; j < layer.getNeurons().size(); j++) {
@@ -108,18 +88,13 @@ public class Trainer {
             Double batchSize) {
 
         List<Layer> layers = network.getLayers();
-        // actualiza desde la primera capa con backwardWeights (índice 1) hasta la capa de salida
         for (int l = 1; l < layers.size(); l++) {
             Layer layer = layers.get(l);
             Layer prev = layer.getPreviousLayer();
             for (int j = 0; j < layer.getNeurons().size(); j++) {
                 Neuron neuron = layer.getNeurons().get(j);
                 Double delta = neuron.getDelta();
-
-                // bias
                 neuron.setBias(neuron.getBias() - (lr * delta / batchSize));
-
-                // backwardWeights: w_i_j (desde prev neurona i hacia esta neurona j)
                 ArrayList<Double> bw = neuron.getBackwardWeights();
                 if (bw != null) {
                     for (int i = 0; i < bw.size(); i++) {
@@ -129,8 +104,6 @@ public class Trainer {
                     }
                     neuron.setBackwardWeights(bw);
                 }
-
-                // sincronizar forwardWeights de la capa previa (prevNeurons.forwardWeights[j] == neuron.backwardWeights[i])
                 if (prev != null) {
                     for (int i = 0; i < prev.getNeurons().size(); i++) {
                         Neuron prevNeuron = prev.getNeurons().get(i);
