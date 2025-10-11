@@ -53,8 +53,8 @@ public class Setup {
         { 0.0, 0.0 },
         { 1.0, 1.0 }
     };
-    private static Double LEARNING_RATE = 20.0;
-    private static Integer EPOCHS = 50000;
+    private static Double LEARNING_RATE = 0.01;
+    private static Integer EPOCHS = 20000;
     private static Integer BATCH_SIZE = 4;
     private static Integer NUMBER_OF_INPUTS = BIASES[0].length;
     private static Integer NUMBER_OF_OUTPUTS = BIASES[BIASES.length - 1].length;

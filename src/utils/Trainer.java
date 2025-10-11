@@ -14,18 +14,28 @@ public class Trainer {
      * ATTRIBUTES
      */
 
-    private static Network network;
-    private static Loss loss;
-    private static Double learningRate;
+    private Network network;
+
+    // Setup parameters
+    private Double learningRate;
+    private Integer epochs;
+    private Integer batchSize;
+    private Loss loss;
+    private Double[][] trainingInputs;
+    private Double[][] trainingOutputs;
 
     /*
      * CONSTRUCTORS
      */
 
     public Trainer(Network network) {
-        Trainer.network = network;
-        Trainer.loss = new MSELoss();
-        Trainer.learningRate = Setup.getLearningRate();
+        this.network = network;
+        this.learningRate = Setup.getLearningRate();
+        this.epochs = Setup.getEpochs();
+        this.batchSize = Setup.getBatchSize();
+        this.loss = new MSELoss();
+        this.trainingInputs = Setup.getTrainingInputs();
+        this.trainingOutputs = Setup.getTrainingOutputs();
     }
 
     /*
@@ -33,13 +43,13 @@ public class Trainer {
      */
 
     public void train() {
-        for (int epoch = 0; epoch < Setup.getEpochs(); epoch++) {
-            for (int i = 0; i < Setup.getTrainingInputs().length; i += Setup.getBatchSize()) {
-                Double[][] XBatch = new Double[Math.min(Setup.getBatchSize(), Setup.getTrainingInputs().length - i)][];
-                Double[][] YBatch = new Double[Math.min(Setup.getBatchSize(), Setup.getTrainingOutputs().length - i)][];
+        for (int epoch = 0; epoch < epochs; epoch++) {
+            for (int i = 0; i < trainingInputs.length; i += batchSize) {
+                Double[][] XBatch = new Double[Math.min(batchSize, trainingInputs.length - i)][];
+                Double[][] YBatch = new Double[Math.min(batchSize, trainingOutputs.length - i)][];
                 for (int j = 0; j < XBatch.length; j++) {
-                    XBatch[j] = Setup.getTrainingInputs()[i + j];
-                    YBatch[j] = Setup.getTrainingOutputs()[i + j];
+                    XBatch[j] = trainingInputs[i + j];
+                    YBatch[j] = trainingOutputs[i + j];
                 }
                 for (int j = 0; j < XBatch.length; j++) {
                     network.forward(XBatch[j]);
@@ -125,9 +135,10 @@ public class Trainer {
      */
 
     public Network getNetwork() { return network; }
-    public void setNetwork(Network network) { Trainer.network = network; }
-    public Loss getLoss() { return loss; }
-    public void setLoss(Loss loss) { Trainer.loss = loss; }
     public Double getLearningRate() { return learningRate; }
-    public void setLearningRate(Double learningRate) { Trainer.learningRate = learningRate; }
+    public Integer getEpochs() { return epochs; }
+    public Integer getBatchSize() { return batchSize; }
+    public Loss getLoss() { return loss; }
+    public Double[][] getTrainingInputs() { return trainingInputs; }
+    public Double[][] getTrainingOutputs() { return trainingOutputs; }
 }
