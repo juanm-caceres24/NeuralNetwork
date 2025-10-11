@@ -7,9 +7,9 @@ public class Setup {
      */
 
     private static Double[] INPUT_VALUES = {
-        1.00, // N0
-        0.00, // N1
-        1.00, // N2
+        0.00, // N0
+        1.00, // N1
+        0.00, // N2
     };
     private static Double[][] BIASES = {
     //    N0   N1   N2   N3
@@ -30,12 +30,32 @@ public class Setup {
     };
     private static Integer[] ACTIVATION_FUNCTIONS = {
         0, // i_L
-        1, // h_Ls
-        1  // o_L
+        2, // h_Ls
+        2  // o_L
     };
-    private static Double LEARNING_RATE = 0.01;
-    private static Integer EPOCHS = 20000;
-    private static Integer BATCH_SIZE = 4;
+    private static Double[][] TRAINING_INPUTS = {
+        { 0.0, 0.0, 0.0 },
+        { 0.0, 0.0, 1.0 },
+        { 0.0, 1.0, 0.0 },
+        { 0.0, 1.0, 1.0 },
+        { 1.0, 0.0, 0.0 },
+        { 1.0, 0.0, 1.0 },
+        { 1.0, 1.0, 0.0 },
+        { 1.0, 1.0, 1.0 }
+    };
+    private static Double[][] TRAINING_OUTPUTS = {
+        { 0.0, 0.0 },
+        { 1.0, 1.0 },
+        { 1.0, 1.0 },
+        { 0.0, 0.0 },
+        { 1.0, 1.0 },
+        { 0.0, 0.0 },
+        { 0.0, 0.0 },
+        { 1.0, 1.0 }
+    };
+    private static Double LEARNING_RATE = 0.001;
+    private static Integer EPOCHS = 25000;
+    private static Integer BATCH_SIZE = 3;
     private static Integer NUMBER_OF_INPUTS = BIASES[0].length;
     private static Integer NUMBER_OF_OUTPUTS = BIASES[BIASES.length - 1].length;
     private static Integer NUMBER_OF_HIDDEN_LAYERS = BIASES.length - 2;
@@ -50,6 +70,8 @@ public class Setup {
     public static Double[][] getBiases() { return BIASES; }
     public static Double[][][] getWeights() { return WEIGHTS; }
     public static Integer[] getActivationFunctions() { return ACTIVATION_FUNCTIONS; }
+    public static Double[][] getTrainingInputs() { return TRAINING_INPUTS; }
+    public static Double[][] getTrainingOutputs() { return TRAINING_OUTPUTS; }
     public static Double getLearningRate() { return LEARNING_RATE; }
     public static Integer getEpochs() { return EPOCHS; }
     public static Integer getBatchSize() { return BATCH_SIZE; }

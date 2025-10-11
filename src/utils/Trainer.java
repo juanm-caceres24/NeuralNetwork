@@ -14,38 +14,32 @@ public class Trainer {
      * ATTRIBUTES
      */
 
-    private Network network;
-    private Loss loss;
-    private Double learningRate;
+    private static Network network;
+    private static Loss loss;
+    private static Double learningRate;
 
     /*
      * CONSTRUCTORS
      */
 
-    public Trainer(
-            Network network,
-            Loss loss) {
-
-        this.network = network;
-        this.loss = loss;
-        this.learningRate = Setup.getLearningRate();
+    public Trainer(Network network) {
+        Trainer.network = network;
+        Trainer.loss = new MSELoss();
+        Trainer.learningRate = Setup.getLearningRate();
     }
 
     /*
      * METHODS
      */
 
-    public void train(
-            Double[][] X,
-            Double[][] Y) {
-    
+    public void train() {
         for (int epoch = 0; epoch < Setup.getEpochs(); epoch++) {
-            for (int i = 0; i < X.length; i += Setup.getBatchSize()) {
-                Double[][] XBatch = new Double[Math.min(Setup.getBatchSize(), X.length - i)][];
-                Double[][] YBatch = new Double[Math.min(Setup.getBatchSize(), Y.length - i)][];
+            for (int i = 0; i < Setup.getTrainingInputs().length; i += Setup.getBatchSize()) {
+                Double[][] XBatch = new Double[Math.min(Setup.getBatchSize(), Setup.getTrainingInputs().length - i)][];
+                Double[][] YBatch = new Double[Math.min(Setup.getBatchSize(), Setup.getTrainingOutputs().length - i)][];
                 for (int j = 0; j < XBatch.length; j++) {
-                    XBatch[j] = X[i + j];
-                    YBatch[j] = Y[i + j];
+                    XBatch[j] = Setup.getTrainingInputs()[i + j];
+                    YBatch[j] = Setup.getTrainingOutputs()[i + j];
                 }
                 for (int j = 0; j < XBatch.length; j++) {
                     this.forward(XBatch[j]);
@@ -53,7 +47,6 @@ public class Trainer {
                     this.applyGradients(learningRate, (double) XBatch.length);
                 }
             }
-            System.out.println("Epoch " + (epoch + 1) + "/" + Setup.getEpochs() + " completed.");
         }
     }
 
@@ -159,9 +152,9 @@ public class Trainer {
      */
 
     public Network getNetwork() { return network; }
-    public void setNetwork(Network network) { this.network = network; }
+    public void setNetwork(Network network) { Trainer.network = network; }
     public Loss getLoss() { return loss; }
-    public void setLoss(Loss loss) { this.loss = loss; }
+    public void setLoss(Loss loss) { Trainer.loss = loss; }
     public Double getLearningRate() { return learningRate; }
-    public void setLearningRate(Double learningRate) { this.learningRate = learningRate; }
+    public void setLearningRate(Double learningRate) { Trainer.learningRate = learningRate; }
 }

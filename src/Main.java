@@ -1,6 +1,8 @@
 package src;
 
-import src.utils.MSELoss;
+import src.models.Network;
+import src.user_interface.UserInterface;
+import src.user_interface.impl.Console;
 import src.utils.Trainer;
 
 public class Main {
@@ -9,42 +11,22 @@ public class Main {
      * ATTRIBUTES
      */
 
-    private static Controller controller;
+    private static UserInterface userInterface;
+    private static Network network;
     private static Trainer trainer;
 
     /*
      * MAIN METHOD
      */
     public static void main(String args[]) {
-        controller = new Controller();
-        trainer = new Trainer(
-                controller.getNetwork(),
-                new MSELoss()
-        );
-        Double[][] X = new Double[][] {
-            new Double[] {0.0, 0.0, 0.0},
-            new Double[] {0.0, 0.0, 1.0},
-            new Double[] {0.0, 1.0, 0.0},
-            new Double[] {0.0, 1.0, 1.0},
-            new Double[] {1.0, 0.0, 0.0},
-            new Double[] {1.0, 0.0, 1.0},
-            new Double[] {1.0, 1.0, 0.0},
-            new Double[] {1.0, 1.0, 1.0}
-        };
-        Double[][] Y = new Double[][] {
-            new Double[] {0.0, 0.0},
-            new Double[] {1.0, 1.0},
-            new Double[] {1.0, 1.0},
-            new Double[] {0.0, 0.0},
-            new Double[] {1.0, 1.0},
-            new Double[] {0.0, 0.0},
-            new Double[] {0.0, 0.0},
-            new Double[] {1.0, 1.0}
-        };
-        trainer.train(X, Y);
-        controller.predict();
-        controller.getUserInterface().showNetwork();
-        controller.getUserInterface().showInputs();
-        controller.getUserInterface().showOutputs();
+        network = new Network();
+        userInterface = new Console(network);
+        trainer = new Trainer(network);
+        userInterface.showNetwork();
+        trainer.train();
+        network.predict();
+        userInterface.showNetwork();
+        userInterface.showInputs();
+        userInterface.showOutputs();
     }
 }

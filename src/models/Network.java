@@ -17,7 +17,6 @@ public class Network {
 
     private ArrayList<Layer> layers;
     private ArrayList<Neuron> neurons;
-    private Double learningRate;
 
     /*
      * CONSTRUCTORS
@@ -26,7 +25,6 @@ public class Network {
     public Network() {
         this.layers = new ArrayList<>();
         this.neurons = new ArrayList<>();
-        this.learningRate = Setup.getLearningRate();
         this.createNetwork();
     }
 
@@ -66,7 +64,7 @@ public class Network {
                 Neuron neuronTmp = new Neuron(
                         neuronId,
                         Setup.getBiases()[i][j],
-                        this.getActivationFunction(Setup.getActivationFunctions()[activationFunctionIndex]),
+                        this.mapActivationFunction(Setup.getActivationFunctions()[activationFunctionIndex]),
                         forwardWeights,
                         backwardWeights
                 );
@@ -90,7 +88,7 @@ public class Network {
         }
     }
 
-    public ActivationFunction getActivationFunction(Integer functionType) {
+    public ActivationFunction mapActivationFunction(Integer functionType) {
         switch (functionType) {
             case 0:
                 return new None();
@@ -105,6 +103,19 @@ public class Network {
                 return new None(); 
         }
     }
+
+    public void predict() {
+        // Load input values into the input layer
+        for (Neuron neuron : this.layers.get(0).getNeurons()) {
+            neuron.setValue(Setup.getInputValues()[neuron.getNeuronId()]);
+        }
+        // Propagate values through the network
+        for (Layer layer : this.layers) {
+            if (layer.getPreviousLayer() != null) {
+                layer.feedForward();
+            }
+        }
+    }
     
     /*
      * GETTERS AND SETTERS
@@ -112,5 +123,4 @@ public class Network {
 
     public ArrayList<Layer> getLayers() { return layers; }
     public ArrayList<Neuron> getNeurons() { return neurons; }
-    public Double getLearningRate() { return learningRate; }
 }
