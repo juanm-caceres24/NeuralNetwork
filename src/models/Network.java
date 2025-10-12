@@ -124,6 +124,27 @@ public class Network {
         }
     }
 
+    public void saveNetwork() {
+        // Gets the current weights and biases from the network and saves them into the Network attributes
+        for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+            // Save biases
+            for (int j = 0; j < layer.getNeurons().size(); j++) {
+                Neuron neuron = layer.getNeurons().get(j);
+                this.biases[i][j] = neuron.getBias();
+            }
+            // Save weights
+            if (i < layers.size() - 1) { // skip output layer
+                for (int j = 0; j < layer.getNeurons().size(); j++) {
+                    Neuron neuron = layer.getNeurons().get(j);
+                    for (int k = 0; k < neuron.getForwardWeights().size(); k++) {
+                        this.weights[i][j][k] = neuron.getForwardWeights().get(k);
+                    }
+                }
+            }
+        }
+    }
+
     public void predict() {
         forward(Setup.getInputValues());
     }
