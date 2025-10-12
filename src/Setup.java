@@ -6,11 +6,6 @@ public class Setup {
      * ATTRIBUTES
      */
 
-    private static Double[] INPUT_VALUES = {
-        1.00, // N0
-        0.00,  // N1
-        0.00  // N2
-    };
     private static Double[][] BIASES = {
     //    N0    N1    N2    N3
         { 0.00, 0.00, 0.00 },       // i_L
@@ -42,6 +37,11 @@ public class Setup {
     private static Integer NEURONS_PER_HIDDEN_LAYER = BIASES[1].length;
     private static Integer TOTAL_NUMBER_OF_LAYERS = BIASES.length;
     private static String CONFIG_FILE_PATH = "config.txt";
+    private static Double[] INPUT_VALUES = {
+        0.50, // N0
+        0.45, // N1
+        0.50  // N2
+    };
     private static Double[][] TRAINING_INPUTS = {
         // Random training inputs between 0.0 and 1.0
         {0.32, 0.72, 0.90},
