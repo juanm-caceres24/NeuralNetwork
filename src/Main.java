@@ -21,36 +21,49 @@ public class Main {
      * MAIN METHOD
      */
     public static void main(String args[]) {
-        //Main.initializeAndTrainNetwork();
-        Main.loadAndPredictNetwork();
+        //Main.createNetwork();
+        Main.loadNetwork();
+        //Main.trainNetwork();
+        Main.predictNetwork();
     }
 
     /*
      * METHODS
      */
 
-    public static void initializeAndTrainNetwork() {
-        Setup.generateTrainingOutput();
+    public static void createNetwork() {
+        Setup.initializeFromLayerSizes();
         network = new Network();
         userInterface = new Console(network);
         fileUtils = new FileUtils(network);
-        trainer = new Trainer(network);
+        fileUtils.saveNetworkIntoFile();
         userInterface.showNetwork();
-        trainer.train();
-        userInterface.showNetwork();
-        network.saveNetwork();
-        fileUtils.saveNetworkIntoSetup();
-        fileUtils.saveSetupIntoFile();
     }
 
-    public static void loadAndPredictNetwork() {
+    public static void loadNetwork() {
         fileUtils = new FileUtils(null);
         fileUtils.loadSetupFromFile();
+        Setup.initializeFromWeightsAndBiases();
         network = new Network();
         fileUtils.setNetwork(network);
         userInterface = new Console(network);
         userInterface.showNetwork();
+    }
+
+    public static void trainNetwork() {
+        Setup.generateTestTrainingValues();
+        trainer = new Trainer(network);
+        trainer.train();
+        network.saveNetwork();
+        fileUtils.saveNetworkIntoFile();
+        userInterface.showNetwork();
+    }
+
+    public static void predictNetwork() {
+        fileUtils.readInputValuesFromFile();
+        network.setInputValues(Setup.getInputValues());
         network.predict();
+        fileUtils.saveOutputValuesIntoFile();
         userInterface.showInputs();
         userInterface.showOutputs();
     }

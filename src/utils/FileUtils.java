@@ -5,8 +5,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import src.Setup;
+import src.models.Layer;
 import src.models.Network;
+import src.models.Neuron;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FileUtils {
@@ -17,6 +20,9 @@ public class FileUtils {
 
     private Network network;
     private String configFilePath;
+    private String trainingDataFilePath;
+    private String inputValuesFilePath;
+    private String outputValuesFilePath;
 
     /*
      * CONSTRUCTORS
@@ -25,6 +31,9 @@ public class FileUtils {
     public FileUtils(Network network) {
         this.network = network;
         this.configFilePath = Setup.getConfigFilePath();
+        this.trainingDataFilePath = Setup.getTrainingDataFilePath();
+        this.inputValuesFilePath = Setup.getInputValuesFilePath();
+        this.outputValuesFilePath = Setup.getOutputValuesFilePath();
     }
 
     /*
@@ -62,11 +71,53 @@ public class FileUtils {
         dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), configFilePath);
     }
 
-    public void saveNetworkIntoSetup() {
+    public void saveNetworkIntoFile() {
         // Save the network's weights and biases into the setup file
         Setup.setWeights(network.getWeights());
         Setup.setBiases(network.getBiases());
+        Setup.setActivationFunctions(network.getActivationFunctions());
         saveSetupIntoFile();
+    }
+
+    public void readInputValuesFromFile() {
+        // Reads the input values from the input file and sets them into Setup
+        // Expected format: one numeric value per line. Empty lines are ignored.
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(inputValuesFilePath))) {
+            java.util.List<Double> values = new java.util.ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue; // skip empty lines
+                // Parse the whole line as a double (one value per line)
+                values.add(Double.parseDouble(line));
+            }
+            if (!values.isEmpty()) {
+                Double[] inputValues = values.toArray(new Double[0]);
+                Setup.setInputValues(inputValues);
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveOutputValuesIntoFile() {
+        // Write each output value on its own line (overwrites file)
+        if (this.outputValuesFilePath == null) return;
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputValuesFilePath))) {
+            if (this.network == null) return;
+            ArrayList<Layer> layers = this.network.getLayers();
+            if (layers == null || layers.isEmpty()) return;
+            Layer lastLayer = layers.get(layers.size() - 1);
+            if (lastLayer == null || lastLayer.getNeurons() == null) return;
+
+            for (Neuron neuron : lastLayer.getNeurons()) {
+                Double v = neuron.getValue();
+                writer.write(v == null ? "" : v.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void loadSetupFromFile() {
@@ -206,9 +257,6 @@ public class FileUtils {
         return array;
     }
 
-    /*
-     * SERIALIZATION HELPERS
-     */
     private String toString(Double[] arr) {
         if (arr == null) return "[]";
         StringBuilder sb = new StringBuilder();
@@ -264,4 +312,7 @@ public class FileUtils {
     public Network getNetwork() { return network; }
     public void setNetwork(Network network) { this.network = network; }
     public String getConfigFilePath() { return configFilePath; }
+    public String getTrainingDataFilePath() { return trainingDataFilePath; }
+    public String getInputValuesFilePath() { return inputValuesFilePath; }
+    public String getOutputValuesFilePath() { return outputValuesFilePath; }
 }

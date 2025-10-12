@@ -22,8 +22,7 @@ public class Trainer {
     private Integer epochs;
     private Integer batchSize;
     private Loss loss;
-    private Double[][] trainingInputs;
-    private Double[][] trainingOutputs;
+    private Double[][][] trainingData;
 
     /*
      * CONSTRUCTORS
@@ -35,8 +34,7 @@ public class Trainer {
         this.epochs = Setup.getEpochs();
         this.batchSize = Setup.getBatchSize();
         this.loss = new MSELoss();
-        this.trainingInputs = Setup.getTrainingInputs();
-        this.trainingOutputs = Setup.getTrainingOutputs();
+        this.trainingData = Setup.getTrainingData();
     }
 
     /*
@@ -45,29 +43,33 @@ public class Trainer {
 
     public void train() {
         // Simple training loop using stochastic gradient descent
-        int printEvery = Math.max(1, this.epochs / 10);
+        int computeEvery = Math.max(1, this.epochs / 10);
         List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < trainingInputs.length; i++) indices.add(i);
+        for (int i = 0; i < trainingData.length; i++) {
+            indices.add(i);
+        }
         for (int epoch = 0; epoch < this.epochs; epoch++) {
             // Shuffle samples each epoch to aid SGD convergence
             Collections.shuffle(indices);
             for (int idx = 0; idx < indices.size(); idx++) {
                 int sample = indices.get(idx);
                 // Set input values and forward
-                network.forward(trainingInputs[sample]);
+                network.forward(trainingData[sample][0]);
                 // Compute backward deltas using target
-                backward(trainingOutputs[sample]);
+                backward(trainingData[sample][1]);
                 // Apply gradients to update weights and biases
                 applyGradients();
             }
-            // Compute and print loss periodically
-            if ((epoch + 1) % printEvery == 0 || epoch == this.epochs - 1) {
+            // Compute loss periodically
+            if ((epoch + 1) % computeEvery == 0 || epoch == this.epochs - 1) {
                 ArrayList<Layer> layers = network.getLayers();
                 Layer outputLayer = layers.get(layers.size() - 1);
-                for (int s = 0; s < trainingInputs.length; s++) {
-                    network.forward(trainingInputs[s]);
+                for (int s = 0; s < trainingData.length; s++) {
+                    network.forward(trainingData[s][0]);
                     Double[] pred = new Double[outputLayer.getNeurons().size()];
-                    for (int i = 0; i < pred.length; i++) pred[i] = outputLayer.getNeurons().get(i).getValue();
+                    for (int i = 0; i < pred.length; i++) {
+                        pred[i] = outputLayer.getNeurons().get(i).getValue();
+                    }
                 }
             }
         }
@@ -154,6 +156,5 @@ public class Trainer {
     public Integer getEpochs() { return epochs; }
     public Integer getBatchSize() { return batchSize; }
     public Loss getLoss() { return loss; }
-    public Double[][] getTrainingInputs() { return trainingInputs; }
-    public Double[][] getTrainingOutputs() { return trainingOutputs; }
+    public Double[][][] getTrainingData() { return trainingData; }
 }

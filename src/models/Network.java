@@ -53,19 +53,11 @@ public class Network {
      */
 
     public void createNetwork() {
-        Integer activationFunctionIndex;
         Integer neuronId = 0;
         Integer layerId = 0;
         Layer previousLayer = null;
         // Create and add layers
         for (int i = 0; i < this.totalNumberOfLayers; i++) {
-            if (i != 0 && i != this.totalNumberOfLayers - 1) {
-                activationFunctionIndex = 1;
-            } else if (i == this.totalNumberOfLayers - 1) {
-                activationFunctionIndex = 2;
-            } else {
-                activationFunctionIndex = 0;
-            }
             ArrayList<Neuron> neurons = new ArrayList<>();
             // Create and add neurons to the layer
             for (int j = 0; j < this.biases[i].length; j++) {
@@ -84,7 +76,7 @@ public class Network {
                 Neuron neuronTmp = new Neuron(
                         neuronId,
                         this.biases[i][j],
-                        this.mapActivationFunction(this.activationFunctions[activationFunctionIndex]),
+                        this.mapActivationFunction(this.activationFunctions[i]),
                         forwardWeights,
                         backwardWeights
                 );
@@ -124,6 +116,22 @@ public class Network {
         }
     }
 
+    public Integer mapActivationFunction(ActivationFunction function) {
+        switch (function.getClass().getSimpleName()) {
+            case "None":
+                return 0;
+            case "Sigmoid":
+                return 1;
+            case "ReLu":
+                return 2;
+            case "TanH":
+                return 3;
+            default:
+                // Default to None if unknown
+                return 0;
+        }
+    }
+
     public void saveNetwork() {
         // Gets the current weights and biases from the network and saves them into the Network attributes
         for (int i = 0; i < layers.size(); i++) {
@@ -143,10 +151,21 @@ public class Network {
                 }
             }
         }
+        // Save activation functions
+        for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+            if (i != 0 && i != layers.size() - 1) {
+                this.activationFunctions[i] = this.mapActivationFunction(layer.getNeurons().get(0).getActivationFunction());
+            } else if (i == layers.size() - 1) {
+                this.activationFunctions[i] = this.mapActivationFunction(layer.getNeurons().get(0).getActivationFunction());
+            } else {
+                this.activationFunctions[i] = this.mapActivationFunction(layer.getNeurons().get(0).getActivationFunction());
+            }
+        }
     }
 
     public void predict() {
-        forward(Setup.getInputValues());
+        forward(this.inputValues);
     }
 
     public void forward(Double[] inputValues) {
@@ -169,6 +188,7 @@ public class Network {
     public ArrayList<Layer> getLayers() { return layers; }
     public ArrayList<Neuron> getNeurons() { return neurons; }
     public Double[] getInputValues() { return inputValues; }
+    public void setInputValues(Double[] inputValues) { this.inputValues = inputValues; }
     public Double[][] getBiases() { return biases; }
     public Double[][][] getWeights() { return weights; }
     public Integer[] getActivationFunctions() { return activationFunctions; }
