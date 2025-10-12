@@ -6,13 +6,11 @@ public class MSELoss implements Loss {
     public Double loss(
             Double[] predicted,
             Double[] target) {
-                
-        double sum = 0.0;
+        
+        Double sum = 0.0;
         for (int i = 0; i < predicted.length; i++) {
-            double p = predicted[i] != null ? predicted[i] : 0.0;
-            double t = target[i] != null ? target[i] : 0.0;
-            double d = p - t;
-            sum += d * d;
+            Double diff = predicted[i] - target[i];
+            sum += diff * diff;
         }
         return sum / predicted.length;
     }
@@ -21,14 +19,13 @@ public class MSELoss implements Loss {
     public Double[] derivative(
             Double[] predicted,
             Double[] target) {
-
-        Double[] out = new Double[predicted.length];
-        for (int i = 0; i < predicted.length; i++) {
-            double p = predicted[i] != null ? predicted[i] : 0.0;
-            double t = target[i] != null ? target[i] : 0.0;
-            // d/dp (1/N * sum (p - t)^2) = 2*(p - t)/N
-            out[i] = 2.0 * (p - t) / predicted.length;
+    
+        Double[] deriv = new Double[predicted.length];
+        Integer n = predicted.length;
+        for (int i = 0; i < n; i++) {
+            // Use sum-of-squares derivative (not averaged) to provide stronger gradients for small networks
+            deriv[i] = 2.0 * (predicted[i] - target[i]);
         }
-        return out;
+        return deriv;
     }
 }
