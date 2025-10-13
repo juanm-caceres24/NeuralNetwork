@@ -12,6 +12,7 @@ public class Main {
      * ATTRIBUTES
      */
 
+    // Objects instances
     private static UserInterface userInterface;
     private static FileUtils fileUtils;
     private static Network network;
@@ -21,10 +22,30 @@ public class Main {
      * MAIN METHOD
      */
     public static void main(String args[]) {
-        Main.createNetwork();
-        //Main.loadNetwork();
-        Main.trainNetwork();
-        Main.predictNetwork();
+        Boolean running = true;
+        userInterface = new Console(null);
+        while (running) {
+            switch (userInterface.requestModeSelection()) {
+                case 0:
+                    predictNetwork();
+                    break;
+                case 1:
+                    trainNetwork();
+                    break;
+                case 2:
+                    createNetwork();
+                    break;
+                case 3:
+                    loadNetwork();
+                    break;
+                case 4:
+                    running = false;
+                    break;
+                default:
+                    userInterface.showError(null);
+                    break;
+            }
+        }
     }
 
     /*
@@ -34,7 +55,7 @@ public class Main {
     public static void createNetwork() {
         Setup.initializeFromLayerSizes();
         network = new Network();
-        userInterface = new Console(network);
+        userInterface.setNetwork(network);
         fileUtils = new FileUtils(network);
         fileUtils.exportNetworkToFile();
         userInterface.showNetwork();
@@ -45,6 +66,7 @@ public class Main {
         fileUtils.importSetupFromFile();
         Setup.initializeFromWeightsAndBiases();
         network = new Network();
+        userInterface.setNetwork(network);
         fileUtils.setNetwork(network);
         userInterface = new Console(network);
         userInterface.showNetwork();

@@ -81,13 +81,13 @@ public class Network {
                 neuronId++;
             }
             Layer layer = new Layer(layerId, neurons, null, previousLayer);
-            layers.add(layer);
+            this.layers.add(layer);
             layerId++;
             previousLayer = layer;
         }
         // Set the next layer for each layer
         for (int i = 0; i < layers.size() - 1; i++) {
-            layers.get(i).setNextLayer(layers.get(i + 1));
+            this.layers.get(i).setNextLayer(this.layers.get(i + 1));
         }
     }
 

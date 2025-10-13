@@ -14,10 +14,9 @@ public class Setup {
 
     // Network parameters
     private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
-        3, // i_L
-        5, // h_L0
-        5, // h_L1
-        5, // h_L2
+        2, // i_L
+        3, // h_L0
+        3, // h_L1
         2  // o_L
     };
     private static Integer NUMBER_OF_INPUTS = LAYER_SIZES[0];
@@ -31,7 +30,6 @@ public class Setup {
         0, // i_L
         1, // h_L0
         1, // h_L1
-        1, // h_L2
         1  // o_L
     };
 
@@ -55,7 +53,7 @@ public class Setup {
      */
 
     public static void generateTestTrainingValues() {
-        Integer trainingDataLength = 10000;
+        Integer trainingDataLength = 1000;
         TRAINING_DATA = new Double[trainingDataLength][2][NUMBER_OF_INPUTS > NUMBER_OF_OUTPUTS ? NUMBER_OF_INPUTS : NUMBER_OF_OUTPUTS];
         // Generate random n-inputs between 0.0 and 1.0
         for (int i = 0; i < trainingDataLength; i++) {
