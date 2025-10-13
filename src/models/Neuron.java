@@ -23,13 +23,7 @@ public class Neuron {
      * CONSTRUCTORS
      */
 
-    public Neuron(
-            Integer neuronId,
-            Double bias,
-            ActivationFunction activationFunction,
-            ArrayList<Double> forwardWeights,
-            ArrayList<Double> backwardWeights) {
-
+    public Neuron(Integer neuronId, Double bias, ActivationFunction activationFunction, ArrayList<Double> forwardWeights, ArrayList<Double> backwardWeights) {
         this.neuronId = neuronId;
         this.z = 0.0;
         value = 0.0;

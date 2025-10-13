@@ -21,9 +21,9 @@ public class Main {
      * MAIN METHOD
      */
     public static void main(String args[]) {
-        //Main.createNetwork();
-        Main.loadNetwork();
-        //Main.trainNetwork();
+        Main.createNetwork();
+        //Main.loadNetwork();
+        Main.trainNetwork();
         Main.predictNetwork();
     }
 
@@ -36,13 +36,13 @@ public class Main {
         network = new Network();
         userInterface = new Console(network);
         fileUtils = new FileUtils(network);
-        fileUtils.saveNetworkIntoFile();
+        fileUtils.ExportNetworkIntoFile();
         userInterface.showNetwork();
     }
 
     public static void loadNetwork() {
         fileUtils = new FileUtils(null);
-        fileUtils.loadSetupFromFile();
+        fileUtils.ImportSetupFromFile();
         Setup.initializeFromWeightsAndBiases();
         network = new Network();
         fileUtils.setNetwork(network);
@@ -55,15 +55,15 @@ public class Main {
         trainer = new Trainer(network);
         trainer.train();
         network.saveNetwork();
-        fileUtils.saveNetworkIntoFile();
+        fileUtils.ExportNetworkIntoFile();
         userInterface.showNetwork();
     }
 
     public static void predictNetwork() {
-        fileUtils.readInputValuesFromFile();
+        fileUtils.ImportInputFromFile();
         network.setInputValues(Setup.getInputValues());
         network.predict();
-        fileUtils.saveOutputValuesIntoFile();
+        fileUtils.ExportOutputIntoFile();
         userInterface.showInputs();
         userInterface.showOutputs();
     }

@@ -73,23 +73,13 @@ public class Network {
                         backwardWeights.add(this.weights[i - 1][k][j]);
                     }
                 }
-                Neuron neuronTmp = new Neuron(
-                        neuronId,
-                        this.biases[i][j],
-                        this.mapActivationFunction(this.activationFunctions[i]),
-                        forwardWeights,
-                        backwardWeights
+                Neuron neuronTmp = new Neuron(neuronId, this.biases[i][j], this.mapActivationFunction(this.activationFunctions[i]), forwardWeights, backwardWeights
                 );
                 this.neurons.add(neuronTmp);
                 neurons.add(neuronTmp);
                 neuronId++;
             }
-            Layer layer = new Layer(
-                    layerId,
-                    neurons,
-                    null,
-                    previousLayer
-            );
+            Layer layer = new Layer(layerId, neurons, null, previousLayer);
             layers.add(layer);
             layerId++;
             previousLayer = layer;

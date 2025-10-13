@@ -13,7 +13,7 @@ public class Setup {
     private static String OUTPUT_VALUES_FILE_PATH = "output.txt";
 
     // Network parameters
-    private static Integer[] LAYER_SIZES = {6, 5, 5, 5, 2}; // Used for automatic creation of weights and biases
+    private static Integer[] LAYER_SIZES = { 6, 5, 5, 5, 2 }; // Used for automatic creation of weights and biases
     private static Integer NUMBER_OF_INPUTS = LAYER_SIZES[0];
     private static Integer NUMBER_OF_OUTPUTS = LAYER_SIZES[LAYER_SIZES.length - 1];
     private static Integer NUMBER_OF_HIDDEN_LAYERS = LAYER_SIZES.length - 2;
@@ -30,8 +30,8 @@ public class Setup {
     };
 
     // Training parameters
-    private static Double LEARNING_RATE = 0.01;
-    private static Integer EPOCHS = 10000;
+    private static Double LEARNING_RATE = 0.1;
+    private static Integer EPOCHS = 1000;
     private static Integer BATCH_SIZE = 5;
     private static Double[][][] TRAINING_DATA;
 
@@ -68,7 +68,11 @@ public class Setup {
                 if (input > 0.5) count++;
             }
             for (int j = 0; j < outputs.length; j++) {
-                outputs[j] = (count % 2 == 1) ? 1.0 : 0.0;
+                if (j % 2 == 0) {
+                    outputs[j] = (count % 2 == 0) ? 1.0 : 0.0;
+                } else {
+                    outputs[j] = (count % 2 == 1) ? 1.0 : 0.0;
+                }
             }
         }
     }

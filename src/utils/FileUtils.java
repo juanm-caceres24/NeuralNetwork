@@ -40,10 +40,7 @@ public class FileUtils {
      * METHODS
      */
 
-    public void dumpLineIntoFile(
-            String line,
-            String filePath) {
-        
+    public void dumpLineIntoFile(String line, String filePath) {
         // Implementation for writing 'line' into the file at 'filePath'
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(
                 filePath,
@@ -55,7 +52,7 @@ public class FileUtils {
         }
     }
 
-    public void saveSetupIntoFile() {
+    public void ExportSetupIntoFile() {
         // First clear the file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(configFilePath))) {
             writer.write("");
@@ -71,15 +68,15 @@ public class FileUtils {
         dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), configFilePath);
     }
 
-    public void saveNetworkIntoFile() {
+    public void ExportNetworkIntoFile() {
         // Save the network's weights and biases into the setup file
         Setup.setWeights(network.getWeights());
         Setup.setBiases(network.getBiases());
         Setup.setActivationFunctions(network.getActivationFunctions());
-        saveSetupIntoFile();
+        ExportSetupIntoFile();
     }
 
-    public void readInputValuesFromFile() {
+    public void ImportInputFromFile() {
         // Reads the input values from the input file and sets them into Setup
         // Expected format: one numeric value per line. Empty lines are ignored.
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(inputValuesFilePath))) {
@@ -100,7 +97,7 @@ public class FileUtils {
         }
     }
 
-    public void saveOutputValuesIntoFile() {
+    public void ExportOutputIntoFile() {
         // Write each output value on its own line (overwrites file)
         if (this.outputValuesFilePath == null) return;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputValuesFilePath))) {
@@ -109,7 +106,6 @@ public class FileUtils {
             if (layers == null || layers.isEmpty()) return;
             Layer lastLayer = layers.get(layers.size() - 1);
             if (lastLayer == null || lastLayer.getNeurons() == null) return;
-
             for (Neuron neuron : lastLayer.getNeurons()) {
                 Double v = neuron.getValue();
                 writer.write(v == null ? "" : v.toString());
@@ -120,7 +116,7 @@ public class FileUtils {
         }
     }
 
-    public void loadSetupFromFile() {
+    public void ImportSetupFromFile() {
         // Reads the configuration file and sets up the parameters accordingly
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(configFilePath))) {
             String line;
@@ -158,6 +154,7 @@ public class FileUtils {
         }
     }
 
+    @SuppressWarnings("unused")
     private Double[] parseDoubleArray(String value) {
         if (value == null) return new Double[0];
         String s = value.trim();

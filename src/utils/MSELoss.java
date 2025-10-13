@@ -3,10 +3,7 @@ package src.utils;
 public class MSELoss implements Loss {
     
     @Override
-    public Double loss(
-            Double[] predicted,
-            Double[] target) {
-        
+    public Double loss(Double[] predicted, Double[] target) {
         Double sum = 0.0;
         for (int i = 0; i < predicted.length; i++) {
             Double diff = predicted[i] - target[i];
@@ -16,10 +13,7 @@ public class MSELoss implements Loss {
     }
 
     @Override
-    public Double[] derivative(
-            Double[] predicted,
-            Double[] target) {
-    
+    public Double[] derivative(Double[] predicted, Double[] target) {
         Double[] deriv = new Double[predicted.length];
         Integer n = predicted.length;
         for (int i = 0; i < n; i++) {

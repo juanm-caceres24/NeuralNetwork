@@ -18,12 +18,7 @@ public class Layer{
      * CONSTRUCTORS
      */
 
-    public Layer(
-            Integer layerId,
-            ArrayList<Neuron> neurons,
-            Layer nextLayer,
-            Layer previousLayer) {
-
+    public Layer(Integer layerId, ArrayList<Neuron> neurons, Layer nextLayer, Layer previousLayer) {
         this.layerId = layerId;
         this.neurons = neurons;
         this.nextLayer = nextLayer;
