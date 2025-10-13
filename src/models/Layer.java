@@ -8,8 +8,10 @@ public class Layer{
      * ATTRIBUTES
      */
 
-    // List of neurons in the layer
+    // Layer identifier
     private Integer layerId;
+
+    // Layer topology
     private ArrayList<Neuron> neurons;
     private Layer nextLayer;
     private Layer previousLayer;

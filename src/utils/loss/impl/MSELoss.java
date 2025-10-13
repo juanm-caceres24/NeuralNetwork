@@ -1,4 +1,6 @@
-package src.utils;
+package src.utils.loss.impl;
+
+import src.utils.loss.Loss;
 
 public class MSELoss implements Loss {
     

@@ -9,6 +9,7 @@ public class Window implements UserInterface {
      * ATTRIBUTES
      */
     
+    // Network instance
     private static Network network;
 
     /*

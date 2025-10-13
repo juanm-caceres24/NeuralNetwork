@@ -36,7 +36,7 @@ public class Main {
         network = new Network();
         userInterface = new Console(network);
         fileUtils = new FileUtils(network);
-        fileUtils.ExportNetworkIntoFile();
+        fileUtils.ExportNetworkToFile();
         userInterface.showNetwork();
     }
 
@@ -55,7 +55,7 @@ public class Main {
         trainer = new Trainer(network);
         trainer.train();
         network.saveNetwork();
-        fileUtils.ExportNetworkIntoFile();
+        fileUtils.ExportNetworkToFile();
         userInterface.showNetwork();
     }
 
@@ -63,7 +63,7 @@ public class Main {
         fileUtils.ImportInputFromFile();
         network.setInputValues(Setup.getInputValues());
         network.predict();
-        fileUtils.ExportOutputIntoFile();
+        fileUtils.ExportOutputToFile();
         userInterface.showInputs();
         userInterface.showOutputs();
     }

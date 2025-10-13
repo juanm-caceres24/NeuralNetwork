@@ -8,6 +8,8 @@ import src.Setup;
 import src.models.Layer;
 import src.models.Network;
 import src.models.Neuron;
+import src.utils.loss.Loss;
+import src.utils.loss.impl.MSELoss;
 
 public class Trainer {
 
@@ -15,13 +17,16 @@ public class Trainer {
      * ATTRIBUTES
      */
 
+    // Network instance
     private Network network;
+
+    // Error/Loss function
+    private Loss loss;
 
     // Setup parameters
     private Double learningRate;
     private Integer epochs;
     private Integer batchSize;
-    private Loss loss;
     private Double[][][] trainingData;
 
     /*
@@ -30,10 +35,10 @@ public class Trainer {
 
     public Trainer(Network network) {
         this.network = network;
+        this.loss = new MSELoss();
         this.learningRate = Setup.getLearningRate();
         this.epochs = Setup.getEpochs();
         this.batchSize = Setup.getBatchSize();
-        this.loss = new MSELoss();
         this.trainingData = Setup.getTrainingData();
     }
 
@@ -161,9 +166,9 @@ public class Trainer {
      */
 
     public Network getNetwork() { return network; }
+    public Loss getLoss() { return loss; }
     public Double getLearningRate() { return learningRate; }
     public Integer getEpochs() { return epochs; }
     public Integer getBatchSize() { return batchSize; }
-    public Loss getLoss() { return loss; }
     public Double[][][] getTrainingData() { return trainingData; }
 }

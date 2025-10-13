@@ -11,6 +11,7 @@ public class Console implements UserInterface {
      * ATTRIBUTES
      */
 
+    // Network instance
     private static Network network;
 
     /*
