@@ -54,7 +54,7 @@ public class FileUtils {
         }
     }
 
-    public void ExportSetupToFile() {
+    public void exportSetupToFile() {
         // First clear the file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(configFilePath))) {
             writer.write("");
@@ -70,15 +70,15 @@ public class FileUtils {
         dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), configFilePath);
     }
 
-    public void ExportNetworkToFile() {
+    public void exportNetworkToFile() {
         // Save the network's weights and biases into the setup file
         Setup.setWeights(network.getWeights());
         Setup.setBiases(network.getBiases());
         Setup.setActivationFunctions(network.getActivationFunctions());
-        ExportSetupToFile();
+        exportSetupToFile();
     }
 
-    public void ImportInputFromFile() {
+    public void importInputFromFile() {
         // Reads the input values from the input file and sets them into Setup
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(inputValuesFilePath))) {
             java.util.List<Double> values = new java.util.ArrayList<>();
@@ -98,7 +98,7 @@ public class FileUtils {
         }
     }
 
-    public void ExportOutputToFile() {
+    public void exportOutputToFile() {
         // Write each output value on its own line (overwrites file)
         if (this.outputValuesFilePath == null) return;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputValuesFilePath))) {
@@ -117,7 +117,7 @@ public class FileUtils {
         }
     }
 
-    public void ImportSetupFromFile() {
+    public void importSetupFromFile() {
         // Reads the configuration file and sets up the parameters accordingly
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(configFilePath))) {
             String line;

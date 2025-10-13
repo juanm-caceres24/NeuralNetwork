@@ -14,7 +14,7 @@ public class Setup {
 
     // Network parameters
     private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
-        6, // i_L
+        3, // i_L
         5, // h_L0
         5, // h_L1
         5, // h_L2
