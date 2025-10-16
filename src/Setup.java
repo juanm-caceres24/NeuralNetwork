@@ -15,9 +15,8 @@ public class Setup {
     // Network parameters
     private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
         5, // i_L
-        3, // h_L0
-        3, // h_L1
-        3, // h_L2
+        4, // h_L0
+        4, // h_L1
         2  // o_L
     };
     private static Integer NUMBER_OF_INPUTS = LAYER_SIZES[0];
@@ -31,7 +30,6 @@ public class Setup {
         0, // i_L
         1, // h_L0
         1, // h_L1
-        1, // h_L2
         1  // o_L
     };
 
