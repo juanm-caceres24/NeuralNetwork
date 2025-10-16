@@ -52,25 +52,25 @@ public class Trainer {
             Collections.shuffle(indices);
             // Process data in mini-batches
             for (int start = 0; start < indices.size(); start += this.batchSize) {
-                int end = Math.min(start + this.batchSize, indices.size());
-                int actualBatch = end - start;
+                Integer end = Math.min(start + this.batchSize, indices.size());
+                Integer actualBatch = end - start;
                 // Prepare accumulators for biases and weights per layer
                 ArrayList<Layer> layers = network.getLayers();
-                int L = layers.size();
+                Integer L = layers.size();
                 if (L < 2) continue; // nothing to update
-                double[][] biasGradSums = new double[L][]; // biasGradSums[layer][neuron]
-                double[][][] weightGradSums = new double[L][][]; // weightGradSums[layer][to][from]
+                Double[][] biasGradSums = new Double[L][]; // biasGradSums[layer][neuron]
+                Double[][][] weightGradSums = new Double[L][][]; // weightGradSums[layer][to][from]
                 // Initialize accumulator shapes
                 for (int l = 1; l < L; l++) {
                     Layer layer = layers.get(l);
-                    int neuronsCount = layer.getNeurons().size();
-                    int prevNeurons = layer.getPreviousLayer() != null ? layer.getPreviousLayer().getNeurons().size() : 0;
-                    biasGradSums[l] = new double[neuronsCount];
-                    weightGradSums[l] = new double[neuronsCount][prevNeurons];
+                    Integer neuronsCount = layer.getNeurons().size();
+                    Integer prevNeurons = layer.getPreviousLayer() != null ? layer.getPreviousLayer().getNeurons().size() : 0;
+                    biasGradSums[l] = new Double[neuronsCount];
+                    weightGradSums[l] = new Double[neuronsCount][prevNeurons];
                 }
                 // Accumulate gradients for each sample in the batch
                 for (int p = start; p < end; p++) {
-                    int sample = indices.get(p);
+                    Integer sample = indices.get(p);
                     // Forward and backward to compute deltas
                     network.forward(trainingData[sample][0]);
                     backward(trainingData[sample][1]);
@@ -80,11 +80,11 @@ public class Trainer {
                         Layer prev = layer.getPreviousLayer();
                         for (int j = 0; j < layer.getNeurons().size(); j++) {
                             Neuron neuron = layer.getNeurons().get(j);
-                            double delta = neuron.getDelta();
+                            Double delta = neuron.getDelta();
                             biasGradSums[l][j] += delta;
                             if (neuron.getBackwardWeights() != null && prev != null) {
                                 for (int k = 0; k < neuron.getBackwardWeights().size(); k++) {
-                                    double prevVal = prev.getNeurons().get(k).getValue();
+                                    Double prevVal = prev.getNeurons().get(k).getValue();
                                     weightGradSums[l][j][k] += delta * prevVal;
                                 }
                             }
@@ -97,14 +97,14 @@ public class Trainer {
                     for (int j = 0; j < layer.getNeurons().size(); j++) {
                         Neuron neuron = layer.getNeurons().get(j);
                         // Update bias: average over batch
-                        double biasGradAvg = biasGradSums[l][j] / (double) actualBatch;
-                        double newBias = neuron.getBias() - this.learningRate * biasGradAvg;
+                        Double biasGradAvg = biasGradSums[l][j] / (double) actualBatch;
+                        Double newBias = neuron.getBias() - this.learningRate * biasGradAvg;
                         neuron.setBias(newBias);
                         // Update backward (incoming) weights
                         if (neuron.getBackwardWeights() != null) {
                             for (int k = 0; k < neuron.getBackwardWeights().size(); k++) {
-                                double gradAvg = weightGradSums[l][j][k] / (double) actualBatch;
-                                double updated = neuron.getBackwardWeights().get(k) - this.learningRate * gradAvg;
+                                Double gradAvg = weightGradSums[l][j][k] / (double) actualBatch;
+                                Double updated = neuron.getBackwardWeights().get(k) - this.learningRate * gradAvg;
                                 neuron.getBackwardWeights().set(k, updated);
                             }
                         }
@@ -133,7 +133,7 @@ public class Trainer {
     private void backward(Double[] y) {
         // Compute output layer deltas using loss derivative and activation derivative
         ArrayList<Layer> layers = network.getLayers();
-        int L = layers.size();
+        Integer L = layers.size();
         if (L == 0) return;
         Layer outputLayer = layers.get(L - 1);
         // Gather predicted outputs
@@ -146,7 +146,7 @@ public class Trainer {
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeurons().get(i);
             // derivative of activation evaluated at z
-            double activationDeriv = neuron.getActivationFunction().derivative(neuron.getZ());
+            Double activationDeriv = neuron.getActivationFunction().derivative(neuron.getZ());
             neuron.setDelta(lossDeriv[i] * activationDeriv);
         }
         // Backpropagate deltas through hidden layers using Layer.backPropagate()
