@@ -1,5 +1,7 @@
 package src.user_interface.impl;
 
+import java.util.Scanner;
+
 import src.models.Layer;
 import src.models.Network;
 import src.models.Neuron;
@@ -11,14 +13,17 @@ public class Console implements UserInterface {
      * ATTRIBUTES
      */
 
-    private static Network network;
+    // Object instances
+    private Network network;
+    private Scanner scanner;
 
     /*
      * CONSTRUCTORS
      */
 
     public Console(Network network) {
-        Console.network = network;
+        this.network = network;
+        scanner = new Scanner(System.in);
     }
 
     /*
@@ -26,21 +31,48 @@ public class Console implements UserInterface {
      */
 
     @Override
+    public Integer requestModeSelection() {
+        System.out.println("========================================|");
+        System.out.println(" MODE SELECTION                         | '0'=Predict, '1'=Train, '2'=Create, '3'=Load, '4'=Exit (default=Predict)");
+        System.out.println("========================================|");
+        System.out.print("                                    >>> | Select mode: ");
+        String input = scanner.nextLine();
+        switch (input) {
+            case "0":
+                return 0;
+            case "1":
+                return 1;
+            case "2":
+                return 2;
+            case "3":
+                return 3;
+            case "4":
+                return 4;
+            default:
+                this.showError(0);
+                return 0;
+        }        
+    }
+
+    @Override
     public void showError(Integer errorCode) {
+        System.out.println("========================================|");
+        System.out.print(" ERROR                                  |");
         switch (errorCode) {
+            case 0:
+                System.out.println(" Invalid input. Selecting default mode.");
+                break;
             case 1:
-                System.out.println("Error: Invalid input.");
+                System.out.println(" File not found.");
                 break;
             case 2:
-                System.out.println("Error: File not found.");
-                break;
-            case 3:
-                System.out.println("Error: Unable to save file.");
+                System.out.println(" Unable to save file.");
                 break;
             default:
-                System.out.println("Error: Unknown error.");
+                System.out.println(" Unknown error.");
                 break;
         }
+        System.out.println("========================================|");
     }
 
     @Override
@@ -112,5 +144,7 @@ public class Console implements UserInterface {
      * GETTERS AND SETTERS
      */
 
-    public static Network getNetwork() { return network; }
+    public Network getNetwork() { return network; }
+    public void setNetwork(Network network) { this.network = network; }
+    public Scanner getScanner() { return scanner; }
 }

@@ -1,6 +1,6 @@
-package src.activation_function.impl;
+package src.utils.activation_function.impl;
 
-import src.activation_function.ActivationFunction;
+import src.utils.activation_function.ActivationFunction;
 
 public class ReLu implements ActivationFunction {
 

@@ -3,11 +3,11 @@ package src.models;
 import java.util.ArrayList;
 
 import src.Setup;
-import src.activation_function.ActivationFunction;
-import src.activation_function.impl.None;
-import src.activation_function.impl.ReLu;
-import src.activation_function.impl.Sigmoid;
-import src.activation_function.impl.TanH;
+import src.utils.activation_function.ActivationFunction;
+import src.utils.activation_function.impl.None;
+import src.utils.activation_function.impl.ReLu;
+import src.utils.activation_function.impl.Sigmoid;
+import src.utils.activation_function.impl.TanH;
 
 public class Network {
 
@@ -15,6 +15,7 @@ public class Network {
      * ATTRIBUTES
      */
 
+    // Network topology
     private ArrayList<Layer> layers;
     private ArrayList<Neuron> neurons;
     
@@ -80,13 +81,13 @@ public class Network {
                 neuronId++;
             }
             Layer layer = new Layer(layerId, neurons, null, previousLayer);
-            layers.add(layer);
+            this.layers.add(layer);
             layerId++;
             previousLayer = layer;
         }
         // Set the next layer for each layer
         for (int i = 0; i < layers.size() - 1; i++) {
-            layers.get(i).setNextLayer(layers.get(i + 1));
+            this.layers.get(i).setNextLayer(this.layers.get(i + 1));
         }
     }
 

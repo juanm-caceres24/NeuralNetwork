@@ -1,4 +1,4 @@
-package src.activation_function;
+package src.utils.activation_function;
 
 public interface ActivationFunction {
 

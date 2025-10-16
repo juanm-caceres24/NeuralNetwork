@@ -2,7 +2,7 @@ package src.models;
 
 import java.util.ArrayList;
 
-import src.activation_function.ActivationFunction;
+import src.utils.activation_function.ActivationFunction;
 
 public class Neuron {
 
@@ -10,12 +10,17 @@ public class Neuron {
      * ATTRIBUTES
      */
 
+    // Neuron identifier
     private Integer neuronId;
+
+    // Neuron parameters
     private Double z;
     private Double value;
     private Double bias;
     private Double delta;
     private ActivationFunction activationFunction;
+
+    // Neuron topology
     private ArrayList<Double> forwardWeights;
     private ArrayList<Double> backwardWeights;
 
@@ -60,7 +65,6 @@ public class Neuron {
 
     public Integer getNeuronId() { return neuronId; }
     public Double getZ() { return z; }
-    public void setZ(Double z) { this.z = z; }
     public Double getValue() { return value; }
     public void setValue(Double value) { this.value = value; }
     public Double getBias() { return bias; }
@@ -70,7 +74,5 @@ public class Neuron {
     public ActivationFunction getActivationFunction() { return activationFunction; }
     public void setActivationFunction(ActivationFunction activationFunction) { this.activationFunction = activationFunction; }
     public ArrayList<Double> getForwardWeights() { return forwardWeights; }
-    public void setForwardWeights(ArrayList<Double> forwardWeights) { this.forwardWeights = forwardWeights; }
     public ArrayList<Double> getBackwardWeights() { return backwardWeights; }
-    public void setBackwardWeights(ArrayList<Double> backwardWeights) { this.backwardWeights = backwardWeights; }
 }

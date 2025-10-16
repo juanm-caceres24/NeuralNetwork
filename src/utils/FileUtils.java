@@ -3,14 +3,13 @@ package src.utils;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import src.Setup;
 import src.models.Layer;
 import src.models.Network;
 import src.models.Neuron;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class FileUtils {
 
@@ -18,7 +17,10 @@ public class FileUtils {
      * ATTRIBUTES
      */
 
+    // Network instance
     private Network network;
+
+    // Setup file paths
     private String configFilePath;
     private String trainingDataFilePath;
     private String inputValuesFilePath;
@@ -52,7 +54,7 @@ public class FileUtils {
         }
     }
 
-    public void ExportSetupIntoFile() {
+    public void exportSetupToFile() {
         // First clear the file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(configFilePath))) {
             writer.write("");
@@ -68,17 +70,16 @@ public class FileUtils {
         dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), configFilePath);
     }
 
-    public void ExportNetworkIntoFile() {
+    public void exportNetworkToFile() {
         // Save the network's weights and biases into the setup file
         Setup.setWeights(network.getWeights());
         Setup.setBiases(network.getBiases());
         Setup.setActivationFunctions(network.getActivationFunctions());
-        ExportSetupIntoFile();
+        exportSetupToFile();
     }
 
-    public void ImportInputFromFile() {
+    public void importInputFromFile() {
         // Reads the input values from the input file and sets them into Setup
-        // Expected format: one numeric value per line. Empty lines are ignored.
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(inputValuesFilePath))) {
             java.util.List<Double> values = new java.util.ArrayList<>();
             String line;
@@ -97,7 +98,7 @@ public class FileUtils {
         }
     }
 
-    public void ExportOutputIntoFile() {
+    public void exportOutputToFile() {
         // Write each output value on its own line (overwrites file)
         if (this.outputValuesFilePath == null) return;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputValuesFilePath))) {
@@ -116,7 +117,7 @@ public class FileUtils {
         }
     }
 
-    public void ImportSetupFromFile() {
+    public void importSetupFromFile() {
         // Reads the configuration file and sets up the parameters accordingly
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(configFilePath))) {
             String line;
