@@ -15,16 +15,16 @@ public class Setup {
     // Network parameters
     private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
         4, // i_L
-        3, // h_L0
-        3, // h_L1
+        5, // h_L0
+        2, // h_L1
         2  // o_L
     };
     private static Double[][] BIASES;
     private static Double[][][] WEIGHTS;
     private static Integer[] ACTIVATION_FUNCTIONS = {
         0, // i_L
-        1, // h_L0
-        1, // h_L1
+        3, // h_L0
+        2, // h_L1
         1  // o_L
     };
 
