@@ -14,17 +14,19 @@ public class Setup {
 
     // Network parameters
     private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
-        4, // i_L
-        5, // h_L0
-        2, // h_L1
-        2  // o_L
+        4,  // i_L
+        15, // h_L0
+        10, // h_L1
+        5,  // h_L2
+        2   // o_L
     };
     private static Double[][] BIASES;
     private static Double[][][] WEIGHTS;
     private static Integer[] ACTIVATION_FUNCTIONS = {
         0, // i_L
-        3, // h_L0
+        2, // h_L0
         2, // h_L1
+        3, // h_L2
         1  // o_L
     };
 
@@ -98,7 +100,7 @@ public class Setup {
         }
     }
 
-    public static void initializeFromWeightsAndBiases() {
+    public static void initializeFromBiases() {
         // Set LAYER_SIZES according to the dimensions of WEIGHTS and BIASES
         LAYER_SIZES = new Integer[BIASES.length];
         for (int i = 0; i < BIASES.length; i++) {
@@ -117,7 +119,6 @@ public class Setup {
 
     public static Integer[] getLayerSizes() { return LAYER_SIZES; }
     public static void setLayerSizes(Integer[] layerSizes) { LAYER_SIZES = layerSizes; }
-
     public static Double[][] getBiases() { return BIASES; }
     public static void setBiases(Double[][] biases) { BIASES = biases; }
     public static Double[][][] getWeights() { return WEIGHTS; }

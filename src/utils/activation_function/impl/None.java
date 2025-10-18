@@ -15,12 +15,12 @@ public class None implements ActivationFunction {
      */
 
     @Override
-    public Double activate(Double value) {
-        return value;
+    public Double activate(Double x) {
+        return x;
     }
 
     @Override
-    public Double derivative(Double value) {
+    public Double derivative(Double x) {
         return 1.0;
     }
 }

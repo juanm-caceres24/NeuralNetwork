@@ -4,8 +4,9 @@ import java.util.ArrayList;
 
 import src.Setup;
 import src.utils.activation_function.ActivationFunction;
+import src.utils.activation_function.impl.LeakyReLU;
 import src.utils.activation_function.impl.None;
-import src.utils.activation_function.impl.ReLu;
+import src.utils.activation_function.impl.ReLU;
 import src.utils.activation_function.impl.Sigmoid;
 import src.utils.activation_function.impl.TanH;
 
@@ -88,9 +89,11 @@ public class Network {
             case 1:
                 return new Sigmoid();
             case 2:
-                return new ReLu();
-            case 3:
                 return new TanH();
+            case 3:
+                return new ReLU();
+            case 4:
+                return new LeakyReLU();
             default:
                 // Default to None if unknown
                 return new None(); 
@@ -103,10 +106,12 @@ public class Network {
                 return 0;
             case "Sigmoid":
                 return 1;
-            case "ReLu":
-                return 2;
             case "TanH":
+                return 2;
+            case "ReLU":
                 return 3;
+            case "LeakyReLU":
+                return 4;
             default:
                 // Default to None if unknown
                 return 0;

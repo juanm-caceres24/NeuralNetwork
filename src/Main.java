@@ -64,7 +64,7 @@ public class Main {
     public static void loadNetwork() {
         fileUtils = new FileUtils(null);
         fileUtils.importSetupFromFile();
-        Setup.initializeFromWeightsAndBiases();
+        Setup.initializeFromBiases();
         network = new Network();
         userInterface.setNetwork(network);
         fileUtils.setNetwork(network);

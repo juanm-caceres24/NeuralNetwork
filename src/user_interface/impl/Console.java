@@ -1,6 +1,7 @@
 package src.user_interface.impl;
 
 import java.util.Scanner;
+import java.util.List;
 
 import src.models.Layer;
 import src.models.Network;
@@ -100,18 +101,43 @@ public class Console implements UserInterface {
                 System.out.println("    |     | Bias ---------------------- | " + neuron.getBias());
                 System.out.println("    |     | Activation Function ------- | " + neuron.getActivationFunction().getClass().getSimpleName());
                 if (neuron.getForwardWeights() != null) {
-                    System.out.println("    |     | Forward Weights ----------- | " + neuron.getForwardWeights());
+                    printWeights("Forward Weights -", neuron.getForwardWeights());
                 } else {
                     System.out.println("    |     | Forward Weights ----------- | (none)");
                 }
                 if (neuron.getBackwardWeights() != null) {
-                    System.out.println("    |     | Backward Weights ---------- | " + neuron.getBackwardWeights());
+                    printWeights("Backward Weights ", neuron.getBackwardWeights());
                 } else {
                     System.out.println("    |     | Backward Weights ---------- | (none)");
                 }
             }
         }
         System.out.println("                                        |");
+    }
+
+    // Print a list of weights with up to PER_LINE elements per line, aligned with the weights column
+    private void printWeights(String label, List<Double> weights) {
+        final int PER_LINE = 4;
+        String prefix = "    |     | " + label + "---------- | ";
+        String continuedPrefix = "    |     |                           + | ";
+        StringBuilder line = new StringBuilder();
+        for (int i = 0; i < weights.size(); i++) {
+            if (i % PER_LINE == 0) {
+                // flush previous line
+                if (line.length() > 0) {
+                    System.out.println(prefix + line.toString());
+                    prefix = continuedPrefix; // subsequent lines use continued prefix
+                    line.setLength(0);
+                }
+            } else {
+                line.append(", ");
+            }
+            line.append(weights.get(i));
+        }
+        // Print remaining
+        if (line.length() > 0) {
+            System.out.println(prefix + line.toString());
+        }
     }
 
     @Override

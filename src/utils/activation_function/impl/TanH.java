@@ -15,13 +15,13 @@ public class TanH implements ActivationFunction {
      */
 
     @Override
-    public Double activate(Double value) {
-        return Math.tanh(value);
+    public Double activate(Double x) {
+        return Math.tanh(x);
     }
 
     @Override
-    public Double derivative(Double value) {
-        Double activatedValue = this.activate(value);
-        return 1 - Math.pow(activatedValue, 2);
+    public Double derivative(Double x) {
+        Double y = this.activate(x);
+        return 1 - Math.pow(y, 2);
     }
 }
