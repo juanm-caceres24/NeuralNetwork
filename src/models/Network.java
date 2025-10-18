@@ -24,11 +24,6 @@ public class Network {
     private Double[][] biases;
     private Double[][][] weights;
     private Integer[] activationFunctions;
-    private Integer numberOfInputs;
-    private Integer numberOfOutputs;
-    private Integer numberOfHiddenLayers;
-    private Integer neuronsPerHiddenLayer;
-    private Integer totalNumberOfLayers;
 
     /*
      * CONSTRUCTORS
@@ -41,11 +36,6 @@ public class Network {
         this.biases = Setup.getBiases();
         this.weights = Setup.getWeights();
         this.activationFunctions = Setup.getActivationFunctions();
-        this.numberOfInputs = Setup.getNumberOfInputs();
-        this.numberOfOutputs = Setup.getNumberOfOutputs();
-        this.numberOfHiddenLayers = Setup.getNumberOfHiddenLayers();
-        this.neuronsPerHiddenLayer = Setup.getNeuronsPerHiddenLayer();
-        this.totalNumberOfLayers = Setup.getTotalNumberOfLayers();
         this.createNetwork();
     }
 
@@ -58,13 +48,13 @@ public class Network {
         Integer layerId = 0;
         Layer previousLayer = null;
         // Create and add layers
-        for (int i = 0; i < this.totalNumberOfLayers; i++) {
+        for (int i = 0; i < this.biases.length; i++) {
             ArrayList<Neuron> neurons = new ArrayList<>();
             // Create and add neurons to the layer
             for (int j = 0; j < this.biases[i].length; j++) {
-                ArrayList<Double> forwardWeights = (i < this.totalNumberOfLayers - 1) ? new ArrayList<Double>() : null;
+                ArrayList<Double> forwardWeights = (i < this.biases.length - 1) ? new ArrayList<Double>() : null;
                 ArrayList<Double> backwardWeights = (i > 0) ? new ArrayList<Double>() : null;
-                if (i < this.totalNumberOfLayers - 1) {
+                if (i < this.biases.length - 1) {
                     for (int k = 0; k < this.weights[i][j].length; k++) {
                         forwardWeights.add(this.weights[i][j][k]);
                     }
@@ -183,9 +173,4 @@ public class Network {
     public Double[][] getBiases() { return biases; }
     public Double[][][] getWeights() { return weights; }
     public Integer[] getActivationFunctions() { return activationFunctions; }
-    public Integer getNumberOfInputs() { return numberOfInputs; }
-    public Integer getNumberOfOutputs() { return numberOfOutputs; }
-    public Integer getNumberOfHiddenLayers() { return numberOfHiddenLayers; }
-    public Integer getNeuronsPerHiddenLayer() { return neuronsPerHiddenLayer; }
-    public Integer getTotalNumberOfLayers() { return totalNumberOfLayers; }
 }

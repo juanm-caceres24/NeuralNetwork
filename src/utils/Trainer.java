@@ -72,6 +72,13 @@ public class Trainer {
                     Integer prevNeurons = layer.getPreviousLayer() != null ? layer.getPreviousLayer().getNeurons().size() : 0;
                     biasGradSums[l] = new Double[neuronsCount];
                     weightGradSums[l] = new Double[neuronsCount][prevNeurons];
+                    // Initialize values to 0.0 to avoid NullPointerException when accumulating
+                    for (int ni = 0; ni < neuronsCount; ni++) {
+                        biasGradSums[l][ni] = 0.0;
+                        for (int pi = 0; pi < prevNeurons; pi++) {
+                            weightGradSums[l][ni][pi] = 0.0;
+                        }
+                    }
                 }
                 // Accumulate gradients for each sample in the batch
                 for (int p = start; p < end; p++) {

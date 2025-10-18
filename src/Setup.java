@@ -14,16 +14,11 @@ public class Setup {
 
     // Network parameters
     private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
-        5, // i_L
-        4, // h_L0
-        4, // h_L1
+        4, // i_L
+        3, // h_L0
+        3, // h_L1
         2  // o_L
     };
-    private static Integer NUMBER_OF_INPUTS = LAYER_SIZES[0];
-    private static Integer NUMBER_OF_OUTPUTS = LAYER_SIZES[LAYER_SIZES.length - 1];
-    private static Integer NUMBER_OF_HIDDEN_LAYERS = LAYER_SIZES.length - 2;
-    private static Integer NEURONS_PER_HIDDEN_LAYER = LAYER_SIZES[1];
-    private static Integer TOTAL_NUMBER_OF_LAYERS = LAYER_SIZES.length;
     private static Double[][] BIASES;
     private static Double[][][] WEIGHTS;
     private static Integer[] ACTIVATION_FUNCTIONS = {
@@ -54,7 +49,7 @@ public class Setup {
 
     public static void generateTestTrainingValues() {
         Integer trainingDataLength = 10000;
-        TRAINING_DATA = new Double[trainingDataLength][2][NUMBER_OF_INPUTS > NUMBER_OF_OUTPUTS ? NUMBER_OF_INPUTS : NUMBER_OF_OUTPUTS];
+        TRAINING_DATA = new Double[trainingDataLength][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
         // Generate random n-inputs between 0.0 and 1.0
         for (int i = 0; i < trainingDataLength; i++) {
             Double[] inputs = TRAINING_DATA[i][0];
@@ -83,15 +78,15 @@ public class Setup {
 
     public static void initializeFromLayerSizes() {
         // Set the dimension of weights and biases according to LAYER_SIZES and initialize them to 0.0
-        BIASES = new Double[TOTAL_NUMBER_OF_LAYERS][];
-        WEIGHTS = new Double[TOTAL_NUMBER_OF_LAYERS - 1][][];
-        for (int i = 0; i < TOTAL_NUMBER_OF_LAYERS; i++) {
+        BIASES = new Double[LAYER_SIZES.length][];
+        WEIGHTS = new Double[LAYER_SIZES.length - 1][][];
+        for (int i = 0; i < LAYER_SIZES.length; i++) {
             BIASES[i] = new Double[LAYER_SIZES[i]];
             for (int j = 0; j < LAYER_SIZES[i]; j++) {
                 // Initialize all biases to random values between -1.0 and 1.0
                 BIASES[i][j] = Math.random() * 2 - 1; 
             }
-            if (i < TOTAL_NUMBER_OF_LAYERS - 1) {
+            if (i < LAYER_SIZES.length - 1) {
                 WEIGHTS[i] = new Double[LAYER_SIZES[i]][LAYER_SIZES[i + 1]];
                 for (int j = 0; j < LAYER_SIZES[i]; j++) {
                     for (int k = 0; k < LAYER_SIZES[i + 1]; k++) {
@@ -105,15 +100,10 @@ public class Setup {
 
     public static void initializeFromWeightsAndBiases() {
         // Set LAYER_SIZES according to the dimensions of WEIGHTS and BIASES
-        TOTAL_NUMBER_OF_LAYERS = BIASES.length;
-        LAYER_SIZES = new Integer[TOTAL_NUMBER_OF_LAYERS];
-        for (int i = 0; i < TOTAL_NUMBER_OF_LAYERS; i++) {
+        LAYER_SIZES = new Integer[BIASES.length];
+        for (int i = 0; i < BIASES.length; i++) {
             LAYER_SIZES[i] = BIASES[i].length;
         }
-        NUMBER_OF_INPUTS = LAYER_SIZES[0];
-        NUMBER_OF_OUTPUTS = LAYER_SIZES[LAYER_SIZES.length - 1];
-        NUMBER_OF_HIDDEN_LAYERS = LAYER_SIZES.length - 2;
-        NEURONS_PER_HIDDEN_LAYER = LAYER_SIZES[1];
     }
     
     /*
@@ -127,12 +117,6 @@ public class Setup {
 
     public static Integer[] getLayerSizes() { return LAYER_SIZES; }
     public static void setLayerSizes(Integer[] layerSizes) { LAYER_SIZES = layerSizes; }
-
-    public static Integer getNumberOfInputs() { return NUMBER_OF_INPUTS; }
-    public static Integer getNumberOfOutputs() { return NUMBER_OF_OUTPUTS; }
-    public static Integer getNumberOfHiddenLayers() { return NUMBER_OF_HIDDEN_LAYERS; }
-    public static Integer getNeuronsPerHiddenLayer() { return NEURONS_PER_HIDDEN_LAYER; }
-    public static Integer getTotalNumberOfLayers() { return TOTAL_NUMBER_OF_LAYERS; }
 
     public static Double[][] getBiases() { return BIASES; }
     public static void setBiases(Double[][] biases) { BIASES = biases; }
