@@ -7,18 +7,18 @@ public class XOR implements TestGenerator {
 
     @Override
     public Double[][][] generateTrainingData() {
-        Integer DEMO_TRAINING_DATA_LENGTH = Setup.getDemoTrainingDataLength();
+        Integer TEST_TRAINING_DATA_LENGTH = Setup.getTestTrainingDataLength();
         Integer[] LAYER_SIZES = Setup.getLayerSizes();
-        Double[][][] TRAINING_DATA = new Double[DEMO_TRAINING_DATA_LENGTH][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
+        Double[][][] TRAINING_DATA = new Double[TEST_TRAINING_DATA_LENGTH][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
         // Generate random n-inputs between 0.0 and 1.0
-        for (int i = 0; i < DEMO_TRAINING_DATA_LENGTH; i++) {
+        for (int i = 0; i < TEST_TRAINING_DATA_LENGTH; i++) {
             Double[] inputs = TRAINING_DATA[i][0];
             for (int j = 0; j < inputs.length; j++) {
                 inputs[j] = Math.random();
             }
         }
         // Generate training outputs as XOR of the inputs (set all the outputs to 0.0 or 1.0) (use modular code to n-inputs and m-outputs)
-        for (int i = 0; i < DEMO_TRAINING_DATA_LENGTH; i++) {
+        for (int i = 0; i < TEST_TRAINING_DATA_LENGTH; i++) {
             Double[] inputs = TRAINING_DATA[i][0];
             Double[] outputs = TRAINING_DATA[i][1];
             // XOR logic: output is 1.0 if an odd number of inputs are > 0.5, else 0.0

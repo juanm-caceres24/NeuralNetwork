@@ -33,13 +33,17 @@ public class Console implements UserInterface {
     @Override
     public Integer requestModeSelection() {
         System.out.printf("========================================|\n");
-        System.out.printf(" MODE SELECTION                         | '0'=Predict\n");
-        System.out.printf("                                        | '1'=Create\n");
-        System.out.printf("                                        | '2'=Load\n");
-        System.out.printf("                                        | '3'=Train from File\n");
-        System.out.printf("                                        | '4'=Train from Demo Test\n");
-        System.out.printf("                                        | '5'=Exit (default=Predict)\n");
+        System.out.printf(" MODE SELECTION                         |\n");
         System.out.printf("========================================|\n");
+        System.out.printf("                                        |\n");
+        System.out.printf("                            Predict='0' |\n");
+        System.out.printf("                             Create='1' |\n");
+        System.out.printf("                               Load='2' |\n");
+        System.out.printf("                    Train from file='3' |\n");
+        System.out.printf("                    Train from demo='4' |\n");
+        System.out.printf("                               Exit='5' |\n");
+        System.out.printf("                      (default=Predict) |\n");
+        System.out.printf("                                        |\n");
         System.out.printf("                                    >>> | Select mode: ");
         String input = scanner.nextLine();
         switch (input) {

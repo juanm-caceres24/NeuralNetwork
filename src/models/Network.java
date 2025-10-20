@@ -88,14 +88,14 @@ public class Network {
             case 4:
                 return new LeakyReLU();
             default:
-                // Default to None if unknown
+                // Default to Lineal if unknown
                 return new Lineal(); 
         }
     }
 
     public Integer mapActivationFunction(ActivationFunction function) {
         switch (function.getClass().getSimpleName()) {
-            case "None":
+            case "Lineal":
                 return 0;
             case "Sigmoid":
                 return 1;
@@ -106,7 +106,7 @@ public class Network {
             case "LeakyReLU":
                 return 4;
             default:
-                // Default to None if unknown
+                // Default to Lineal if unknown
                 return 0;
         }
     }

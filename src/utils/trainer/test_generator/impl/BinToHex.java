@@ -7,11 +7,11 @@ public class BinToHex implements TestGenerator {
 
     @Override
     public Double[][][] generateTrainingData() {
-        Integer DEMO_TRAINING_DATA_LENGTH = Setup.getDemoTrainingDataLength();
+        Integer TEST_TRAINING_DATA_LENGTH = Setup.getTestTrainingDataLength();
         Integer[] LAYER_SIZES = Setup.getLayerSizes();
-        Double[][][] TRAINING_DATA = new Double[DEMO_TRAINING_DATA_LENGTH][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
+        Double[][][] TRAINING_DATA = new Double[TEST_TRAINING_DATA_LENGTH][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
         // Generate training data for the BinToHex conversion
-        for (int i = 0; i < DEMO_TRAINING_DATA_LENGTH; i++) {
+        for (int i = 0; i < TEST_TRAINING_DATA_LENGTH; i++) {
             // Generate random 4-bit binary input
             Double[] inputs = TRAINING_DATA[i][0];
             for (int j = 0; j < 4; j++) {

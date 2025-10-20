@@ -32,14 +32,11 @@ public class Setup {
     private static Double LEARNING_RATE = 0.1;
     private static Integer EPOCHS = 1000;
     private static Integer BATCH_SIZE = 10;
+    private static Integer TEST_TRAINING_DATA_LENGTH = 1000;
     private static Double[][][] TRAINING_DATA;
-    private static Integer DEMO_TRAINING_DATA_LENGTH = 1000;
 
     // Input values for prediction
     private static Double[] INPUT_VALUES;
-
-    // Console parameters
-    private static Integer WEIGHTS_PER_LINE = 4;
 
     /*
      * CONSTRUCTORS
@@ -107,10 +104,9 @@ public class Setup {
     public static void setBatchSize(Integer batchSize) { BATCH_SIZE = batchSize; }
     public static Double[][][] getTrainingData() { return TRAINING_DATA; }
     public static void setTrainingData(Double[][][] trainingData) { TRAINING_DATA = trainingData; }
-    public static Integer getDemoTrainingDataLength() { return DEMO_TRAINING_DATA_LENGTH; }
+    public static Integer getTestTrainingDataLength() { return TEST_TRAINING_DATA_LENGTH; }
+    public static void setTestTrainingDataLength(Integer testTrainingDataLength) { TEST_TRAINING_DATA_LENGTH = testTrainingDataLength; }
 
     public static Double[] getInputValues() { return INPUT_VALUES; }
     public static void setInputValues(Double[] inputValues) { INPUT_VALUES = inputValues; }
-
-    public static Integer getWeightsPerLine() { return WEIGHTS_PER_LINE; }
 }

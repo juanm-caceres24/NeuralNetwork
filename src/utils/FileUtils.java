@@ -59,6 +59,7 @@ public class FileUtils {
         dumpLineIntoFile("LEARNING_RATE=" + Setup.getLearningRate(), CONFIG_FILE_PATH);
         dumpLineIntoFile("EPOCHS=" + Setup.getEpochs(), CONFIG_FILE_PATH);
         dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), CONFIG_FILE_PATH);
+        dumpLineIntoFile("TEST_TRAINING_DATA_LENGTH=" + Setup.getTestTrainingDataLength(), CONFIG_FILE_PATH);
     }
 
     public void exportNetworkToFile() {
@@ -135,6 +136,9 @@ public class FileUtils {
                         break;
                     case "BATCH_SIZE":
                         Setup.setBatchSize(Integer.parseInt(value));
+                        break;
+                    case "TEST_TRAINING_DATA_LENGTH":
+                        Setup.setTestTrainingDataLength(Integer.parseInt(value));
                         break;
                     default:
                         // Unknown key
@@ -273,10 +277,10 @@ public class FileUtils {
         // remove outer brackets
         s = s.substring(1, s.length() - 1).trim();
         List<String> rows = new java.util.ArrayList<>();
-        int level = 0;
+        Integer level = 0;
         StringBuilder cur = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
+            Character c = s.charAt(i);
             if (c == '[') {
                 level++;
                 if (level == 1) continue; // skip the bracket that starts the row
@@ -316,10 +320,10 @@ public class FileUtils {
         // remove outer brackets
         s = s.substring(1, s.length() - 1).trim();
         List<String> mats = new java.util.ArrayList<>();
-        int level = 0;
+        Integer level = 0;
         StringBuilder cur = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
+            Character c = s.charAt(i);
             if (c == '[') {
                 level++;
             }
