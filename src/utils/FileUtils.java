@@ -20,22 +20,12 @@ public class FileUtils {
     // Network instance
     private Network network;
 
-    // Setup file paths
-    private String configFilePath;
-    private String trainingDataFilePath;
-    private String inputValuesFilePath;
-    private String outputValuesFilePath;
-
     /*
      * CONSTRUCTORS
      */
 
     public FileUtils(Network network) {
         this.network = network;
-        this.configFilePath = Setup.getConfigFilePath();
-        this.trainingDataFilePath = Setup.getTrainingDataFilePath();
-        this.inputValuesFilePath = Setup.getInputValuesFilePath();
-        this.outputValuesFilePath = Setup.getOutputValuesFilePath();
     }
 
     /*
@@ -55,32 +45,31 @@ public class FileUtils {
     }
 
     public void exportSetupToFile() {
+        String CONFIG_FILE_PATH = Setup.getConfigFilePath();
         // First clear the file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(configFilePath))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(CONFIG_FILE_PATH))) {
             writer.write("");
         } catch (IOException e) {
             e.printStackTrace();
         }
         // Then write the configuration parameters in a parseable bracket format
-        dumpLineIntoFile("BIASES=" + toString(Setup.getBiases()), configFilePath);
-        dumpLineIntoFile("WEIGHTS=" + toString(Setup.getWeights()), configFilePath);
-        dumpLineIntoFile("ACTIVATION_FUNCTIONS=" + toString(Setup.getActivationFunctions()), configFilePath);
-        dumpLineIntoFile("LEARNING_RATE=" + Setup.getLearningRate(), configFilePath);
-        dumpLineIntoFile("EPOCHS=" + Setup.getEpochs(), configFilePath);
-        dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), configFilePath);
+        dumpLineIntoFile("BIASES=" + toString(Setup.getBiases()), CONFIG_FILE_PATH);
+        dumpLineIntoFile("WEIGHTS=" + toString(Setup.getWeights()), CONFIG_FILE_PATH);
+        dumpLineIntoFile("ACTIVATION_FUNCTIONS=" + toString(Setup.getActivationFunctions()), CONFIG_FILE_PATH);
+        dumpLineIntoFile("LEARNING_RATE=" + Setup.getLearningRate(), CONFIG_FILE_PATH);
+        dumpLineIntoFile("EPOCHS=" + Setup.getEpochs(), CONFIG_FILE_PATH);
+        dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), CONFIG_FILE_PATH);
     }
 
     public void exportNetworkToFile() {
         // Save the network's weights and biases into the setup file
-        Setup.setWeights(network.getWeights());
-        Setup.setBiases(network.getBiases());
-        Setup.setActivationFunctions(network.getActivationFunctions());
         exportSetupToFile();
     }
 
     public void importInputFromFile() {
+        String INPUT_VALUES_FILE_PATH = Setup.getInputValuesFilePath();
         // Reads the input values from the input file and sets them into Setup
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(inputValuesFilePath))) {
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(INPUT_VALUES_FILE_PATH))) {
             java.util.List<Double> values = new java.util.ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -99,9 +88,10 @@ public class FileUtils {
     }
 
     public void exportOutputToFile() {
+        String OUTPUT_VALUES_FILE_PATH = Setup.getOutputValuesFilePath();
         // Write each output value on its own line (overwrites file)
-        if (this.outputValuesFilePath == null) return;
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputValuesFilePath))) {
+        if (OUTPUT_VALUES_FILE_PATH == null) return;
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(OUTPUT_VALUES_FILE_PATH))) {
             if (this.network == null) return;
             ArrayList<Layer> layers = this.network.getLayers();
             if (layers == null || layers.isEmpty()) return;
@@ -118,8 +108,9 @@ public class FileUtils {
     }
 
     public void importSetupFromFile() {
+        String CONFIG_FILE_PATH = Setup.getConfigFilePath();
         // Reads the configuration file and sets up the parameters accordingly
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(configFilePath))) {
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(CONFIG_FILE_PATH))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("=");
@@ -309,8 +300,4 @@ public class FileUtils {
 
     public Network getNetwork() { return network; }
     public void setNetwork(Network network) { this.network = network; }
-    public String getConfigFilePath() { return configFilePath; }
-    public String getTrainingDataFilePath() { return trainingDataFilePath; }
-    public String getInputValuesFilePath() { return inputValuesFilePath; }
-    public String getOutputValuesFilePath() { return outputValuesFilePath; }
 }

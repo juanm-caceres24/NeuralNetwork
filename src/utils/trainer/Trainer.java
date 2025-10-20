@@ -1,4 +1,4 @@
-package src.utils;
+package src.utils.trainer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +10,9 @@ import src.models.Network;
 import src.models.Neuron;
 import src.utils.loss.Loss;
 import src.utils.loss.impl.MSELoss;
+import src.utils.trainer.test_generator.TestGenerator;
+import src.utils.trainer.test_generator.impl.BinToHex;
+//import src.utils.trainer.test_generator.impl.XOR;
 
 public class Trainer {
 
@@ -23,11 +26,8 @@ public class Trainer {
     // Error/Loss function
     private Loss loss;
 
-    // Setup parameters
-    private Double learningRate;
-    private Integer epochs;
-    private Integer batchSize;
-    private Double[][][] trainingData;
+    // Demo generator
+    private TestGenerator demoGenerator;
 
     /*
      * CONSTRUCTORS
@@ -36,10 +36,7 @@ public class Trainer {
     public Trainer(Network network) {
         this.network = network;
         this.loss = new MSELoss();
-        this.learningRate = Setup.getLearningRate();
-        this.epochs = Setup.getEpochs();
-        this.batchSize = Setup.getBatchSize();
-        this.trainingData = Setup.getTrainingData();
+        this.demoGenerator = new BinToHex();
     }
 
     /*
@@ -47,17 +44,21 @@ public class Trainer {
      */
 
     public void train() {
+        Double LEARNING_RATE = Setup.getLearningRate();
+        Integer EPOCHS = Setup.getEpochs();
+        Integer BATCH_SIZE = Setup.getBatchSize();
+        Double[][][] TRAINING_DATA = Setup.getTrainingData();
         // Simple training loop using stochastic gradient descent (SGD)
         List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < trainingData.length; i++) {
+        for (int i = 0; i < TRAINING_DATA.length; i++) {
             indices.add(i);
         }
-        for (int epoch = 0; epoch < this.epochs; epoch++) {
+        for (int epoch = 0; epoch < EPOCHS; epoch++) {
             // Shuffle samples each epoch to aid SGD convergence
             Collections.shuffle(indices);
             // Process data in mini-batches
-            for (int start = 0; start < indices.size(); start += this.batchSize) {
-                Integer end = Math.min(start + this.batchSize, indices.size());
+            for (int start = 0; start < indices.size(); start += BATCH_SIZE) {
+                Integer end = Math.min(start + BATCH_SIZE, indices.size());
                 Integer actualBatch = end - start;
                 // Prepare accumulators for biases and weights per layer
                 ArrayList<Layer> layers = network.getLayers();
@@ -84,8 +85,8 @@ public class Trainer {
                 for (int p = start; p < end; p++) {
                     Integer sample = indices.get(p);
                     // Forward and backward to compute deltas
-                    network.forward(trainingData[sample][0]);
-                    backward(trainingData[sample][1]);
+                    network.forward(TRAINING_DATA[sample][0]);
+                    backward(TRAINING_DATA[sample][1]);
                     // Accumulate per-layer gradients (skip input layer l=0)
                     for (int l = 1; l < L; l++) {
                         Layer layer = layers.get(l);
@@ -110,13 +111,13 @@ public class Trainer {
                         Neuron neuron = layer.getNeurons().get(j);
                         // Update bias: average over batch
                         Double biasGradAvg = biasGradSums[l][j] / (double) actualBatch;
-                        Double newBias = neuron.getBias() - this.learningRate * biasGradAvg;
+                        Double newBias = neuron.getBias() - LEARNING_RATE * biasGradAvg;
                         neuron.setBias(newBias);
                         // Update backward (incoming) weights
                         if (neuron.getBackwardWeights() != null) {
                             for (int k = 0; k < neuron.getBackwardWeights().size(); k++) {
                                 Double gradAvg = weightGradSums[l][j][k] / (double) actualBatch;
-                                Double updated = neuron.getBackwardWeights().get(k) - this.learningRate * gradAvg;
+                                Double updated = neuron.getBackwardWeights().get(k) - LEARNING_RATE * gradAvg;
                                 neuron.getBackwardWeights().set(k, updated);
                             }
                         }
@@ -168,14 +169,16 @@ public class Trainer {
         }
     }
 
+    public void generateDemoTestTrainingValues() {
+        Double[][][] TRAINING_DATA = this.demoGenerator.generateTrainingData();
+        Setup.setTrainingData(TRAINING_DATA);
+    }
+
     /*
      * GETTERS AND SETTERS
      */
 
     public Network getNetwork() { return network; }
     public Loss getLoss() { return loss; }
-    public Double getLearningRate() { return learningRate; }
-    public Integer getEpochs() { return epochs; }
-    public Integer getBatchSize() { return batchSize; }
-    public Double[][][] getTrainingData() { return trainingData; }
+    public TestGenerator getDemoGenerator() { return demoGenerator; }
 }

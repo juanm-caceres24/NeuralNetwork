@@ -2,13 +2,13 @@ package src.utils.activation_function.impl;
 
 import src.utils.activation_function.ActivationFunction;
 
-public class None implements ActivationFunction {
+public class Lineal implements ActivationFunction {
 
     /*
      * CONSTRUCTORS
      */
 
-    public None() { }
+    public Lineal() { }
 
     /*
      * METHODS

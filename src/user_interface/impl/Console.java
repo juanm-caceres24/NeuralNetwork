@@ -1,9 +1,7 @@
 package src.user_interface.impl;
 
 import java.util.Scanner;
-import java.util.List;
 
-import src.Setup;
 import src.models.Layer;
 import src.models.Network;
 import src.models.Neuron;
@@ -19,9 +17,6 @@ public class Console implements UserInterface {
     private Network network;
     private Scanner scanner;
 
-    // Console parameters
-    private Integer WEIGHTS_PER_LINE;
-
     /*
      * CONSTRUCTORS
      */
@@ -29,7 +24,6 @@ public class Console implements UserInterface {
     public Console(Network network) {
         this.network = network;
         scanner = new Scanner(System.in);
-        this.WEIGHTS_PER_LINE = Setup.getWeightsPerLine();
     }
 
     /*
@@ -38,10 +32,10 @@ public class Console implements UserInterface {
 
     @Override
     public Integer requestModeSelection() {
-        System.out.println("========================================|");
-        System.out.println(" MODE SELECTION                         | '0'=Predict, '1'=Train, '2'=Create, '3'=Load, '4'=Exit (default=Predict)");
-        System.out.println("========================================|");
-        System.out.print("                                    >>> | Select mode: ");
+        System.out.printf("========================================|\n");
+        System.out.printf(" MODE SELECTION                         | '0'=Predict, '1'=Train, '2'=Create, '3'=Load, '4'=Exit (default=Predict)\n");
+        System.out.printf("========================================|\n");
+        System.out.printf("                                    >>> | Select mode: ");
         String input = scanner.nextLine();
         switch (input) {
             case "0":
@@ -62,112 +56,110 @@ public class Console implements UserInterface {
 
     @Override
     public void showError(Integer errorCode) {
-        System.out.println("========================================|");
-        System.out.print(" ERROR                                  |");
+        System.out.printf("========================================|\n");
+        System.out.printf(" ERROR                                  |\n");
         switch (errorCode) {
             case 0:
-                System.out.println(" Invalid input. Selecting default mode.");
+                System.out.printf(" Invalid input. Selecting default mode.\n");
                 break;
             case 1:
-                System.out.println(" File not found.");
+                System.out.printf(" File not found.\n");
                 break;
             case 2:
-                System.out.println(" Unable to save file.");
+                System.out.printf(" Unable to save file.\n");
                 break;
             default:
-                System.out.println(" Unknown error.");
+                System.out.printf(" Unknown error.\n");
                 break;
         }
-        System.out.println("========================================|");
+        System.out.printf("========================================|\n");
     }
 
     @Override
     public void showNetwork() {
-        System.out.println("========================================|");
-        System.out.println(" NETWORK                                |");
-        System.out.println("========================================|");
+        System.out.printf("========================================|\n");
+        System.out.printf(" NETWORK                                |\n");
+        System.out.printf("========================================|\n");
         for (Layer layer : network.getLayers()) {
-            System.out.println("                                        |");
-            System.out.println(" >> | Layer Id ------------------------ | " + layer.getLayerId());
+            System.out.printf("                                        |\n");
+            System.out.printf(" >> | Layer Id ------------------------ | %d\n", layer.getLayerId());
             if (layer.getNextLayer() == null) {
-                System.out.println("    | Next Layer Id ------------------- | (none)");
+                System.out.printf("    | Next Layer Id ------------------- | (none)\n");
             } else {
-                System.out.println("    | Next Layer Id ------------------- | " + layer.getNextLayer().getLayerId());
+                System.out.printf("    | Next Layer Id ------------------- | %d\n", layer.getNextLayer().getLayerId());
             }
             if (layer.getPreviousLayer() == null) {
-                System.out.println("    | Previous Layer Id --------------- | (none)");
+                System.out.printf("    | Previous Layer Id --------------- | (none)\n");
             } else {
-                System.out.println("    | Previous Layer Id --------------- | " + layer.getPreviousLayer().getLayerId());
+                System.out.printf("    | Previous Layer Id --------------- | %d\n", layer.getPreviousLayer().getLayerId());
             }
             for (Neuron neuron : layer.getNeurons()) {
-                System.out.println("    +                                   |");
-                System.out.println("    | ->> | Neuron Id ----------------- | " + neuron.getNeuronId());
-                System.out.println("    |     | Value --------------------- | " + neuron.getValue());
-                System.out.println("    |     | Bias ---------------------- | " + neuron.getBias());
-                System.out.println("    |     | Activation Function ------- | " + neuron.getActivationFunction().getClass().getSimpleName());
+                System.out.printf("    +                                   |\n");
+                System.out.printf("    | ->> | Neuron Id ----------------- | %d\n", neuron.getNeuronId());
+                System.out.printf("    |     | Value --------------------- | %.8f\n", neuron.getValue());
+                System.out.printf("    |     | Bias ---------------------- | %.8f\n", neuron.getBias());
+                System.out.printf("    |     | Activation Function ------- | %s\n", neuron.getActivationFunction().getClass().getSimpleName());
                 if (neuron.getForwardWeights() != null) {
-                    printWeights("Forward Weights -", neuron.getForwardWeights());
+                    for (Double w : neuron.getForwardWeights()) {
+                        if (w == neuron.getForwardWeights().get(0)) {
+                            System.out.printf("    |     | Forward Weights ----------- | %.8f\n", w);
+                        } else {
+                            System.out.printf("    |     |                           + | %.8f\n", w);
+                        }
+                    }
                 } else {
-                    System.out.println("    |     | Forward Weights ----------- | (none)");
+                    System.out.printf("    |     | Forward Weights ----------- | (none)\n");
                 }
                 if (neuron.getBackwardWeights() != null) {
-                    printWeights("Backward Weights ", neuron.getBackwardWeights());
+                    for (Double w : neuron.getBackwardWeights()) {
+                        if (w == neuron.getBackwardWeights().get(0)) {
+                            System.out.printf("    |     | Backward Weights ---------- | %.8f\n", w);
+                        } else {
+                            System.out.printf("    |     |                           + | %.8f\n", w);
+                        }
+                    }
                 } else {
-                    System.out.println("    |     | Backward Weights ---------- | (none)");
+                    System.out.printf("    |     | Backward Weights ---------- | (none)\n");
                 }
             }
         }
-        System.out.println("                                        |");
-    }
-
-    // Print a list of weights with up to WEIGHTS_PER_LINE elements per line, aligned with the weights column
-    private void printWeights(String label, List<Double> weights) {
-        String prefix = "    |     | " + label + "---------- | ";
-        String continuedPrefix = "    |     |                           + | ";
-        StringBuilder line = new StringBuilder();
-        for (int i = 0; i < weights.size(); i++) {
-            if (i % WEIGHTS_PER_LINE == 0) {
-                // flush previous line
-                if (line.length() > 0) {
-                    System.out.println(prefix + line.toString());
-                    prefix = continuedPrefix; // subsequent lines use continued prefix
-                    line.setLength(0);
-                }
-            } else {
-                line.append(", ");
-            }
-            line.append(weights.get(i));
-        }
-        // Print remaining
-        if (line.length() > 0) {
-            System.out.println(prefix + line.toString());
-        }
+        System.out.printf("                                        |\n");
     }
 
     @Override
     public void showInputs() {
-        System.out.println("========================================|");
-        System.out.println(" INPUTS                                 |");
-        System.out.println("========================================|");
-        System.out.println("                                        |");
-        System.out.print(" >> Input Values ---------------------- | ");
+        System.out.printf("========================================|\n");
+        System.out.printf(" INPUTS                                 |\n");
+        System.out.printf("========================================|\n");
+        System.out.printf("                                        |\n");
+        Integer inputLayerIndex = 0;
         for (Neuron neuron : network.getLayers().get(0).getNeurons()) {
-            System.out.print(neuron.getValue() + " ");
+            if (inputLayerIndex == 0) {
+                System.out.printf(" >> Input Values ---------------------- | %.8f\n", neuron.getValue());
+            } else {
+                System.out.printf("                                      + | %.8f\n", neuron.getValue());
+            }
+            inputLayerIndex++;
         }
-        System.out.println("\n                                        |");
+        System.out.printf("                                        |\n");
     }
 
     @Override
     public void showOutputs() {
-        System.out.println("========================================|");
-        System.out.println(" OUTPUTS                                |");
-        System.out.println("========================================|");
-        System.out.println("                                        |");
-        System.out.print(" >> Output Values --------------------- | ");
+        System.out.printf("========================================|\n");
+        System.out.printf(" OUTPUTS                                |\n");
+        System.out.printf("========================================|\n");
+        System.out.printf("                                        |\n");
+        Integer outputLayerIndex = 0;
         for (Neuron neuron : network.getLayers().get(network.getLayers().size() - 1).getNeurons()) {
-            System.out.print(neuron.getValue() + " ");
+            if (outputLayerIndex == 0) {
+                System.out.printf(" >> Output Values --------------------- | %.8f\n", neuron.getValue());
+            } else {
+                System.out.printf("                                      + | %.8f\n", neuron.getValue());
+            }
+            outputLayerIndex++;
         }
-        System.out.println("\n                                        |");
+        System.out.printf("                                        |\n");
     }
 
     /*

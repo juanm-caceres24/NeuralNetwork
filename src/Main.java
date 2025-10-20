@@ -4,7 +4,7 @@ import src.models.Network;
 import src.user_interface.UserInterface;
 import src.user_interface.impl.Console;
 import src.utils.FileUtils;
-import src.utils.Trainer;
+import src.utils.trainer.Trainer;
 
 public class Main {
 
@@ -73,8 +73,8 @@ public class Main {
     }
 
     public static void trainNetwork() {
-        Setup.generateDemoTestTrainingValues();
         trainer = new Trainer(network);
+        trainer.generateDemoTestTrainingValues();
         trainer.train();
         network.saveNetwork();
         fileUtils.exportNetworkToFile();
@@ -83,7 +83,6 @@ public class Main {
 
     public static void predictNetwork() {
         fileUtils.importInputFromFile();
-        network.setInputValues(Setup.getInputValues());
         network.predict();
         fileUtils.exportOutputToFile();
         userInterface.showInputs();

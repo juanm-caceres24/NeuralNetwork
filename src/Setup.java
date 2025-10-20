@@ -15,10 +15,9 @@ public class Setup {
     // Network parameters
     private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
         4,  // i_L
-        15, // h_L0
+        10, // h_L0
         10, // h_L1
-        5,  // h_L2
-        2   // o_L
+        16   // o_L
     };
     private static Double[][] BIASES;
     private static Double[][][] WEIGHTS;
@@ -26,7 +25,6 @@ public class Setup {
         0, // i_L
         2, // h_L0
         2, // h_L1
-        3, // h_L2
         1  // o_L
     };
 
@@ -35,7 +33,7 @@ public class Setup {
     private static Integer EPOCHS = 1000;
     private static Integer BATCH_SIZE = 10;
     private static Double[][][] TRAINING_DATA;
-    private static Integer DEMO_TRAINING_DATA_LENGTH = 10000;
+    private static Integer DEMO_TRAINING_DATA_LENGTH = 1000;
 
     // Input values for prediction
     private static Double[] INPUT_VALUES;
@@ -52,34 +50,6 @@ public class Setup {
     /*
      * METHODS
      */
-
-    public static void generateDemoTestTrainingValues() {
-        TRAINING_DATA = new Double[DEMO_TRAINING_DATA_LENGTH][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
-        // Generate random n-inputs between 0.0 and 1.0
-        for (int i = 0; i < DEMO_TRAINING_DATA_LENGTH; i++) {
-            Double[] inputs = TRAINING_DATA[i][0];
-            for (int j = 0; j < inputs.length; j++) {
-                inputs[j] = Math.random();
-            }
-        }
-        // Generate training outputs as XOR of the inputs (set all the outputs to 0.0 or 1.0) (use modular code to n-inputs and m-outputs)
-        for (int i = 0; i < DEMO_TRAINING_DATA_LENGTH; i++) {
-            Double[] inputs = TRAINING_DATA[i][0];
-            Double[] outputs = TRAINING_DATA[i][1];
-            // XOR logic: output is 1.0 if an odd number of inputs are > 0.5, else 0.0
-            Integer count = 0;
-            for (Double input : inputs) {
-                if (input > 0.5) count++;
-            }
-            for (int j = 0; j < outputs.length; j++) {
-                if (j % 2 == 1) {
-                    outputs[j] = (count % 2 == 0) ? 1.0 : 0.0;
-                } else {
-                    outputs[j] = (count % 2 == 1) ? 1.0 : 0.0;
-                }
-            }
-        }
-    }
 
     public static void initializeFromLayerSizes() {
         // Set the dimension of weights and biases according to LAYER_SIZES and initialize them to 0.0
