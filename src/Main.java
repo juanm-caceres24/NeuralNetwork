@@ -56,26 +56,25 @@ public class Main {
      */
 
     public static void predictNetwork() {
-        fileUtils.importInputFromFile();
+        fileUtils.importInput();
         network.predict();
-        fileUtils.exportOutputToFile();
+        fileUtils.exportOutput();
         userInterface.showInputs();
         userInterface.showOutputs();
     }
 
     public static void createNetwork() {
-        Setup.initializeFromLayerSizes();
+        Setup.initializeRandomNetwork();
         network = new Network();
         userInterface.setNetwork(network);
         fileUtils = new FileUtils(network);
-        fileUtils.exportNetworkToFile();
+        fileUtils.exportNetwork();
         userInterface.showNetwork();
     }
 
     public static void loadNetwork() {
         fileUtils = new FileUtils(null);
-        fileUtils.importSetupFromFile();
-        Setup.initializeFromBiases();
+        fileUtils.importSetup();
         network = new Network();
         userInterface.setNetwork(network);
         fileUtils.setNetwork(network);
@@ -85,20 +84,20 @@ public class Main {
 
     public static void trainNetworkFromFile() {
         trainer = new Trainer(network);
-        fileUtils.importTrainingDataFromFile();
+        fileUtils.importTrainingData();
         trainer.train();
         network.saveNetwork();
-        fileUtils.exportNetworkToFile();
+        fileUtils.exportNetwork();
         userInterface.showNetwork();
     }
 
     public static void trainNetworkFromDemoTest() {
         trainer = new Trainer(network);
         trainer.generateDemoTestTrainingValues();
-        fileUtils.exportTrainingDataToFile();
+        fileUtils.exportTrainingData();
         trainer.train();
         network.saveNetwork();
-        fileUtils.exportNetworkToFile();
+        fileUtils.exportNetwork();
         userInterface.showNetwork();
     }
 }

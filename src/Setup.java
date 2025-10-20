@@ -13,7 +13,7 @@ public class Setup {
     private static String OUTPUT_VALUES_FILE_PATH = "output.txt";
 
     // Network parameters
-    private static Integer[] LAYER_SIZES = { // Used for first initialization of network topology
+    private static Integer[] LAYERS_SIZE = { // Used for first initialization of network topology
         4,  // i_L
         10, // h_L0
         10, // h_L1
@@ -48,33 +48,25 @@ public class Setup {
      * METHODS
      */
 
-    public static void initializeFromLayerSizes() {
-        // Set the dimension of weights and biases according to LAYER_SIZES and initialize them to 0.0
-        BIASES = new Double[LAYER_SIZES.length][];
-        WEIGHTS = new Double[LAYER_SIZES.length - 1][][];
-        for (int i = 0; i < LAYER_SIZES.length; i++) {
-            BIASES[i] = new Double[LAYER_SIZES[i]];
-            for (int j = 0; j < LAYER_SIZES[i]; j++) {
+    public static void initializeRandomNetwork() {
+        // Set the dimension of weights and biases according to LAYERS_SIZE and initialize them to 0.0
+        BIASES = new Double[LAYERS_SIZE.length][];
+        WEIGHTS = new Double[LAYERS_SIZE.length - 1][][];
+        for (int i = 0; i < LAYERS_SIZE.length; i++) {
+            BIASES[i] = new Double[LAYERS_SIZE[i]];
+            for (int j = 0; j < LAYERS_SIZE[i]; j++) {
                 // Initialize all biases to random values between -1.0 and 1.0
                 BIASES[i][j] = Math.random() * 2 - 1; 
             }
-            if (i < LAYER_SIZES.length - 1) {
-                WEIGHTS[i] = new Double[LAYER_SIZES[i]][LAYER_SIZES[i + 1]];
-                for (int j = 0; j < LAYER_SIZES[i]; j++) {
-                    for (int k = 0; k < LAYER_SIZES[i + 1]; k++) {
+            if (i < LAYERS_SIZE.length - 1) {
+                WEIGHTS[i] = new Double[LAYERS_SIZE[i]][LAYERS_SIZE[i + 1]];
+                for (int j = 0; j < LAYERS_SIZE[i]; j++) {
+                    for (int k = 0; k < LAYERS_SIZE[i + 1]; k++) {
                         // Initialize all weights to random values between -1.0 and 1.0
                         WEIGHTS[i][j][k] = Math.random() * 2 - 1;
                     }
                 }
             }
-        }
-    }
-
-    public static void initializeFromBiases() {
-        // Set LAYER_SIZES according to the dimensions of WEIGHTS and BIASES
-        LAYER_SIZES = new Integer[BIASES.length];
-        for (int i = 0; i < BIASES.length; i++) {
-            LAYER_SIZES[i] = BIASES[i].length;
         }
     }
     
@@ -87,8 +79,8 @@ public class Setup {
     public static String getInputValuesFilePath() { return INPUT_VALUES_FILE_PATH; }
     public static String getOutputValuesFilePath() { return OUTPUT_VALUES_FILE_PATH; }
 
-    public static Integer[] getLayerSizes() { return LAYER_SIZES; }
-    public static void setLayerSizes(Integer[] layerSizes) { LAYER_SIZES = layerSizes; }
+    public static Integer[] getLayersSize() { return LAYERS_SIZE; }
+    public static void setLayersSize(Integer[] layerSizes) { LAYERS_SIZE = layerSizes; }
     public static Double[][] getBiases() { return BIASES; }
     public static void setBiases(Double[][] biases) { BIASES = biases; }
     public static Double[][][] getWeights() { return WEIGHTS; }

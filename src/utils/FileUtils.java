@@ -32,7 +32,7 @@ public class FileUtils {
      * METHODS
      */
 
-    public void dumpLineIntoFile(String line, String filePath) {
+    public void dumpLine(String line, String filePath) {
         // Implementation for writing 'line' into the file at 'filePath'
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(
                 filePath,
@@ -53,62 +53,17 @@ public class FileUtils {
             e.printStackTrace();
         }
         // Then write the configuration parameters in a parseable bracket format
-        dumpLineIntoFile("BIASES=" + toString(Setup.getBiases()), CONFIG_FILE_PATH);
-        dumpLineIntoFile("WEIGHTS=" + toString(Setup.getWeights()), CONFIG_FILE_PATH);
-        dumpLineIntoFile("ACTIVATION_FUNCTIONS=" + toString(Setup.getActivationFunctions()), CONFIG_FILE_PATH);
-        dumpLineIntoFile("LEARNING_RATE=" + Setup.getLearningRate(), CONFIG_FILE_PATH);
-        dumpLineIntoFile("EPOCHS=" + Setup.getEpochs(), CONFIG_FILE_PATH);
-        dumpLineIntoFile("BATCH_SIZE=" + Setup.getBatchSize(), CONFIG_FILE_PATH);
-        dumpLineIntoFile("TEST_TRAINING_DATA_LENGTH=" + Setup.getTestTrainingDataLength(), CONFIG_FILE_PATH);
+        dumpLine("LAYERS_SIZE=" + toString(Setup.getLayersSize()), CONFIG_FILE_PATH);
+        dumpLine("BIASES=" + toString(Setup.getBiases()), CONFIG_FILE_PATH);
+        dumpLine("WEIGHTS=" + toString(Setup.getWeights()), CONFIG_FILE_PATH);
+        dumpLine("ACTIVATION_FUNCTIONS=" + toString(Setup.getActivationFunctions()), CONFIG_FILE_PATH);
+        dumpLine("LEARNING_RATE=" + Setup.getLearningRate(), CONFIG_FILE_PATH);
+        dumpLine("EPOCHS=" + Setup.getEpochs(), CONFIG_FILE_PATH);
+        dumpLine("BATCH_SIZE=" + Setup.getBatchSize(), CONFIG_FILE_PATH);
+        dumpLine("TEST_TRAINING_DATA_LENGTH=" + Setup.getTestTrainingDataLength(), CONFIG_FILE_PATH);
     }
 
-    public void exportNetworkToFile() {
-        // Save the network's weights and biases into the setup file
-        exportSetupToFile();
-    }
-
-    public void importInputFromFile() {
-        String INPUT_VALUES_FILE_PATH = Setup.getInputValuesFilePath();
-        // Reads the input values from the input file and sets them into Setup
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(INPUT_VALUES_FILE_PATH))) {
-            java.util.List<Double> values = new java.util.ArrayList<>();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty()) continue; // skip empty lines
-                // Parse the whole line as a double (one value per line)
-                values.add(Double.parseDouble(line));
-            }
-            if (!values.isEmpty()) {
-                Double[] inputValues = values.toArray(new Double[0]);
-                Setup.setInputValues(inputValues);
-            }
-        } catch (IOException | NumberFormatException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void exportOutputToFile() {
-        String OUTPUT_VALUES_FILE_PATH = Setup.getOutputValuesFilePath();
-        // Write each output value on its own line (overwrites file)
-        if (OUTPUT_VALUES_FILE_PATH == null) return;
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(OUTPUT_VALUES_FILE_PATH))) {
-            if (this.network == null) return;
-            ArrayList<Layer> layers = this.network.getLayers();
-            if (layers == null || layers.isEmpty()) return;
-            Layer lastLayer = layers.get(layers.size() - 1);
-            if (lastLayer == null || lastLayer.getNeurons() == null) return;
-            for (Neuron neuron : lastLayer.getNeurons()) {
-                Double v = neuron.getValue();
-                writer.write(v == null ? "" : v.toString());
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void importSetupFromFile() {
+    public void importSetup() {
         String CONFIG_FILE_PATH = Setup.getConfigFilePath();
         // Reads the configuration file and sets up the parameters accordingly
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(CONFIG_FILE_PATH))) {
@@ -119,6 +74,9 @@ public class FileUtils {
                 String key = parts[0];
                 String value = parts[1].trim();
                 switch (key) {
+                    case "LAYERS_SIZE":
+                        Setup.setLayersSize(parseIntegerArray(value));
+                        break;
                     case "BIASES":
                         Setup.setBiases(parseDoubleMatrix(value));
                         break;
@@ -150,7 +108,53 @@ public class FileUtils {
         }
     }
 
-    public void importTrainingDataFromFile() {
+    public void exportNetwork() {
+        // Save the network's weights and biases into the setup file
+        exportSetupToFile();
+    }
+
+    public void importInput() {
+        String INPUT_VALUES_FILE_PATH = Setup.getInputValuesFilePath();
+        // Reads the input values from the input file and sets them into Setup
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(INPUT_VALUES_FILE_PATH))) {
+            java.util.List<Double> values = new java.util.ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue; // skip empty lines
+                // Parse the whole line as a double (one value per line)
+                values.add(Double.parseDouble(line));
+            }
+            if (!values.isEmpty()) {
+                Double[] inputValues = values.toArray(new Double[0]);
+                Setup.setInputValues(inputValues);
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void exportOutput() {
+        String OUTPUT_VALUES_FILE_PATH = Setup.getOutputValuesFilePath();
+        // Write each output value on its own line (overwrites file)
+        if (OUTPUT_VALUES_FILE_PATH == null) return;
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(OUTPUT_VALUES_FILE_PATH))) {
+            if (this.network == null) return;
+            ArrayList<Layer> layers = this.network.getLayers();
+            if (layers == null || layers.isEmpty()) return;
+            Layer lastLayer = layers.get(layers.size() - 1);
+            if (lastLayer == null || lastLayer.getNeurons() == null) return;
+            for (Neuron neuron : lastLayer.getNeurons()) {
+                Double v = neuron.getValue();
+                writer.write(v == null ? "" : v.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void importTrainingData() {
         String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
         // Reads the training data from the training data file and sets it into Setup
         List<Double[][]> dataList = new ArrayList<>();
@@ -223,7 +227,7 @@ public class FileUtils {
         }
     }
 
-    public void exportTrainingDataToFile() {
+    public void exportTrainingData() {
         String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
         // Writes the training data from Setup into the training data file
         Double[][][] trainingData = Setup.getTrainingData();
