@@ -36,10 +36,10 @@ public class Main {
                     loadNetwork();
                     break;
                 case 3:
-                    trainNetworkFromFile();
+                    trainNetwork();
                     break;
                 case 4:
-                    trainNetworkFromDemoTest();
+                    testTraining();
                     break;
                 case 5:
                     running = false;
@@ -82,7 +82,7 @@ public class Main {
         userInterface.showNetwork();
     }
 
-    public static void trainNetworkFromFile() {
+    public static void trainNetwork() {
         trainer = new Trainer(network);
         fileUtils.importTrainingData();
         trainer.train();
@@ -91,7 +91,7 @@ public class Main {
         userInterface.showNetwork();
     }
 
-    public static void trainNetworkFromDemoTest() {
+    public static void testTraining() {
         trainer = new Trainer(network);
         trainer.generateDemoTestTrainingValues();
         fileUtils.exportTrainingData();
