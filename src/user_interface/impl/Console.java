@@ -3,6 +3,7 @@ package src.user_interface.impl;
 import java.util.Scanner;
 import java.util.List;
 
+import src.Setup;
 import src.models.Layer;
 import src.models.Network;
 import src.models.Neuron;
@@ -18,6 +19,9 @@ public class Console implements UserInterface {
     private Network network;
     private Scanner scanner;
 
+    // Console parameters
+    private Integer WEIGHTS_PER_LINE;
+
     /*
      * CONSTRUCTORS
      */
@@ -25,6 +29,7 @@ public class Console implements UserInterface {
     public Console(Network network) {
         this.network = network;
         scanner = new Scanner(System.in);
+        this.WEIGHTS_PER_LINE = Setup.getWeightsPerLine();
     }
 
     /*
@@ -115,14 +120,13 @@ public class Console implements UserInterface {
         System.out.println("                                        |");
     }
 
-    // Print a list of weights with up to PER_LINE elements per line, aligned with the weights column
+    // Print a list of weights with up to WEIGHTS_PER_LINE elements per line, aligned with the weights column
     private void printWeights(String label, List<Double> weights) {
-        final int PER_LINE = 4;
         String prefix = "    |     | " + label + "---------- | ";
         String continuedPrefix = "    |     |                           + | ";
         StringBuilder line = new StringBuilder();
         for (int i = 0; i < weights.size(); i++) {
-            if (i % PER_LINE == 0) {
+            if (i % WEIGHTS_PER_LINE == 0) {
                 // flush previous line
                 if (line.length() > 0) {
                     System.out.println(prefix + line.toString());

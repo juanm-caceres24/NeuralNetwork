@@ -35,9 +35,13 @@ public class Setup {
     private static Integer EPOCHS = 1000;
     private static Integer BATCH_SIZE = 10;
     private static Double[][][] TRAINING_DATA;
+    private static Integer DEMO_TRAINING_DATA_LENGTH = 10000;
 
     // Input values for prediction
     private static Double[] INPUT_VALUES;
+
+    // Console parameters
+    private static Integer WEIGHTS_PER_LINE = 4;
 
     /*
      * CONSTRUCTORS
@@ -49,18 +53,17 @@ public class Setup {
      * METHODS
      */
 
-    public static void generateTestTrainingValues() {
-        Integer trainingDataLength = 10000;
-        TRAINING_DATA = new Double[trainingDataLength][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
+    public static void generateDemoTestTrainingValues() {
+        TRAINING_DATA = new Double[DEMO_TRAINING_DATA_LENGTH][2][LAYER_SIZES[0] > LAYER_SIZES[LAYER_SIZES.length - 1] ? LAYER_SIZES[0] : LAYER_SIZES[LAYER_SIZES.length - 1]];
         // Generate random n-inputs between 0.0 and 1.0
-        for (int i = 0; i < trainingDataLength; i++) {
+        for (int i = 0; i < DEMO_TRAINING_DATA_LENGTH; i++) {
             Double[] inputs = TRAINING_DATA[i][0];
             for (int j = 0; j < inputs.length; j++) {
                 inputs[j] = Math.random();
             }
         }
         // Generate training outputs as XOR of the inputs (set all the outputs to 0.0 or 1.0) (use modular code to n-inputs and m-outputs)
-        for (int i = 0; i < trainingDataLength; i++) {
+        for (int i = 0; i < DEMO_TRAINING_DATA_LENGTH; i++) {
             Double[] inputs = TRAINING_DATA[i][0];
             Double[] outputs = TRAINING_DATA[i][1];
             // XOR logic: output is 1.0 if an odd number of inputs are > 0.5, else 0.0
@@ -134,7 +137,10 @@ public class Setup {
     public static void setBatchSize(Integer batchSize) { BATCH_SIZE = batchSize; }
     public static Double[][][] getTrainingData() { return TRAINING_DATA; }
     public static void setTrainingData(Double[][][] trainingData) { TRAINING_DATA = trainingData; }
+    public static Integer getDemoTrainingDataLength() { return DEMO_TRAINING_DATA_LENGTH; }
 
     public static Double[] getInputValues() { return INPUT_VALUES; }
     public static void setInputValues(Double[] inputValues) { INPUT_VALUES = inputValues; }
+
+    public static Integer getWeightsPerLine() { return WEIGHTS_PER_LINE; }
 }

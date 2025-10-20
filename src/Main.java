@@ -73,7 +73,7 @@ public class Main {
     }
 
     public static void trainNetwork() {
-        Setup.generateTestTrainingValues();
+        Setup.generateDemoTestTrainingValues();
         trainer = new Trainer(network);
         trainer.train();
         network.saveNetwork();
