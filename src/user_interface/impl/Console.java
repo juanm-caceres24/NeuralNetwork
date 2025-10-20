@@ -33,7 +33,12 @@ public class Console implements UserInterface {
     @Override
     public Integer requestModeSelection() {
         System.out.printf("========================================|\n");
-        System.out.printf(" MODE SELECTION                         | '0'=Predict, '1'=Train, '2'=Create, '3'=Load, '4'=Exit (default=Predict)\n");
+        System.out.printf(" MODE SELECTION                         | '0'=Predict\n");
+        System.out.printf("                                        | '1'=Create\n");
+        System.out.printf("                                        | '2'=Load\n");
+        System.out.printf("                                        | '3'=Train from File\n");
+        System.out.printf("                                        | '4'=Train from Demo Test\n");
+        System.out.printf("                                        | '5'=Exit (default=Predict)\n");
         System.out.printf("========================================|\n");
         System.out.printf("                                    >>> | Select mode: ");
         String input = scanner.nextLine();
@@ -48,6 +53,8 @@ public class Console implements UserInterface {
                 return 3;
             case "4":
                 return 4;
+            case "5":
+                return 5;
             default:
                 this.showError(0);
                 return 0;

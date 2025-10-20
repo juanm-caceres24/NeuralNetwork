@@ -146,6 +146,112 @@ public class FileUtils {
         }
     }
 
+    public void importTrainingDataFromFile() {
+        String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
+        // Reads the training data from the training data file and sets it into Setup
+        List<Double[][]> dataList = new ArrayList<>();
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(TRAINING_DATA_FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue; // skip empty lines
+                // Support format: input_csv|target_csv  (both sides are comma-separated doubles)
+                // Backwards-compatible: if no '|' is present, treat whole line as input and leave target empty
+                String inputPart = line;
+                String targetPart = "";
+                int sep = line.indexOf('|');
+                if (sep >= 0) {
+                    inputPart = line.substring(0, sep).trim();
+                    targetPart = line.substring(sep + 1).trim();
+                }
+                Double[] inputRow = new Double[0];
+                Double[] targetRow = new Double[0];
+                if (!inputPart.isEmpty()) {
+                    String[] parts = inputPart.split(",");
+                    inputRow = new Double[parts.length];
+                    for (int i = 0; i < parts.length; i++) {
+                        String tok = parts[i].trim();
+                        if (tok.isEmpty() || tok.equalsIgnoreCase("null")) {
+                            inputRow[i] = 0.0; // fallback for missing values
+                        } else {
+                            try {
+                                inputRow[i] = Double.parseDouble(tok);
+                            } catch (NumberFormatException ex) {
+                                // fallback to 0.0 on parse error
+                                inputRow[i] = 0.0;
+                            }
+                        }
+                    }
+                }
+                if (!targetPart.isEmpty()) {
+                    String[] parts = targetPart.split(",");
+                    targetRow = new Double[parts.length];
+                    for (int i = 0; i < parts.length; i++) {
+                        String tok = parts[i].trim();
+                        if (tok.isEmpty() || tok.equalsIgnoreCase("null")) {
+                            targetRow[i] = 0.0;
+                        } else {
+                            try {
+                                targetRow[i] = Double.parseDouble(tok);
+                            } catch (NumberFormatException ex) {
+                                targetRow[i] = 0.0;
+                            }
+                        }
+                    }
+                }
+                dataList.add(new Double[][] { inputRow, targetRow });
+            }
+            // Convert List<Double[][]> to Double[][][] (samples x 2 x N)
+            Double[][][] trainingData = new Double[dataList.size()][][];
+            for (int i = 0; i < dataList.size(); i++) {
+                trainingData[i] = dataList.get(i);
+            }
+            // If no records, set an empty training data array to avoid NPEs downstream
+            if (trainingData.length == 0) {
+                Setup.setTrainingData(new Double[0][][]);
+            } else {
+                Setup.setTrainingData(trainingData);
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+            // on error, ensure training data is at least an empty array to avoid NPE downstream
+            Setup.setTrainingData(new Double[0][][]);
+        }
+    }
+
+    public void exportTrainingDataToFile() {
+        String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
+        // Writes the training data from Setup into the training data file
+        Double[][][] trainingData = Setup.getTrainingData();
+        if (trainingData == null) return;
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(TRAINING_DATA_FILE_PATH))) {
+            for (Double[][] dataPair : trainingData) {
+                if (dataPair == null || dataPair.length == 0) continue;
+                Double[] inputData = dataPair.length > 0 ? dataPair[0] : new Double[0];
+                Double[] targetData = dataPair.length > 1 ? dataPair[1] : new Double[0];
+                StringBuilder line = new StringBuilder();
+                line.append(joinCSV(inputData));
+                // write separator and target CSV (empty target allowed)
+                line.append("|");
+                line.append(joinCSV(targetData));
+                writer.write(line.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String joinCSV(Double[] arr) {
+        if (arr == null || arr.length == 0) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < arr.length; i++) {
+            if (i > 0) sb.append(",");
+            sb.append(arr[i]);
+        }
+        return sb.toString();
+    }
+
     @SuppressWarnings("unused")
     private Double[] parseDoubleArray(String value) {
         if (value == null) return new Double[0];

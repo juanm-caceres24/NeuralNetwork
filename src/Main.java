@@ -30,15 +30,18 @@ public class Main {
                     predictNetwork();
                     break;
                 case 1:
-                    trainNetwork();
-                    break;
-                case 2:
                     createNetwork();
                     break;
-                case 3:
+                case 2:
                     loadNetwork();
                     break;
+                case 3:
+                    trainNetworkFromFile();
+                    break;
                 case 4:
+                    trainNetworkFromDemoTest();
+                    break;
+                case 5:
                     running = false;
                     break;
                 default:
@@ -51,6 +54,14 @@ public class Main {
     /*
      * METHODS
      */
+
+    public static void predictNetwork() {
+        fileUtils.importInputFromFile();
+        network.predict();
+        fileUtils.exportOutputToFile();
+        userInterface.showInputs();
+        userInterface.showOutputs();
+    }
 
     public static void createNetwork() {
         Setup.initializeFromLayerSizes();
@@ -72,20 +83,22 @@ public class Main {
         userInterface.showNetwork();
     }
 
-    public static void trainNetwork() {
+    public static void trainNetworkFromFile() {
         trainer = new Trainer(network);
-        trainer.generateDemoTestTrainingValues();
+        fileUtils.importTrainingDataFromFile();
         trainer.train();
         network.saveNetwork();
         fileUtils.exportNetworkToFile();
         userInterface.showNetwork();
     }
 
-    public static void predictNetwork() {
-        fileUtils.importInputFromFile();
-        network.predict();
-        fileUtils.exportOutputToFile();
-        userInterface.showInputs();
-        userInterface.showOutputs();
+    public static void trainNetworkFromDemoTest() {
+        trainer = new Trainer(network);
+        trainer.generateDemoTestTrainingValues();
+        fileUtils.exportTrainingDataToFile();
+        trainer.train();
+        network.saveNetwork();
+        fileUtils.exportNetworkToFile();
+        userInterface.showNetwork();
     }
 }
