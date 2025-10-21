@@ -15,8 +15,9 @@ public class Neuron {
 
     // Neuron parameters
     private Double z;
-    private Double value;
+    private Double activation;
     private Double bias;
+    private Double y;
     private Double delta;
     private ActivationFunction activationFunction;
 
@@ -31,8 +32,9 @@ public class Neuron {
     public Neuron(Integer neuronId, Double bias, ActivationFunction activationFunction, ArrayList<Double> forwardWeights, ArrayList<Double> backwardWeights) {
         this.neuronId = neuronId;
         this.z = 0.0;
-        value = 0.0;
+        this.activation = 0.0;
         this.bias = bias;
+        this.y = 0.0;
         this.delta = 0.0;
         this.activationFunction = activationFunction;
         this.forwardWeights = forwardWeights;
@@ -43,20 +45,30 @@ public class Neuron {
      * METHODS
      */
 
-    public void calculateForward(ArrayList<Double> inputs) {
+    public Double calculateForward(ArrayList<Double> inputs) {
         z = bias;
         for (int i = 0; i < inputs.size(); i++) {
             z += inputs.get(i) * backwardWeights.get(i);
         }
-        value = activationFunction.activate(z);
+        return z;
     }
 
-    public void calculateBackward(ArrayList<Double> inputs) {
-        Double sum = 0.0;
+    public Double calculateActivation() {
+        activation = activationFunction.activate(z);
+        return activation;
+    }
+
+    public Double calculateBackward(ArrayList<Double> inputs) {
+        y = 0.0;
         for (int i = 0; i < inputs.size(); i++) {
-            sum += inputs.get(i) * forwardWeights.get(i);
+            y += inputs.get(i) * forwardWeights.get(i);
         }
-        delta = activationFunction.derivative(z) * sum;
+        return y;
+    }
+
+    public Double calculateDelta() {
+        delta = activationFunction.derivative(z) * y;
+        return delta;
     }
 
     /*
@@ -65,14 +77,14 @@ public class Neuron {
 
     public Integer getNeuronId() { return neuronId; }
     public Double getZ() { return z; }
-    public Double getValue() { return value; }
-    public void setValue(Double value) { this.value = value; }
+    public Double getActivation() { return activation; }
+    public void setActivation(Double activation) { this.activation = activation; }
     public Double getBias() { return bias; }
     public void setBias(Double bias) { this.bias = bias; }
+    public Double getY() { return y; }
     public Double getDelta() { return delta; }
     public void setDelta(Double delta) { this.delta = delta; }
     public ActivationFunction getActivationFunction() { return activationFunction; }
-    public void setActivationFunction(ActivationFunction activationFunction) { this.activationFunction = activationFunction; }
     public ArrayList<Double> getForwardWeights() { return forwardWeights; }
     public ArrayList<Double> getBackwardWeights() { return backwardWeights; }
 }

@@ -145,7 +145,7 @@ public class FileUtils {
             Layer lastLayer = layers.get(layers.size() - 1);
             if (lastLayer == null || lastLayer.getNeurons() == null) return;
             for (Neuron neuron : lastLayer.getNeurons()) {
-                Double v = neuron.getValue();
+                Double v = neuron.getActivation();
                 writer.write(v == null ? "" : v.toString());
                 writer.newLine();
             }

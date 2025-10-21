@@ -34,10 +34,13 @@ public class Layer{
     public void feedForward() {
         ArrayList<Double> inputs = new ArrayList<>();
         for (Neuron neuron : this.previousLayer.getNeurons()) {
-            inputs.add(neuron.getValue());
+            inputs.add(neuron.getActivation());
         }
         for (Neuron neuron : this.neurons) {
             neuron.calculateForward(inputs);
+        }
+        for (Neuron neuron : this.neurons) {
+            neuron.calculateActivation();
         }
     }
 
@@ -48,6 +51,9 @@ public class Layer{
         }
         for (Neuron neuron : this.neurons) {
             neuron.calculateBackward(inputs);
+        }
+        for (Neuron neuron : this.neurons) {
+            neuron.calculateDelta();
         }
     }
 

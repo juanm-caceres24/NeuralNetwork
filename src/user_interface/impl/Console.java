@@ -107,7 +107,7 @@ public class Console implements UserInterface {
             for (Neuron neuron : layer.getNeurons()) {
                 System.out.printf("    +                                   |\n");
                 System.out.printf("    | ->> | Neuron Id ----------------- | %d\n", neuron.getNeuronId());
-                System.out.printf("    |     | Value --------------------- | %.8f\n", neuron.getValue());
+                System.out.printf("    |     | Activation ---------------- | %.8f\n", neuron.getActivation());
                 System.out.printf("    |     | Bias ---------------------- | %.8f\n", neuron.getBias());
                 System.out.printf("    |     | Activation Function ------- | %s\n", neuron.getActivationFunction().getClass().getSimpleName());
                 if (neuron.getForwardWeights() != null) {
@@ -146,9 +146,9 @@ public class Console implements UserInterface {
         Integer inputLayerIndex = 0;
         for (Neuron neuron : network.getLayers().get(0).getNeurons()) {
             if (inputLayerIndex == 0) {
-                System.out.printf(" >> Input Values ---------------------- | %.8f\n", neuron.getValue());
+                System.out.printf(" >> Input Values ---------------------- | %.8f\n", neuron.getActivation());
             } else {
-                System.out.printf("                                      + | %.8f\n", neuron.getValue());
+                System.out.printf("                                      + | %.8f\n", neuron.getActivation());
             }
             inputLayerIndex++;
         }
@@ -164,9 +164,9 @@ public class Console implements UserInterface {
         Integer outputLayerIndex = 0;
         for (Neuron neuron : network.getLayers().get(network.getLayers().size() - 1).getNeurons()) {
             if (outputLayerIndex == 0) {
-                System.out.printf(" >> Output Values --------------------- | %.8f\n", neuron.getValue());
+                System.out.printf(" >> Output Values --------------------- | %.8f\n", neuron.getActivation());
             } else {
-                System.out.printf("                                      + | %.8f\n", neuron.getValue());
+                System.out.printf("                                      + | %.8f\n", neuron.getActivation());
             }
             outputLayerIndex++;
         }

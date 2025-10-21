@@ -58,8 +58,7 @@ public class Network {
                         backwardWeights.add(WEIGHTS[i - 1][k][j]);
                     }
                 }
-                Neuron neuronTmp = new Neuron(neuronId, BIASES[i][j], this.mapActivationFunction(ACTIVATION_FUNCTIONS[i]), forwardWeights, backwardWeights
-                );
+                Neuron neuronTmp = new Neuron(neuronId, BIASES[i][j], this.mapActivationFunction(ACTIVATION_FUNCTIONS[i]), forwardWeights, backwardWeights);
                 this.neurons.add(neuronTmp);
                 neurons.add(neuronTmp);
                 neuronId++;
@@ -157,7 +156,7 @@ public class Network {
     public void forward(Double[] inputValues) {
         // Load input values into the input layer
         for (Neuron neuron : this.layers.get(0).getNeurons()) {
-            neuron.setValue(inputValues[neuron.getNeuronId()]);
+            neuron.setActivation(inputValues[neuron.getNeuronId()]);
         }
         // Propagate values through the network
         for (Layer layer : this.layers) {

@@ -97,7 +97,7 @@ public class Trainer {
                             biasGradSums[l][j] += delta;
                             if (neuron.getBackwardWeights() != null && prev != null) {
                                 for (int k = 0; k < neuron.getBackwardWeights().size(); k++) {
-                                    Double prevVal = prev.getNeurons().get(k).getValue();
+                                    Double prevVal = prev.getNeurons().get(k).getActivation();
                                     weightGradSums[l][j][k] += delta * prevVal;
                                 }
                             }
@@ -152,7 +152,7 @@ public class Trainer {
         // Gather predicted outputs
         Double[] predicted = new Double[outputLayer.getNeurons().size()];
         for (int i = 0; i < predicted.length; i++) {
-            predicted[i] = outputLayer.getNeurons().get(i).getValue();
+            predicted[i] = outputLayer.getNeurons().get(i).getActivation();
         }
         Double[] lossDeriv = loss.derivative(predicted, y);
         // Set deltas for output neurons
