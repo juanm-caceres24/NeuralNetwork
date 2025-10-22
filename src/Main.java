@@ -56,48 +56,73 @@ public class Main {
      */
 
     public static void predictNetwork() {
-        fileUtils.importInput();
-        network.predict();
-        fileUtils.exportOutput();
-        userInterface.showInputs();
-        userInterface.showOutputs();
+        try {
+            fileUtils.importInput();
+            network.predict();
+            fileUtils.exportOutput();
+            userInterface.showInputs();
+            userInterface.showOutputs();
+        } catch (Exception e) {
+            userInterface.showError(1);
+            //e.printStackTrace();
+        }
     }
 
     public static void createNetwork() {
-        Setup.initializeRandomNetwork();
-        network = new Network();
-        userInterface.setNetwork(network);
-        fileUtils = new FileUtils(network);
-        fileUtils.exportNetwork();
-        userInterface.showNetwork();
+        try {
+            fileUtils = new FileUtils(null);
+            fileUtils.importSetup();
+            network = new Network();
+            userInterface.setNetwork(network);
+            fileUtils.setNetwork(network);
+            fileUtils.exportNetwork();
+            userInterface.showNetwork();
+        } catch (Exception e) {
+            userInterface.showError(2);
+            //e.printStackTrace();
+        }
     }
 
     public static void loadNetwork() {
-        fileUtils = new FileUtils(null);
-        fileUtils.importSetup();
-        network = new Network();
-        userInterface.setNetwork(network);
-        fileUtils.setNetwork(network);
-        userInterface = new Console(network);
-        userInterface.showNetwork();
+        try {
+            fileUtils = new FileUtils(null);
+            fileUtils.importSetup();
+            network = new Network();
+            userInterface.setNetwork(network);
+            fileUtils.setNetwork(network);
+            userInterface.showNetwork();
+        } catch (Exception e) {
+            userInterface.showError(3);
+            //e.printStackTrace();
+        }
     }
 
     public static void trainNetwork() {
-        trainer = new Trainer(network);
-        fileUtils.importTrainingData();
-        trainer.train();
-        network.saveNetwork();
-        fileUtils.exportNetwork();
-        userInterface.showNetwork();
+        try {
+            trainer = new Trainer(network);
+            fileUtils.importTrainingData();
+            trainer.train();
+            network.saveNetwork();
+            fileUtils.exportNetwork();
+            userInterface.showNetwork();
+        } catch (Exception e) {
+            userInterface.showError(4);
+            //e.printStackTrace();
+        }
     }
 
     public static void testTraining() {
-        trainer = new Trainer(network);
-        trainer.generateDemoTestTrainingValues();
-        fileUtils.exportTrainingData();
-        trainer.train();
-        network.saveNetwork();
-        fileUtils.exportNetwork();
-        userInterface.showNetwork();
+        try {
+            trainer = new Trainer(network);
+            trainer.generateTestTrainingValues();
+            fileUtils.exportTrainingData();
+            trainer.train();
+            network.saveNetwork();
+            fileUtils.exportNetwork();
+            userInterface.showNetwork();
+        } catch (Exception e) {
+            userInterface.showError(4);
+            //e.printStackTrace();
+        }
     }
 }

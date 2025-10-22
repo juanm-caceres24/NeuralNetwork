@@ -68,16 +68,22 @@ public class Console implements UserInterface {
     @Override
     public void showError(Integer errorCode) {
         System.out.printf("========================================|\n");
-        System.out.printf(" ERROR                                  |\n");
+        System.out.printf(" ERROR                                  |");
         switch (errorCode) {
             case 0:
                 System.out.printf(" Invalid input. Selecting default mode.\n");
                 break;
             case 1:
-                System.out.printf(" File not found.\n");
+                System.out.printf(" Problem in prediction.\n");
                 break;
             case 2:
-                System.out.printf(" Unable to save file.\n");
+                System.out.printf(" Problem in creating network.\n");
+                break;
+            case 3:
+                System.out.printf(" Problem in loading network.\n");
+                break;
+            case 4:
+                System.out.printf(" Problem in training network.\n");
                 break;
             default:
                 System.out.printf(" Unknown error.\n");

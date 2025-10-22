@@ -35,6 +35,10 @@ public class Network {
      */
 
     public void createNetwork() {
+        // If biases, weights or activation functions are not defined, initialize a random network
+        if (Setup.getBiases() == null || Setup.getWeights() == null || Setup.getActivationFunctions() == null) {
+            Setup.initializeRandomNetwork();
+        }
         Double[][] BIASES = Setup.getBiases();
         Double[][][] WEIGHTS = Setup.getWeights();
         Integer[] ACTIVATION_FUNCTIONS = Setup.getActivationFunctions();

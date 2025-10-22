@@ -169,7 +169,7 @@ public class Trainer {
         }
     }
 
-    public void generateDemoTestTrainingValues() {
+    public void generateTestTrainingValues() {
         Double[][][] TRAINING_DATA = this.demoGenerator.generateTrainingData();
         Setup.setTrainingData(TRAINING_DATA);
     }

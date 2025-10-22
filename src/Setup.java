@@ -13,20 +13,10 @@ public class Setup {
     private static String OUTPUT_VALUES_FILE_PATH = "output.txt";
 
     // Network parameters
-    private static Integer[] LAYERS_SIZE = { // Used for first initialization of network topology
-        4,  // i_L
-        10, // h_L0
-        10, // h_L1
-        16   // o_L
-    };
+    private static Integer[] LAYERS_SIZE;
     private static Double[][] BIASES;
     private static Double[][][] WEIGHTS;
-    private static Integer[] ACTIVATION_FUNCTIONS = {
-        0, // i_L
-        2, // h_L0
-        2, // h_L1
-        1  // o_L
-    };
+    private static Integer[] ACTIVATION_FUNCTIONS;
 
     // Training parameters
     private static Double LEARNING_RATE = 0.1;
