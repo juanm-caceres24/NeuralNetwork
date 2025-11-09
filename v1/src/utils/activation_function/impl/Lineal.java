@@ -15,12 +15,12 @@ public class Lineal implements ActivationFunction {
      */
 
     @Override
-    public Double activate(Double x) {
+    public double activate(double x) {
         return x;
     }
 
     @Override
-    public Double derivative(Double x) {
+    public double derivative(double x) {
         return 1.0;
     }
 }

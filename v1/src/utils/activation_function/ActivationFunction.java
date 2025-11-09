@@ -5,7 +5,7 @@ public interface ActivationFunction {
     /*
      * METHODS
      */
-    
-    public abstract Double activate(Double value);
-    public abstract Double derivative(Double value);
+
+    public abstract double activate(double value);
+    public abstract double derivative(double value);
 }

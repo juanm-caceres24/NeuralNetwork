@@ -1,7 +1,5 @@
 package v1.src.models;
 
-import java.util.ArrayList;
-
 import v1.src.Setup;
 import v1.src.utils.activation_function.ActivationFunction;
 import v1.src.utils.activation_function.impl.LeakyReLU;
@@ -17,16 +15,16 @@ public class Network {
      */
 
     // Network topology
-    private ArrayList<Layer> layers;
-    private ArrayList<Neuron> neurons;
+    private Layer[] layers;
+    private Neuron[] neurons;
 
     /*
      * CONSTRUCTORS
      */
 
     public Network() {
-        this.layers = new ArrayList<>();
-        this.neurons = new ArrayList<>();
+        this.layers = null;
+        this.neurons = null;
         this.createNetwork();
     }
 
@@ -35,46 +33,52 @@ public class Network {
      */
 
     public void createNetwork() {
-        // If biases, weights or activation functions are not defined, initialize a random network
-        if (Setup.getBiases() == null || Setup.getWeights() == null || Setup.getActivationFunctions() == null) {
-            Setup.initializeRandomNetwork();
-        }
-        Double[][] BIASES = Setup.getBiases();
-        Double[][][] WEIGHTS = Setup.getWeights();
-        Integer[] ACTIVATION_FUNCTIONS = Setup.getActivationFunctions();
-        Integer neuronId = 0;
-        Integer layerId = 0;
+        double[][] BIASES = Setup.getBiases();
+        double[][][] WEIGHTS = Setup.getWeights();
+        int[] ACTIVATION_FUNCTIONS = Setup.getActivationFunctions();
+        int neuronId = 0;
+        int layerId = 0;
         Layer previousLayer = null;
+        // initialize arrays for layers and neurons
+        if (BIASES == null) {
+            // nothing to build
+            this.layers = new Layer[0];
+            this.neurons = new Neuron[0];
+            return;
+        }
+        this.layers = new Layer[BIASES.length];
+        int totalNeurons = 0;
+        for (int i = 0; i < BIASES.length; i++) totalNeurons += BIASES[i].length;
+        this.neurons = new Neuron[totalNeurons];
         // Create and add layers
         for (int i = 0; i < BIASES.length; i++) {
-            ArrayList<Neuron> neurons = new ArrayList<>();
+            Neuron[] neurons = new Neuron[BIASES[i].length];
             // Create and add neurons to the layer
             for (int j = 0; j < BIASES[i].length; j++) {
-                ArrayList<Double> forwardWeights = (i < BIASES.length - 1) ? new ArrayList<Double>() : null;
-                ArrayList<Double> backwardWeights = (i > 0) ? new ArrayList<Double>() : null;
+                double[] forwardWeights = (i < BIASES.length - 1) ? new double[WEIGHTS[i][j].length] : null;
+                double[] backwardWeights = (i > 0) ? new double[WEIGHTS[i - 1].length] : null;
                 if (i < BIASES.length - 1) {
                     for (int k = 0; k < WEIGHTS[i][j].length; k++) {
-                        forwardWeights.add(WEIGHTS[i][j][k]);
+                        forwardWeights[k] = WEIGHTS[i][j][k];
                     }
                 }
                 if (i > 0) {
                     for (int k = 0; k < WEIGHTS[i - 1].length; k++) {
-                        backwardWeights.add(WEIGHTS[i - 1][k][j]);
+                        backwardWeights[k] = WEIGHTS[i - 1][k][j];
                     }
                 }
                 Neuron neuronTmp = new Neuron(neuronId, BIASES[i][j], this.mapActivationFunction(ACTIVATION_FUNCTIONS[i]), forwardWeights, backwardWeights);
-                this.neurons.add(neuronTmp);
-                neurons.add(neuronTmp);
+                neurons[j] = neuronTmp;
                 neuronId++;
             }
             Layer layer = new Layer(layerId, neurons, null, previousLayer);
-            this.layers.add(layer);
+            this.layers[layerId] = layer;
             layerId++;
             previousLayer = layer;
         }
         // Set the next layer for each layer
-        for (int i = 0; i < layers.size() - 1; i++) {
-            this.layers.get(i).setNextLayer(this.layers.get(i + 1));
+        for (int i = 0; i < layers.length - 1; i++) {
+            this.layers[i].setNextLayer(this.layers[i + 1]);
         }
     }
 
@@ -115,36 +119,36 @@ public class Network {
     }
 
     public void saveNetwork() {
-        Double[][] BIASES = Setup.getBiases();
-        Double[][][] WEIGHTS = Setup.getWeights();
-        Integer[] ACTIVATION_FUNCTIONS = Setup.getActivationFunctions();
+        double[][] BIASES = Setup.getBiases();
+        double[][][] WEIGHTS = Setup.getWeights();
+        int[] ACTIVATION_FUNCTIONS = Setup.getActivationFunctions();
         // Gets the current weights and biases from the network and saves them into the Network attributes
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
+        for (int i = 0; i < layers.length; i++) {
+            Layer layer = layers[i];
             // Save biases
-            for (int j = 0; j < layer.getNeurons().size(); j++) {
-                Neuron neuron = layer.getNeurons().get(j);
+            for (int j = 0; j < layer.getNeurons().length; j++) {
+                Neuron neuron = layer.getNeurons()[j];
                 BIASES[i][j] = neuron.getBias();
             }
             // Save weights
-            if (i < layers.size() - 1) { // skip output layer
-                for (int j = 0; j < layer.getNeurons().size(); j++) {
-                    Neuron neuron = layer.getNeurons().get(j);
-                    for (int k = 0; k < neuron.getForwardWeights().size(); k++) {
-                        WEIGHTS[i][j][k] = neuron.getForwardWeights().get(k);
+            if (i < layers.length - 1) { // skip output layer
+                for (int j = 0; j < layer.getNeurons().length; j++) {
+                    Neuron neuron = layer.getNeurons()[j];
+                    for (int k = 0; k < neuron.getForwardWeights().length; k++) {
+                        WEIGHTS[i][j][k] = neuron.getForwardWeights()[k];
                     }
                 }
             }
         }
         // Save activation functions
-        for (int i = 0; i < layers.size(); i++) {
-            Layer layer = layers.get(i);
-            if (i != 0 && i != layers.size() - 1) {
-                ACTIVATION_FUNCTIONS[i] = this.mapActivationFunction(layer.getNeurons().get(0).getActivationFunction());
-            } else if (i == layers.size() - 1) {
-                ACTIVATION_FUNCTIONS[i] = this.mapActivationFunction(layer.getNeurons().get(0).getActivationFunction());
+        for (int i = 0; i < layers.length; i++) {
+            Layer layer = layers[i];
+            if (i != 0 && i != layers.length - 1) {
+                ACTIVATION_FUNCTIONS[i] = this.mapActivationFunction(layer.getNeurons()[0].getActivationFunction());
+            } else if (i == layers.length - 1) {
+                ACTIVATION_FUNCTIONS[i] = this.mapActivationFunction(layer.getNeurons()[0].getActivationFunction());
             } else {
-                ACTIVATION_FUNCTIONS[i] = this.mapActivationFunction(layer.getNeurons().get(0).getActivationFunction());
+                ACTIVATION_FUNCTIONS[i] = this.mapActivationFunction(layer.getNeurons()[0].getActivationFunction());
             }
         }
         Setup.setBiases(BIASES);
@@ -153,13 +157,13 @@ public class Network {
     }
 
     public void predict() {
-        Double[] INPUT_VALUES = Setup.getInputValues();
+        double[] INPUT_VALUES = Setup.getInputValues();
         forward(INPUT_VALUES);
     }
 
-    public void forward(Double[] inputValues) {
+    public void forward(double[] inputValues) {
         // Load input values into the input layer
-        for (Neuron neuron : this.layers.get(0).getNeurons()) {
+        for (Neuron neuron : this.layers[0].getNeurons()) {
             neuron.setActivation(inputValues[neuron.getNeuronId()]);
         }
         // Propagate values through the network
@@ -174,6 +178,6 @@ public class Network {
      * GETTERS AND SETTERS
      */
 
-    public ArrayList<Layer> getLayers() { return layers; }
-    public ArrayList<Neuron> getNeurons() { return neurons; }
+    public Layer[] getLayers() { return layers; }
+    public Neuron[] getNeurons() { return neurons; }
 }

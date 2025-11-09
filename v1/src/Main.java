@@ -22,7 +22,7 @@ public class Main {
      * MAIN METHOD
      */
     public static void main(String args[]) {
-        Boolean running = true;
+        boolean running = true;
         userInterface = new Console(null);
         while (running) {
             switch (userInterface.requestModeSelection()) {
@@ -64,7 +64,7 @@ public class Main {
             userInterface.showOutputs();
         } catch (Exception e) {
             userInterface.showError(1);
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -72,6 +72,7 @@ public class Main {
         try {
             fileUtils = new FileUtils(null);
             fileUtils.importSetup();
+            Setup.initializeRandomNetwork();
             network = new Network();
             userInterface.setNetwork(network);
             fileUtils.setNetwork(network);
@@ -79,7 +80,7 @@ public class Main {
             userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(2);
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -93,7 +94,7 @@ public class Main {
             userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(3);
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -107,7 +108,7 @@ public class Main {
             userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(4);
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -122,7 +123,7 @@ public class Main {
             userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(4);
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 }

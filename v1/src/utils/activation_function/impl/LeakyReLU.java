@@ -15,12 +15,12 @@ public class LeakyReLU implements ActivationFunction {
      */
 
     @Override
-    public Double activate(Double x) {
+    public double activate(double x) {
         return (x > 0) ? x : 0.01 * x;
     }
 
     @Override
-    public Double derivative(Double x) {
+    public double derivative(double x) {
         return (x > 0) ? 1.0 : 0.01;
     }
 }

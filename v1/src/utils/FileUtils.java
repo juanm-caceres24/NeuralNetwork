@@ -34,9 +34,7 @@ public class FileUtils {
 
     public void dumpLine(String line, String filePath) {
         // Implementation for writing 'line' into the file at 'filePath'
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(
-                filePath,
-                true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
             writer.write(line);
             writer.newLine();
         } catch (IOException e) {
@@ -45,7 +43,7 @@ public class FileUtils {
     }
 
     public void exportSetupToFile() {
-        String CONFIG_FILE_PATH = Setup.getConfigFilePath();
+        String CONFIG_FILE_PATH = String.valueOf(Setup.getConfigFilePath());
         // First clear the file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(CONFIG_FILE_PATH))) {
             writer.write("");
@@ -64,7 +62,7 @@ public class FileUtils {
     }
 
     public void importSetup() {
-        String CONFIG_FILE_PATH = Setup.getConfigFilePath();
+        String CONFIG_FILE_PATH = String.valueOf(Setup.getConfigFilePath());
         // Reads the configuration file and sets up the parameters accordingly
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(CONFIG_FILE_PATH))) {
             String line;
@@ -114,7 +112,7 @@ public class FileUtils {
     }
 
     public void importInput() {
-        String INPUT_VALUES_FILE_PATH = Setup.getInputValuesFilePath();
+        String INPUT_VALUES_FILE_PATH = String.valueOf(Setup.getInputValuesFilePath());
         // Reads the input values from the input file and sets them into Setup
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(INPUT_VALUES_FILE_PATH))) {
             java.util.List<Double> values = new java.util.ArrayList<>();
@@ -126,7 +124,10 @@ public class FileUtils {
                 values.add(Double.parseDouble(line));
             }
             if (!values.isEmpty()) {
-                Double[] inputValues = values.toArray(new Double[0]);
+                double[] inputValues = new double[values.size()];
+                for (int i = 0; i < values.size(); i++) {
+                    inputValues[i] = values.get(i);
+                }
                 Setup.setInputValues(inputValues);
             }
         } catch (IOException | NumberFormatException e) {
@@ -135,14 +136,14 @@ public class FileUtils {
     }
 
     public void exportOutput() {
-        String OUTPUT_VALUES_FILE_PATH = Setup.getOutputValuesFilePath();
+        String OUTPUT_VALUES_FILE_PATH = String.valueOf(Setup.getOutputValuesFilePath());
         // Write each output value on its own line (overwrites file)
         if (OUTPUT_VALUES_FILE_PATH == null) return;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(OUTPUT_VALUES_FILE_PATH))) {
             if (this.network == null) return;
-            ArrayList<Layer> layers = this.network.getLayers();
-            if (layers == null || layers.isEmpty()) return;
-            Layer lastLayer = layers.get(layers.size() - 1);
+            Layer[] layers = this.network.getLayers();
+            if (layers == null || layers.length == 0) return;
+            Layer lastLayer = layers[layers.length - 1];
             if (lastLayer == null || lastLayer.getNeurons() == null) return;
             for (Neuron neuron : lastLayer.getNeurons()) {
                 Double v = neuron.getActivation();
@@ -155,9 +156,9 @@ public class FileUtils {
     }
 
     public void importTrainingData() {
-        String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
+        String TRAINING_DATA_FILE_PATH = String.valueOf(Setup.getTrainingDataFilePath());
         // Reads the training data from the training data file and sets it into Setup
-        List<Double[][]> dataList = new ArrayList<>();
+        List<double[][]> dataList = new ArrayList<>();
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(TRAINING_DATA_FILE_PATH))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -172,11 +173,11 @@ public class FileUtils {
                     inputPart = line.substring(0, sep).trim();
                     targetPart = line.substring(sep + 1).trim();
                 }
-                Double[] inputRow = new Double[0];
-                Double[] targetRow = new Double[0];
+                double[] inputRow = new double[0];
+                double[] targetRow = new double[0];
                 if (!inputPart.isEmpty()) {
                     String[] parts = inputPart.split(",");
-                    inputRow = new Double[parts.length];
+                    inputRow = new double[parts.length];
                     for (int i = 0; i < parts.length; i++) {
                         String tok = parts[i].trim();
                         if (tok.isEmpty() || tok.equalsIgnoreCase("null")) {
@@ -193,7 +194,7 @@ public class FileUtils {
                 }
                 if (!targetPart.isEmpty()) {
                     String[] parts = targetPart.split(",");
-                    targetRow = new Double[parts.length];
+                    targetRow = new double[parts.length];
                     for (int i = 0; i < parts.length; i++) {
                         String tok = parts[i].trim();
                         if (tok.isEmpty() || tok.equalsIgnoreCase("null")) {
@@ -207,36 +208,36 @@ public class FileUtils {
                         }
                     }
                 }
-                dataList.add(new Double[][] { inputRow, targetRow });
+                dataList.add(new double[][] { inputRow, targetRow });
             }
-            // Convert List<Double[][]> to Double[][][] (samples x 2 x N)
-            Double[][][] trainingData = new Double[dataList.size()][][];
+            // Convert List<double[][]> to double[][][] (samples x 2 x N)
+            double[][][] trainingData = new double[dataList.size()][][];
             for (int i = 0; i < dataList.size(); i++) {
                 trainingData[i] = dataList.get(i);
             }
             // If no records, set an empty training data array to avoid NPEs downstream
             if (trainingData.length == 0) {
-                Setup.setTrainingData(new Double[0][][]);
+                Setup.setTrainingData(new double[0][][]);
             } else {
                 Setup.setTrainingData(trainingData);
             }
         } catch (IOException | NumberFormatException e) {
             e.printStackTrace();
             // on error, ensure training data is at least an empty array to avoid NPE downstream
-            Setup.setTrainingData(new Double[0][][]);
+            Setup.setTrainingData(new double[0][][]);
         }
     }
 
     public void exportTrainingData() {
-        String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
+        String TRAINING_DATA_FILE_PATH = String.valueOf(Setup.getTrainingDataFilePath());
         // Writes the training data from Setup into the training data file
-        Double[][][] trainingData = Setup.getTrainingData();
+        double[][][] trainingData = Setup.getTrainingData();
         if (trainingData == null) return;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(TRAINING_DATA_FILE_PATH))) {
-            for (Double[][] dataPair : trainingData) {
+            for (double[][] dataPair : trainingData) {
                 if (dataPair == null || dataPair.length == 0) continue;
-                Double[] inputData = dataPair.length > 0 ? dataPair[0] : new Double[0];
-                Double[] targetData = dataPair.length > 1 ? dataPair[1] : new Double[0];
+                double[] inputData = dataPair.length > 0 ? dataPair[0] : new double[0];
+                double[] targetData = dataPair.length > 1 ? dataPair[1] : new double[0];
                 StringBuilder line = new StringBuilder();
                 line.append(joinCSV(inputData));
                 // write separator and target CSV (empty target allowed)
@@ -250,7 +251,7 @@ public class FileUtils {
         }
     }
 
-    private String joinCSV(Double[] arr) {
+    private String joinCSV(double[] arr) {
         if (arr == null || arr.length == 0) return "";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < arr.length; i++) {
@@ -261,30 +262,30 @@ public class FileUtils {
     }
 
     @SuppressWarnings("unused")
-    private Double[] parseDoubleArray(String value) {
-        if (value == null) return new Double[0];
+    private double[] parseDoubleArray(String value) {
+        if (value == null) return new double[0];
         String s = value.trim();
         if (s.startsWith("[") && s.endsWith("]")) s = s.substring(1, s.length() - 1);
-        if (s.trim().isEmpty()) return new Double[0];
+        if (s.trim().isEmpty()) return new double[0];
         String[] parts = s.split(",");
-        Double[] array = new Double[parts.length];
+        double[] array = new double[parts.length];
         for (int i = 0; i < parts.length; i++) {
             array[i] = Double.parseDouble(parts[i].trim());
         }
         return array;
     }
 
-    private Double[][] parseDoubleMatrix(String value) {
-        if (value == null) return new Double[0][];
+    private double[][] parseDoubleMatrix(String value) {
+        if (value == null) return new double[0][];
         String s = value.trim();
-        if (!s.startsWith("[") || !s.endsWith("]")) return new Double[0][];
+        if (!s.startsWith("[") || !s.endsWith("]")) return new double[0][];
         // remove outer brackets
         s = s.substring(1, s.length() - 1).trim();
         List<String> rows = new java.util.ArrayList<>();
-        Integer level = 0;
+        int level = 0;
         StringBuilder cur = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
-            Character c = s.charAt(i);
+            char c = s.charAt(i);
             if (c == '[') {
                 level++;
                 if (level == 1) continue; // skip the bracket that starts the row
@@ -300,16 +301,16 @@ public class FileUtils {
             if (level >= 1) cur.append(c);
             // ignore commas at level 0
         }
-        Double[][] matrix = new Double[rows.size()][];
+        double[][] matrix = new double[rows.size()][];
         for (int i = 0; i < rows.size(); i++) {
             String row = rows.get(i).trim();
             // split row by commas
             if (row.isEmpty()) {
-                matrix[i] = new Double[0];
+                matrix[i] = new double[0];
                 continue;
             }
             String[] parts = row.split(",");
-            matrix[i] = new Double[parts.length];
+            matrix[i] = new double[parts.length];
             for (int j = 0; j < parts.length; j++) {
                 matrix[i][j] = Double.parseDouble(parts[j].trim());
             }
@@ -317,17 +318,17 @@ public class FileUtils {
         return matrix;
     }
 
-    private Double[][][] parseDoubleTensor(String value) {
-        if (value == null) return new Double[0][][];
+    private double[][][] parseDoubleTensor(String value) {
+        if (value == null) return new double[0][][];
         String s = value.trim();
-        if (!s.startsWith("[") || !s.endsWith("]")) return new Double[0][][];
+        if (!s.startsWith("[") || !s.endsWith("]")) return new double[0][][];
         // remove outer brackets
         s = s.substring(1, s.length() - 1).trim();
         List<String> mats = new java.util.ArrayList<>();
-        Integer level = 0;
+        int level = 0;
         StringBuilder cur = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
-            Character c = s.charAt(i);
+            char c = s.charAt(i);
             if (c == '[') {
                 level++;
             }
@@ -340,27 +341,27 @@ public class FileUtils {
                 }
             }
         }
-        Double[][][] tensor = new Double[mats.size()][][];
+        double[][][] tensor = new double[mats.size()][][];
         for (int i = 0; i < mats.size(); i++) {
             tensor[i] = parseDoubleMatrix(mats.get(i));
         }
         return tensor;
     }
 
-    private Integer[] parseIntegerArray(String value) {
-        if (value == null) return new Integer[0];
+    private int[] parseIntegerArray(String value) {
+        if (value == null) return new int[0];
         String s = value.trim();
         if (s.startsWith("[") && s.endsWith("]")) s = s.substring(1, s.length() - 1);
-        if (s.trim().isEmpty()) return new Integer[0];
+        if (s.trim().isEmpty()) return new int[0];
         String[] parts = s.split(",");
-        Integer[] array = new Integer[parts.length];
+        int[] array = new int[parts.length];
         for (int i = 0; i < parts.length; i++) {
             array[i] = Integer.parseInt(parts[i].trim());
         }
         return array;
     }
 
-    private String toString(Double[] arr) {
+    private String toString(double[] arr) {
         if (arr == null) return "[]";
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -372,7 +373,7 @@ public class FileUtils {
         return sb.toString();
     }
 
-    private String toString(Double[][] mat) {
+    private String toString(double[][] mat) {
         if (mat == null) return "[]";
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -384,7 +385,7 @@ public class FileUtils {
         return sb.toString();
     }
 
-    private String toString(Double[][][] tensor) {
+    private String toString(double[][][] tensor) {
         if (tensor == null) return "[]";
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -396,7 +397,7 @@ public class FileUtils {
         return sb.toString();
     }
 
-    private String toString(Integer[] arr) {
+    private String toString(int[] arr) {
         if (arr == null) return "[]";
         StringBuilder sb = new StringBuilder();
         sb.append("[");

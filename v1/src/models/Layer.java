@@ -1,7 +1,5 @@
 package v1.src.models;
 
-import java.util.ArrayList;
-
 public class Layer{
     
     /*
@@ -12,7 +10,7 @@ public class Layer{
     private Integer layerId;
 
     // Layer topology
-    private ArrayList<Neuron> neurons;
+    private Neuron[] neurons;
     private Layer nextLayer;
     private Layer previousLayer;
 
@@ -20,7 +18,7 @@ public class Layer{
      * CONSTRUCTORS
      */
 
-    public Layer(Integer layerId, ArrayList<Neuron> neurons, Layer nextLayer, Layer previousLayer) {
+    public Layer(Integer layerId, Neuron[] neurons, Layer nextLayer, Layer previousLayer) {
         this.layerId = layerId;
         this.neurons = neurons;
         this.nextLayer = nextLayer;
@@ -32,9 +30,9 @@ public class Layer{
      */
 
     public void feedForward() {
-        ArrayList<Double> inputs = new ArrayList<>();
-        for (Neuron neuron : this.previousLayer.getNeurons()) {
-            inputs.add(neuron.getActivation());
+        double[] inputs = new double[this.previousLayer.getNeurons().length];
+        for (int i = 0; i < this.previousLayer.getNeurons().length; i++) {
+            inputs[i] = this.previousLayer.getNeurons()[i].getActivation();
         }
         for (Neuron neuron : this.neurons) {
             neuron.calculateForward(inputs);
@@ -45,9 +43,9 @@ public class Layer{
     }
 
     public void backPropagate() {
-        ArrayList<Double> inputs = new ArrayList<>();
-        for (Neuron neuron : this.nextLayer.getNeurons()) {
-            inputs.add(neuron.getDelta());
+        double[] inputs = new double[this.nextLayer.getNeurons().length];
+        for (int i = 0; i < this.nextLayer.getNeurons().length; i++) {
+            inputs[i] = this.nextLayer.getNeurons()[i].getDelta();
         }
         for (Neuron neuron : this.neurons) {
             neuron.calculateBackward(inputs);
@@ -62,7 +60,7 @@ public class Layer{
      */
 
     public Integer getLayerId() { return layerId; }
-    public ArrayList<Neuron> getNeurons() { return neurons; }
+    public Neuron[] getNeurons() { return neurons; }
     public Layer getNextLayer() { return nextLayer; }
     public void setNextLayer(Layer nextLayer) { this.nextLayer = nextLayer; }
     public Layer getPreviousLayer() { return previousLayer; }

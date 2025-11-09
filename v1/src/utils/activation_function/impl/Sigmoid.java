@@ -15,13 +15,13 @@ public class Sigmoid implements ActivationFunction {
      */
 
     @Override
-    public Double activate(Double x) {
+    public double activate(double x) {
         return 1 / (1 + Math.pow(Math.E, - x));
     }
 
     @Override
-    public Double derivative(Double x) {
-        Double y = this.activate(x);
+    public double derivative(double x) {
+        double y = this.activate(x);
         return y * (1 - y);
     }
 }
