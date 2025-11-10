@@ -19,10 +19,10 @@ public class Setup {
     private static int[] ACTIVATION_FUNCTIONS;
 
     // Training parameters
-    private static double LEARNING_RATE = 0.1;
-    private static int EPOCHS = 1000;
-    private static int BATCH_SIZE = 10;
-    private static int TEST_TRAINING_DATA_LENGTH = 1000;
+    private static double LEARNING_RATE;
+    private static int EPOCHS;
+    private static int BATCH_SIZE;
+    private static int TEST_TRAINING_DATA_LENGTH;
     private static double[][][] TRAINING_DATA;
 
     // Input values for prediction
