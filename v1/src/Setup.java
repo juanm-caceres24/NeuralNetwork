@@ -7,10 +7,10 @@ public class Setup {
      */
 
     // File paths
-    private static char[] CONFIG_FILE_PATH = "v1/config.txt".toCharArray();
-    private static char[] TRAINING_DATA_FILE_PATH = "v1/training_data.txt".toCharArray();
-    private static char[] INPUT_VALUES_FILE_PATH = "v1/input.txt".toCharArray();
-    private static char[] OUTPUT_VALUES_FILE_PATH = "v1/output.txt".toCharArray();
+    private static String CONFIG_FILE_PATH = "v1/config.txt";
+    private static String TRAINING_DATA_FILE_PATH = "v1/training_data.txt";
+    private static String INPUT_VALUES_FILE_PATH = "v1/input.txt";
+    private static String OUTPUT_VALUES_FILE_PATH = "v1/output.txt";
 
     // Network parameters
     private static int[] LAYERS_SIZE;
@@ -64,10 +64,10 @@ public class Setup {
      * GETTERS AND SETTERS
      */
 
-    public static char[] getConfigFilePath() { return CONFIG_FILE_PATH; }
-    public static char[] getTrainingDataFilePath() { return TRAINING_DATA_FILE_PATH; }
-    public static char[] getInputValuesFilePath() { return INPUT_VALUES_FILE_PATH; }
-    public static char[] getOutputValuesFilePath() { return OUTPUT_VALUES_FILE_PATH; }
+    public static String getConfigFilePath() { return CONFIG_FILE_PATH; }
+    public static String getTrainingDataFilePath() { return TRAINING_DATA_FILE_PATH; }
+    public static String getInputValuesFilePath() { return INPUT_VALUES_FILE_PATH; }
+    public static String getOutputValuesFilePath() { return OUTPUT_VALUES_FILE_PATH; }
 
     public static int[] getLayersSize() { return LAYERS_SIZE; }
     public static void setLayersSize(int[] layerSizes) { LAYERS_SIZE = layerSizes; }

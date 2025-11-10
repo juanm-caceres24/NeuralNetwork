@@ -49,16 +49,16 @@ public class Trainer {
         int BATCH_SIZE = Setup.getBatchSize();
         double[][][] TRAINING_DATA = Setup.getTrainingData();
         // Simple training loop using stochastic gradient descent (SGD)
-        List<Integer> indices = new ArrayList<>();
+        List<Integer> indexes = new ArrayList<>();
         for (int i = 0; i < TRAINING_DATA.length; i++) {
-            indices.add(i);
+            indexes.add(i);
         }
         for (int epoch = 0; epoch < EPOCHS; epoch++) {
             // Shuffle samples each epoch to aid SGD convergence
-            Collections.shuffle(indices);
+            Collections.shuffle(indexes);
             // Process data in mini-batches
-            for (int start = 0; start < indices.size(); start += BATCH_SIZE) {
-                int end = Math.min(start + BATCH_SIZE, indices.size());
+            for (int start = 0; start < indexes.size(); start += BATCH_SIZE) {
+                int end = Math.min(start + BATCH_SIZE, indexes.size());
                 int actualBatch = end - start;
                 // Prepare accumulators for biases and weights per layer
                 Layer[] layers = network.getLayers();
@@ -83,7 +83,7 @@ public class Trainer {
                 }
                 // Accumulate gradients for each sample in the batch
                 for (int p = start; p < end; p++) {
-                    int sample = indices.get(p);
+                    int sample = indexes.get(p);
                     // Forward and backward to compute deltas
                     network.forward(TRAINING_DATA[sample][0]);
                     backward(TRAINING_DATA[sample][1]);

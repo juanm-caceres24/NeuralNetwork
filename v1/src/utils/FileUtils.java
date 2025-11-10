@@ -1,6 +1,8 @@
 package v1.src.utils;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,7 +45,7 @@ public class FileUtils {
     }
 
     public void exportSetupToFile() {
-        String CONFIG_FILE_PATH = String.valueOf(Setup.getConfigFilePath());
+        String CONFIG_FILE_PATH = Setup.getConfigFilePath();
         // First clear the file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(CONFIG_FILE_PATH))) {
             writer.write("");
@@ -62,7 +64,7 @@ public class FileUtils {
     }
 
     public void importSetup() {
-        String CONFIG_FILE_PATH = String.valueOf(Setup.getConfigFilePath());
+        String CONFIG_FILE_PATH = Setup.getConfigFilePath();
         // Reads the configuration file and sets up the parameters accordingly
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(CONFIG_FILE_PATH))) {
             String line;
@@ -112,10 +114,10 @@ public class FileUtils {
     }
 
     public void importInput() {
-        String INPUT_VALUES_FILE_PATH = String.valueOf(Setup.getInputValuesFilePath());
+        String INPUT_VALUES_FILE_PATH = Setup.getInputValuesFilePath();
         // Reads the input values from the input file and sets them into Setup
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(INPUT_VALUES_FILE_PATH))) {
-            java.util.List<Double> values = new java.util.ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(INPUT_VALUES_FILE_PATH))) {
+            List<Double> values = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
@@ -136,7 +138,7 @@ public class FileUtils {
     }
 
     public void exportOutput() {
-        String OUTPUT_VALUES_FILE_PATH = String.valueOf(Setup.getOutputValuesFilePath());
+        String OUTPUT_VALUES_FILE_PATH = Setup.getOutputValuesFilePath();
         // Write each output value on its own line (overwrites file)
         if (OUTPUT_VALUES_FILE_PATH == null) return;
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(OUTPUT_VALUES_FILE_PATH))) {
@@ -156,10 +158,10 @@ public class FileUtils {
     }
 
     public void importTrainingData() {
-        String TRAINING_DATA_FILE_PATH = String.valueOf(Setup.getTrainingDataFilePath());
+        String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
         // Reads the training data from the training data file and sets it into Setup
         List<double[][]> dataList = new ArrayList<>();
-        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(TRAINING_DATA_FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(TRAINING_DATA_FILE_PATH))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
@@ -229,7 +231,7 @@ public class FileUtils {
     }
 
     public void exportTrainingData() {
-        String TRAINING_DATA_FILE_PATH = String.valueOf(Setup.getTrainingDataFilePath());
+        String TRAINING_DATA_FILE_PATH = Setup.getTrainingDataFilePath();
         // Writes the training data from Setup into the training data file
         double[][][] trainingData = Setup.getTrainingData();
         if (trainingData == null) return;
@@ -251,12 +253,12 @@ public class FileUtils {
         }
     }
 
-    private String joinCSV(double[] arr) {
-        if (arr == null || arr.length == 0) return "";
+    private String joinCSV(double[] array) {
+        if (array == null || array.length == 0) return "";
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < arr.length; i++) {
+        for (int i = 0; i < array.length; i++) {
             if (i > 0) sb.append(",");
-            sb.append(arr[i]);
+            sb.append(array[i]);
         }
         return sb.toString();
     }
@@ -361,25 +363,25 @@ public class FileUtils {
         return array;
     }
 
-    private String toString(double[] arr) {
-        if (arr == null) return "[]";
+    private String toString(double[] array) {
+        if (array == null) return "[]";
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        for (int i = 0; i < arr.length; i++) {
+        for (int i = 0; i < array.length; i++) {
             if (i > 0) sb.append(",");
-            sb.append(arr[i]);
+            sb.append(array[i]);
         }
         sb.append("]");
         return sb.toString();
     }
 
-    private String toString(double[][] mat) {
-        if (mat == null) return "[]";
+    private String toString(double[][] matrix) {
+        if (matrix == null) return "[]";
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        for (int i = 0; i < mat.length; i++) {
+        for (int i = 0; i < matrix.length; i++) {
             if (i > 0) sb.append(",");
-            sb.append(toString(mat[i]));
+            sb.append(toString(matrix[i]));
         }
         sb.append("]");
         return sb.toString();
@@ -397,13 +399,13 @@ public class FileUtils {
         return sb.toString();
     }
 
-    private String toString(int[] arr) {
-        if (arr == null) return "[]";
+    private String toString(int[] array) {
+        if (array == null) return "[]";
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        for (int i = 0; i < arr.length; i++) {
+        for (int i = 0; i < array.length; i++) {
             if (i > 0) sb.append(",");
-            sb.append(arr[i]);
+            sb.append(array[i]);
         }
         sb.append("]");
         return sb.toString();
