@@ -42,6 +42,9 @@ public class Main {
                     testTraining();
                     break;
                 case 5:
+                    showNetwork();
+                    break;
+                case 6:
                     running = false;
                     break;
                 default:
@@ -77,7 +80,6 @@ public class Main {
             userInterface.setNetwork(network);
             fileUtils.setNetwork(network);
             fileUtils.exportNetwork();
-            userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(2);
             e.printStackTrace();
@@ -91,7 +93,6 @@ public class Main {
             network = new Network();
             userInterface.setNetwork(network);
             fileUtils.setNetwork(network);
-            userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(3);
             e.printStackTrace();
@@ -105,7 +106,6 @@ public class Main {
             trainer.train();
             network.saveNetwork();
             fileUtils.exportNetwork();
-            userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(4);
             e.printStackTrace();
@@ -120,9 +120,17 @@ public class Main {
             trainer.train();
             network.saveNetwork();
             fileUtils.exportNetwork();
-            userInterface.showNetwork();
         } catch (Exception e) {
             userInterface.showError(4);
+            e.printStackTrace();
+        }
+    }
+
+    public static void showNetwork() {
+        try {
+            userInterface.showNetwork();
+        } catch (Exception e) {
+            userInterface.showError(5);
             e.printStackTrace();
         }
     }

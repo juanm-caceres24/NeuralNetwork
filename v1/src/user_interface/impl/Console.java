@@ -41,7 +41,8 @@ public class Console implements UserInterface {
         System.out.printf("                               Load='2' |\n");
         System.out.printf("                              Train='3' |\n");
         System.out.printf("                      Test training='4' |\n");
-        System.out.printf("                               Exit='5' |\n");
+        System.out.printf("                       Show network='5' |\n");
+        System.out.printf("                               Exit='6' |\n");
         System.out.printf("                      (default=Predict) |\n");
         System.out.printf("                                        |\n");
         System.out.printf("                                    >>> | Select mode: ");
@@ -84,6 +85,9 @@ public class Console implements UserInterface {
                 break;
             case 4:
                 System.out.printf(" Problem in training network.\n");
+                break;
+            case 5: 
+                System.out.printf(" Problem showing network.\n");
                 break;
             default:
                 System.out.printf(" Unknown error.\n");
