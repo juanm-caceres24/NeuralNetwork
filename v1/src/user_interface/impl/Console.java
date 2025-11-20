@@ -38,10 +38,10 @@ public class Console implements UserInterface {
         System.out.printf("                                        |\n");
         System.out.printf("                            Predict='0' |\n");
         System.out.printf("                             Create='1' |\n");
-        System.out.printf("                               Load='2' |\n");
+        System.out.printf("                             Import='2' |\n");
         System.out.printf("                              Train='3' |\n");
-        System.out.printf("                      Test training='4' |\n");
-        System.out.printf("                       Show network='5' |\n");
+        System.out.printf("                               Test='4' |\n");
+        System.out.printf("                               Show='5' |\n");
         System.out.printf("                               Exit='6' |\n");
         System.out.printf("                      (default=Predict) |\n");
         System.out.printf("                                        |\n");

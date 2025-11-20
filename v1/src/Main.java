@@ -33,7 +33,7 @@ public class Main {
                     createNetwork();
                     break;
                 case 2:
-                    loadNetwork();
+                    importNetwork();
                     break;
                 case 3:
                     trainNetwork();
@@ -86,7 +86,7 @@ public class Main {
         }
     }
 
-    public static void loadNetwork() {
+    public static void importNetwork() {
         try {
             fileUtils = new FileUtils(null);
             fileUtils.importSetup();

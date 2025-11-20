@@ -36,8 +36,6 @@ public class Layer{
         }
         for (Neuron neuron : this.neurons) {
             neuron.calculateForward(inputs);
-        }
-        for (Neuron neuron : this.neurons) {
             neuron.calculateActivation();
         }
     }
@@ -49,8 +47,6 @@ public class Layer{
         }
         for (Neuron neuron : this.neurons) {
             neuron.calculateBackward(inputs);
-        }
-        for (Neuron neuron : this.neurons) {
             neuron.calculateDelta();
         }
     }

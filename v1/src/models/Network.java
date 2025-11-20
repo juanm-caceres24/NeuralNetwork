@@ -25,23 +25,23 @@ public class Network {
     public Network() {
         this.layers = null;
         this.neurons = null;
-        this.createNetwork();
+        this.loadNetwork();
     }
 
     /*
      * METHODS
      */
 
-    public void createNetwork() {
+    public void loadNetwork() {
         double[][] BIASES = Setup.getBiases();
         double[][][] WEIGHTS = Setup.getWeights();
         int[] ACTIVATION_FUNCTIONS = Setup.getActivationFunctions();
         int neuronId = 0;
         int layerId = 0;
         Layer previousLayer = null;
-        // initialize arrays for layers and neurons
+        // Initialize arrays for layers and neurons
         if (BIASES == null) {
-            // nothing to build
+            // Nothing to build
             this.layers = new Layer[0];
             this.neurons = new Neuron[0];
             return;
