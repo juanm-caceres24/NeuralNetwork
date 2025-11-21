@@ -98,6 +98,7 @@ public class Console implements UserInterface {
 
     @Override
     public void showNetwork() {
+        clearConsole();
         System.out.printf("========================================|\n");
         System.out.printf(" NETWORK                                |\n");
         System.out.printf("========================================|\n");
@@ -151,6 +152,7 @@ public class Console implements UserInterface {
 
     @Override
     public void showInputs() {
+        clearConsole();
         System.out.printf("========================================|\n");
         System.out.printf(" INPUTS                                 |\n");
         System.out.printf("========================================|\n");
@@ -183,6 +185,11 @@ public class Console implements UserInterface {
             outputLayerIndex++;
         }
         System.out.printf("                                        |\n");
+    }
+
+    void clearConsole() {
+        System.out.print("\033[H\033[2J"); // ANSI escape code to clear console
+        System.out.flush(); // Flush the output buffer
     }
 
     /*
