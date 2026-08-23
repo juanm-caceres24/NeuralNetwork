@@ -1,0 +1,26 @@
+package src.utils.activation_function.impl;
+
+import src.utils.activation_function.ActivationFunction;
+
+public class LeakyReLU implements ActivationFunction {
+
+    /*
+     * CONSTRUCTORS
+     */
+
+    public LeakyReLU() { }
+
+    /*
+     * METHODS
+     */
+
+    @Override
+    public double activate(double x) {
+        return (x > 0) ? x : 0.01 * x;
+    }
+
+    @Override
+    public double derivative(double x) {
+        return (x > 0) ? 1.0 : 0.01;
+    }
+}
