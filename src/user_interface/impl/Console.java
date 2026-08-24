@@ -214,8 +214,8 @@ public class Console implements UserInterface {
 
     @Override
     public void showAPIMode() {
-        System.out.println("API listening on http://localhost:8080");
-        System.out.println("Use Ctrl+C to stop the process.");
+        System.out.println("                                        | API listening on http://localhost:8001");
+        System.out.println("                                        | Use Ctrl+C to stop the process.");
     }
 
     void clearConsole() {

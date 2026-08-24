@@ -17,7 +17,7 @@ import src.models.Neuron;
 public class PredictionServer {
 
     private static final String HOST = "localhost";
-    private static final int PORT = 8080;
+    private static final int PORT = 8001;
     private final Network network;
 
     public PredictionServer(Network network) {
