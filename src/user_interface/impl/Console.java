@@ -212,6 +212,12 @@ public class Console implements UserInterface {
         System.out.printf("                                        |\n");
     }
 
+    @Override
+    public void showAPIMode() {
+        System.out.println("API listening on http://localhost:8080");
+        System.out.println("Use Ctrl+C to stop the process.");
+    }
+
     void clearConsole() {
         System.out.print("\033[H\033[2J"); // ANSI escape code to clear console
         System.out.flush(); // Flush the output buffer

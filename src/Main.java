@@ -181,6 +181,7 @@ public class Main {
                 fileUtils.importSetup();
                 network = new Network();
             }
+            userInterface.showAPIMode();
             new PredictionServer(network).startAndWait();
         } catch (Exception e) {
             userInterface.showError(7);

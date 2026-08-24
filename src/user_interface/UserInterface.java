@@ -14,5 +14,6 @@ public interface UserInterface  {
     public abstract void showInputs();
     public abstract void showOutputs();
     public abstract void showFileError(double totalAbsoluteError, double meanAbsoluteError, int sampleCount);
+    public abstract void showAPIMode();
     public abstract void setNetwork(Network network);
 }

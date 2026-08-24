@@ -30,8 +30,6 @@ public class PredictionServer {
         server.createContext("/predict", this::handlePredict);
         server.setExecutor(Executors.newSingleThreadExecutor());
         server.start();
-        System.out.println("API listening on http://" + HOST + ":" + PORT);
-        System.out.println("Use Ctrl+C to stop the process.");
         new CountDownLatch(1).await();
     }
 
