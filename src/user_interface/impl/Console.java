@@ -43,7 +43,8 @@ public class Console implements UserInterface {
         System.out.printf("                  Train from test = '4' |\n");
         System.out.printf("                     Show network = '5' |\n");
         System.out.printf("        Calculate error from file = '6' |\n");
-        System.out.printf("                             Exit = '7' |\n");
+        System.out.printf("                   Start API mode = '7' |\n");
+        System.out.printf("                             Exit = '8' |\n");
         System.out.printf("                                        |\n");
         System.out.printf("                                    >>> | Select mode: ");
         String input = scanner.nextLine();
@@ -64,6 +65,8 @@ public class Console implements UserInterface {
                 return 6;
             case "7":
                 return 7;
+            case "8":
+                return 8;
             default:
                 this.showError(0);
                 return 0;
@@ -95,6 +98,9 @@ public class Console implements UserInterface {
                 break;
             case 6:
                 System.out.printf(" Problem calculating error from file.\n");
+                break;
+            case 7:
+                System.out.printf(" Problem starting API mode.\n");
                 break;
             default:
                 System.out.printf(" Unknown error.\n");

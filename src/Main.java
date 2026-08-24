@@ -2,6 +2,7 @@ package src;
 
 import src.models.Network;
 import src.models.Neuron;
+import src.api.PredictionServer;
 import src.user_interface.UserInterface;
 import src.user_interface.impl.Console;
 import src.utils.FileUtils;
@@ -49,6 +50,9 @@ public class Main {
                     calculateErrorFromFile();
                     break;
                 case 7:
+                    startApiMode();
+                    break;
+                case 8:
                     running = false;
                     break;
                 default:
@@ -166,6 +170,20 @@ public class Main {
             userInterface.showFileError(totalAbsoluteError, meanAbsoluteError, trainingData.length);
         } catch (Exception e) {
             userInterface.showError(6);
+            e.printStackTrace();
+        }
+    }
+
+    public static void startApiMode() {
+        try {
+            if (network == null) {
+                fileUtils = new FileUtils(null);
+                fileUtils.importSetup();
+                network = new Network();
+            }
+            new PredictionServer(network).startAndWait();
+        } catch (Exception e) {
+            userInterface.showError(7);
             e.printStackTrace();
         }
     }
