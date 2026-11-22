@@ -53,6 +53,8 @@ std::string to_string(LossType type) {
             return "mse";
         case LossType::BinaryCrossEntropy:
             return "bce";
+        case LossType::CategoricalCrossEntropy:
+            return "cce";
     }
     throw std::invalid_argument("Unknown LossType");
 }
@@ -61,7 +63,27 @@ LossType parse_loss(const std::string& name) {
     const std::string key = to_lower_ascii(name);
     if (key == "mse") return LossType::MSE;
     if (key == "bce" || key == "binary_cross_entropy") return LossType::BinaryCrossEntropy;
+    if (key == "cce" || key == "categorical_cross_entropy" || key == "cross_entropy") {
+        return LossType::CategoricalCrossEntropy;
+    }
     throw std::invalid_argument("Unsupported loss function: '" + name + "'");
+}
+
+std::string to_string(OptimizerType type) {
+    switch (type) {
+        case OptimizerType::SGD:
+            return "sgd";
+        case OptimizerType::Adam:
+            return "adam";
+    }
+    throw std::invalid_argument("Unknown OptimizerType");
+}
+
+OptimizerType parse_optimizer(const std::string& name) {
+    const std::string key = to_lower_ascii(name);
+    if (key == "sgd") return OptimizerType::SGD;
+    if (key == "adam") return OptimizerType::Adam;
+    throw std::invalid_argument("Unsupported optimizer: '" + name + "'");
 }
 
 }  // namespace nn

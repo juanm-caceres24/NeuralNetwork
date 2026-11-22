@@ -10,10 +10,10 @@ namespace loss {
 
 namespace {
 
-constexpr Scalar kBceEpsilon = Scalar{1e-7f};
+constexpr Scalar kProbEpsilon = Scalar{1e-7f};
 
 Scalar clamp_prob(Scalar p) noexcept {
-    return std::max(kBceEpsilon, std::min(Scalar{1} - kBceEpsilon, p));
+    return std::max(kProbEpsilon, std::min(Scalar{1} - kProbEpsilon, p));
 }
 
 void validate_vectors(const std::vector<Scalar>& predicted, const std::vector<Scalar>& target) {
@@ -52,6 +52,17 @@ Scalar compute(LossType type,
             }
             return sum * inv_n;
         }
+        case LossType::CategoricalCrossEntropy: {
+            Scalar sum = Scalar{0};
+            for (std::size_t i = 0; i < n; ++i) {
+                const Scalar t = target[i];
+                if (t != Scalar{0}) {
+                    const Scalar p = clamp_prob(predicted[i]);
+                    sum -= t * std::log(p);
+                }
+            }
+            return sum;
+        }
     }
     throw std::invalid_argument("Unknown LossType");
 }
@@ -78,6 +89,18 @@ void gradient(LossType type,
                 const Scalar p = clamp_prob(predicted[i]);
                 const Scalar t = target[i];
                 grad_out[i] = inv_n * ((p - t) / (p * (Scalar{1} - p)));
+            }
+            return;
+        }
+        case LossType::CategoricalCrossEntropy: {
+            for (std::size_t i = 0; i < n; ++i) {
+                const Scalar t = target[i];
+                if (t != Scalar{0}) {
+                    const Scalar p = clamp_prob(predicted[i]);
+                    grad_out[i] = -t / p;
+                } else {
+                    grad_out[i] = Scalar{0};
+                }
             }
             return;
         }

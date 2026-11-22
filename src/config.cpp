@@ -115,17 +115,31 @@ AppConfig parse_config_json(const std::string& json_text) {
         }
         const std::string loss_str = get_optional_string(train_obj, "loss", "mse");
         cfg.training.loss = parse_loss(loss_str);
+        const std::string opt_str = get_optional_string(train_obj, "optimizer", "sgd");
+        cfg.training.optimizer = parse_optimizer(opt_str);
         cfg.training.epochs = get_optional_size(train_obj, "epochs", cfg.training.epochs);
         cfg.training.batch_size =
             get_optional_size(train_obj, "batch_size", cfg.training.batch_size);
         cfg.training.learning_rate =
             get_optional_scalar(train_obj, "learning_rate", cfg.training.learning_rate);
+        cfg.training.adam_beta1 =
+            get_optional_scalar(train_obj, "adam_beta1", cfg.training.adam_beta1);
+        cfg.training.adam_beta2 =
+            get_optional_scalar(train_obj, "adam_beta2", cfg.training.adam_beta2);
+        cfg.training.adam_epsilon =
+            get_optional_scalar(train_obj, "adam_epsilon", cfg.training.adam_epsilon);
         cfg.training.shuffle = get_optional_bool(train_obj, "shuffle", cfg.training.shuffle);
         cfg.training.num_threads =
             get_optional_size(train_obj, "num_threads", cfg.training.num_threads);
         cfg.training.seed = get_optional_u32(train_obj, "seed", cfg.training.seed);
         cfg.training.log_every_epochs =
             get_optional_size(train_obj, "log_every_epochs", cfg.training.log_every_epochs);
+        cfg.training.validation_split =
+            get_optional_scalar(train_obj, "validation_split", cfg.training.validation_split);
+        cfg.training.validation_shuffle =
+            get_optional_bool(train_obj, "validation_shuffle", cfg.training.validation_shuffle);
+        cfg.training.keep_best_validation_model = get_optional_bool(
+            train_obj, "keep_best_validation_model", cfg.training.keep_best_validation_model);
 
         // Allow dataset fields directly inside "training" for convenience
         cfg.data.dataset_path =
@@ -277,6 +291,10 @@ Dataset load_dataset_from_config(const DataConfig& data_cfg,
     if (gen == "circle") {
         return datasets::make_circle_classification(data_cfg.generator_samples,
                                                     data_cfg.generator_seed);
+    }
+    if (gen == "quadrants") {
+        return datasets::make_quadrant_multiclass(data_cfg.generator_samples,
+                                                  data_cfg.generator_seed);
     }
 
     throw std::invalid_argument("Unknown dataset generator: '" + data_cfg.generator + "'");

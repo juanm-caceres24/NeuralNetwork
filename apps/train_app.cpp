@@ -85,10 +85,17 @@ int main(int argc, char* argv[]) {
 
         std::cout << "[train_app] Training: epochs=" << cfg.training.epochs
                   << ", batch_size=" << cfg.training.batch_size
+                  << ", optimizer=" << nn::to_string(cfg.training.optimizer)
                   << ", lr=" << cfg.training.learning_rate
                   << ", loss=" << nn::to_string(cfg.training.loss)
                   << ", threads=" << cfg.training.num_threads
-                  << ", shuffle=" << (cfg.training.shuffle ? "true" : "false") << "\n";
+                  << ", shuffle=" << (cfg.training.shuffle ? "true" : "false");
+        if (cfg.training.validation_split > 0.0f) {
+            std::cout << ", val_split=" << cfg.training.validation_split
+                      << " (chronological="
+                      << (cfg.training.validation_shuffle ? "false" : "true") << ")";
+        }
+        std::cout << "\n";
 
         const auto t_start = std::chrono::steady_clock::now();
         nn::Trainer trainer(cfg.training);
@@ -99,8 +106,15 @@ int main(int argc, char* argv[]) {
 
         std::cout << std::fixed << std::setprecision(6);
         std::cout << "[train_app] Finished in " << std::setprecision(2) << elapsed_ms
-                  << " ms | initial_loss=" << std::setprecision(6) << result.initial_loss
-                  << " -> final_loss=" << result.final_loss << "\n";
+                  << " ms | train_loss: " << std::setprecision(6) << result.initial_loss
+                  << " -> " << result.final_loss << " | train_acc=" << std::setprecision(2)
+                  << (result.final_train_accuracy * 100.0f) << "%\n";
+        if (result.has_validation) {
+            std::cout << "[train_app] Validation: val_loss=" << std::setprecision(6)
+                      << result.final_val_loss << " (best=" << result.best_val_loss
+                      << " @ epoch " << result.best_val_epoch << ") | val_acc="
+                      << std::setprecision(2) << (result.final_val_accuracy * 100.0f) << "%\n";
+        }
 
         // Display sample predictions (up to 8 rows)
         const std::size_t preview_count = std::min<std::size_t>(dataset.size(), 8);
