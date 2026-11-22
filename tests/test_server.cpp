@@ -168,10 +168,15 @@ TEST_CASE(live_tcp_server_endpoints_and_concurrent_clients) {
         const cJSON* out_arr = cJSON_GetObjectItemCaseSensitive(pred_json.get(), "output");
         CHECK_NEAR(cJSON_GetArrayItem(out_arr, 0)->valuedouble, 1.0, 1e-6);
 
-        // 3. Live 404 check
+        // 3. Live 404 and negative Content-Length (400 Bad Request) checks
         const std::string not_found = send_raw_http_tcp(
             port, "GET /nope HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
         CHECK(not_found.find("HTTP/1.1 404 Not Found") == 0);
+
+        const std::string bad_cl = send_raw_http_tcp(
+            port,
+            "POST /predict HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: -5\r\n\r\n");
+        CHECK(bad_cl.find("HTTP/1.1 400 Bad Request") == 0);
 
         // 4. Concurrent client stress test: 8 threads x 20 live TCP requests = 160 requests
         const std::vector<std::pair<std::string, double>> cases = {
