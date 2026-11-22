@@ -13,8 +13,9 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
   - Synchronous intra-batch multi-threading via a reusable `ThreadPool` — *Implemented*
   - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle) — *Implemented*
 - **Persistence & Configuration**
-  - Zero hardcoded settings: external `config.json` for hyperparameters, architecture, paths, and server port
-  - Model save/load (`model.json`) preserving topology, activations, weights, and biases
+  - Zero hardcoded settings: external `config.json` for hyperparameters, architecture, paths, and server port (`cJSON` v1.7.18 vendored) — *Implemented*
+  - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases — *Implemented*
+  - CLI apps: `train_app` (train/resume/save) and `predict_app` (inference + `--show-neurons` inspection) — *Implemented*
 - **Inference Server**
   - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) so external applications (e.g., games, scripts, robotics controllers) can query a live model over localhost or LAN
 
@@ -43,3 +44,4 @@ All project specifications, architecture decisions, math derivations, and workfl
 - [`docs/02-core-math-and-primitives.md`](docs/02-core-math-and-primitives.md) — Design and mathematics behind `types`, `Matrix`, and `activation`.
 - [`docs/03-layers-workspace-and-network.md`](docs/03-layers-workspace-and-network.md) — Architecture and equations for `DenseLayer`, `NetworkWorkspace`, and `Network`.
 - [`docs/04-training-and-threading.md`](docs/04-training-and-threading.md) — Loss functions, `Dataset` CSV/shuffling, `ThreadPool`, and parallel mini-batch SGD.
+- [`docs/05-config-and-serialization.md`](docs/05-config-and-serialization.md) — `cJSON` integration, `config.json` reference, `model.json` format, and CLI apps.
