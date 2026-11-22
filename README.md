@@ -7,7 +7,7 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
 - **Core Engine (`libnn`)**
   - Contiguous row-major 1D-backed `Matrix` math primitives (`matvec`, `matvec_transpose`, `add_outer_product`, `add_scaled`) — *Implemented*
   - Activation functions & exact derivatives (`Linear`, `Sigmoid`, `Tanh`, `ReLU`, `LeakyReLU`, numerically stable `Softmax`) — *Implemented*
-  - `DenseLayer`, thread-safe `NetworkWorkspace` (full inspection of weights, biases, and neuron activations), and `Network` — *Next*
+  - `DenseLayer`, thread-safe `NetworkWorkspace` (full inspection of weights, biases, and neuron activations), and `Network` (forward + backpropagation + gradient updates) — *Implemented*
 - **Training Engine**
   - Backpropagation with configurable learning rate, loss functions (`MSE`, `BinaryCrossEntropy`), mini-batches, and epoch-level index shuffling
   - Synchronous intra-batch multi-threading via a reusable `ThreadPool`
@@ -41,3 +41,4 @@ All project specifications, architecture decisions, math derivations, and workfl
 - [`docs/00-project-specification.md`](docs/00-project-specification.md) — Full project requirements, architectural decisions, file formats, class map, and roadmap.
 - [`docs/01-git-workflow.md`](docs/01-git-workflow.md) — Branching strategy, Conventional Commits, and merge conventions.
 - [`docs/02-core-math-and-primitives.md`](docs/02-core-math-and-primitives.md) — Design and mathematics behind `types`, `Matrix`, and `activation`.
+- [`docs/03-layers-workspace-and-network.md`](docs/03-layers-workspace-and-network.md) — Architecture and equations for `DenseLayer`, `NetworkWorkspace`, and `Network`.
