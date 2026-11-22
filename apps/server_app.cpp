@@ -24,7 +24,7 @@ void print_usage(const char* prog) {
               << "Options:\n"
               << "  --model <path>   Override model JSON file to load\n"
               << "  --host <ipv4>    Override bind IPv4 address (e.g. 127.0.0.1 or 0.0.0.0)\n"
-              << "  --port <port>    Override TCP port (1..65535)\n"
+              << "  --port <port>    Override TCP port (0..65535; 0 = OS-assigned)\n"
               << "  --workers <n>    Override worker thread count\n";
 }
 

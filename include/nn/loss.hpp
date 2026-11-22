@@ -7,7 +7,8 @@
 namespace nn {
 namespace loss {
 
-// Computes scalar loss L(predicted, target), averaged across output dimensions.
+// Computes scalar loss L(predicted, target).
+// MSE and BinaryCrossEntropy average across output dimensions; CategoricalCrossEntropy sums over classes.
 Scalar compute(LossType type,
                const std::vector<Scalar>& predicted,
                const std::vector<Scalar>& target);

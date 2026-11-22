@@ -29,7 +29,7 @@ struct ModelConfig {
 struct DataConfig {
     std::string dataset_path;
     bool has_header = false;
-    std::string generator;  // Optional: "xor", "and", "or", "nand", "linear", "circle"
+    std::string generator;  // Optional: "xor", "and", "or", "nand", "linear", "circle", "quadrants"
     std::size_t generator_samples = 200;
     std::uint32_t generator_seed = 42;
 };
