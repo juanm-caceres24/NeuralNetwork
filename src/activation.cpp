@@ -81,12 +81,14 @@ void apply_vector(ActivationType type, const std::vector<Scalar>& z, std::vector
     }
 }
 
-void apply_derivative_vector(ActivationType type,
-                             const std::vector<Scalar>& z,
-                             const std::vector<Scalar>& grad_a,
-                             std::vector<Scalar>& grad_z) {
+void apply_derivative_vector_with_output(ActivationType type,
+                                         const std::vector<Scalar>& z,
+                                         const std::vector<Scalar>& a,
+                                         const std::vector<Scalar>& grad_a,
+                                         std::vector<Scalar>& grad_z) {
     if (z.size() != grad_a.size()) {
-        throw std::invalid_argument("apply_derivative_vector size mismatch between z and grad_a");
+        throw std::invalid_argument(
+            "apply_derivative_vector_with_output size mismatch between z and grad_a");
     }
 
     const std::size_t n = z.size();
@@ -96,9 +98,10 @@ void apply_derivative_vector(ActivationType type,
     }
 
     if (type == ActivationType::Softmax) {
-        std::vector<Scalar> a;
-        apply_vector(ActivationType::Softmax, z, a);
-
+        if (a.size() != n) {
+            throw std::invalid_argument(
+                "apply_derivative_vector_with_output size mismatch between z and a");
+        }
         Scalar dot = Scalar{0};
         for (std::size_t i = 0; i < n; ++i) {
             dot += a[i] * grad_a[i];
@@ -112,6 +115,24 @@ void apply_derivative_vector(ActivationType type,
     for (std::size_t i = 0; i < n; ++i) {
         grad_z[i] = derivative_from_preactivation(type, z[i]) * grad_a[i];
     }
+}
+
+void apply_derivative_vector(ActivationType type,
+                             const std::vector<Scalar>& z,
+                             const std::vector<Scalar>& grad_a,
+                             std::vector<Scalar>& grad_z) {
+    if (z.size() != grad_a.size()) {
+        throw std::invalid_argument("apply_derivative_vector size mismatch between z and grad_a");
+    }
+
+    if (type == ActivationType::Softmax) {
+        std::vector<Scalar> a;
+        apply_vector(ActivationType::Softmax, z, a);
+        apply_derivative_vector_with_output(type, z, a, grad_a, grad_z);
+        return;
+    }
+
+    apply_derivative_vector_with_output(type, z, z, grad_a, grad_z);
 }
 
 }  // namespace activation

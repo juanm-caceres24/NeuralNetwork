@@ -25,5 +25,13 @@ void apply_derivative_vector(ActivationType type,
                              const std::vector<Scalar>& grad_a,
                              std::vector<Scalar>& grad_z);
 
+// Zero-allocation vector backward pass using precomputed forward output `a = f(z)`.
+// Avoids recomputing exp() and temporary allocation for Softmax. `grad_z` must not alias `a`.
+void apply_derivative_vector_with_output(ActivationType type,
+                                         const std::vector<Scalar>& z,
+                                         const std::vector<Scalar>& a,
+                                         const std::vector<Scalar>& grad_a,
+                                         std::vector<Scalar>& grad_z);
+
 }  // namespace activation
 }  // namespace nn
