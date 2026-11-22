@@ -208,8 +208,13 @@ AppConfig parse_config_json(const std::string& json_text) {
         }
         cfg.server.host = get_optional_string(server_obj, "host", cfg.server.host);
         cfg.server.port = get_optional_int(server_obj, "port", cfg.server.port);
-        if (cfg.server.port <= 0 || cfg.server.port > 65535) {
-            throw std::runtime_error("Config field 'server.port' must be in range 1..65535");
+        cfg.server.num_workers =
+            get_optional_size(server_obj, "num_workers", cfg.server.num_workers);
+        if (cfg.server.port < 0 || cfg.server.port > 65535) {
+            throw std::runtime_error("Config field 'server.port' must be in range 0..65535");
+        }
+        if (cfg.server.num_workers == 0) {
+            throw std::runtime_error("Config field 'server.num_workers' must be >= 1");
         }
     }
 
