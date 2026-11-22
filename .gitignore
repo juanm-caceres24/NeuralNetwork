@@ -1,0 +1,22 @@
+# Build outputs
+build/
+*.o
+*.d
+*.a
+*.so
+*.out
+
+# Editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Local/temporary experiments
+*.tmp
+*.log
