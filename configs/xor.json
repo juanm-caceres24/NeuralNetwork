@@ -1,0 +1,29 @@
+{
+  "model": {
+    "layers": [
+      { "size": 2 },
+      { "size": 6, "activation": "tanh" },
+      { "size": 1, "activation": "sigmoid" }
+    ],
+    "init_seed": 42,
+    "load_path": "",
+    "save_path": "models/xor_model.json",
+    "save_on_finish": true
+  },
+  "training": {
+    "dataset_path": "",
+    "dataset_generator": "xor",
+    "loss": "mse",
+    "epochs": 4000,
+    "batch_size": 4,
+    "learning_rate": 0.25,
+    "shuffle": true,
+    "num_threads": 1,
+    "seed": 100,
+    "log_every_epochs": 500
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080
+  }
+}

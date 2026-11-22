@@ -1,0 +1,32 @@
+{
+  "model": {
+    "layers": [
+      { "size": 2 },
+      { "size": 16, "activation": "tanh" },
+      { "size": 8, "activation": "tanh" },
+      { "size": 1, "activation": "sigmoid" }
+    ],
+    "init_seed": 321,
+    "load_path": "",
+    "save_path": "models/circle_model.json",
+    "save_on_finish": true
+  },
+  "training": {
+    "dataset_path": "",
+    "dataset_generator": "circle",
+    "generator_samples": 200,
+    "generator_seed": 777,
+    "loss": "bce",
+    "epochs": 300,
+    "batch_size": 20,
+    "learning_rate": 0.1,
+    "shuffle": true,
+    "num_threads": 4,
+    "seed": 11,
+    "log_every_epochs": 50
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080
+  }
+}

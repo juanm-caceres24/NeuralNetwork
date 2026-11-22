@@ -5,25 +5,29 @@
 #   make test           Build and execute all unit tests
 #   make clean          Remove all build artifacts
 
+CC       := gcc
 CXX      := g++
 AR       := ar
 MODE     ?= debug
 SANITIZE ?= 0
 
-COMMON_FLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Wshadow -MMD -MP -Iinclude
-LDFLAGS      := -pthread
-
 ifeq ($(MODE),release)
-    CXXFLAGS := $(COMMON_FLAGS) -O3 -march=native -DNDEBUG
+    OPT_FLAGS := -O3 -march=native -DNDEBUG
 else ifeq ($(MODE),debug)
-    CXXFLAGS := $(COMMON_FLAGS) -O0 -g3
+    OPT_FLAGS := -O0 -g3
 else
     $(error Unknown MODE '$(MODE)'. Use 'debug' or 'release')
 endif
 
+COMMON_CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Wshadow -MMD -MP -Iinclude -isystem third_party/cjson
+CXXFLAGS        := $(COMMON_CXXFLAGS) $(OPT_FLAGS)
+CJSON_CFLAGS    := -std=c99 -MMD -MP $(OPT_FLAGS)
+LDFLAGS         := -pthread
+
 ifeq ($(SANITIZE),1)
-    CXXFLAGS += -fsanitize=address,undefined
-    LDFLAGS  += -fsanitize=address,undefined
+    CXXFLAGS     += -fsanitize=address,undefined
+    CJSON_CFLAGS += -fsanitize=address,undefined
+    LDFLAGS      += -fsanitize=address,undefined
 endif
 
 BUILD_DIR := build/$(MODE)
@@ -31,8 +35,11 @@ OBJ_DIR   := $(BUILD_DIR)/obj
 TEST_DIR  := $(BUILD_DIR)/tests
 APP_DIR   := $(BUILD_DIR)/apps
 
-LIB_SRCS  := $(wildcard src/*.cpp)
-LIB_OBJS  := $(patsubst src/%.cpp,$(OBJ_DIR)/src/%.o,$(LIB_SRCS))
+CJSON_SRC := third_party/cjson/cJSON.c
+CJSON_OBJ := $(OBJ_DIR)/third_party/cjson/cJSON.o
+
+LIB_SRCS   := $(wildcard src/*.cpp)
+LIB_OBJS   := $(patsubst src/%.cpp,$(OBJ_DIR)/src/%.o,$(LIB_SRCS)) $(CJSON_OBJ)
 LIB_TARGET := $(BUILD_DIR)/libnn.a
 
 TEST_SRCS := $(wildcard tests/test_*.cpp)
@@ -45,7 +52,7 @@ APP_BINS  := $(patsubst apps/%.cpp,$(APP_DIR)/%,$(APP_SRCS))
 
 DEPS := $(LIB_OBJS:.o=.d) $(TEST_OBJS:.o=.d) $(APP_OBJS:.o=.d)
 
-.SECONDARY: $(TEST_OBJS) $(APP_OBJS)
+.SECONDARY: $(TEST_OBJS) $(APP_OBJS) $(CJSON_OBJ)
 
 .PHONY: all lib apps tests test clean help
 
@@ -60,6 +67,10 @@ tests: $(TEST_BINS)
 $(LIB_TARGET): $(LIB_OBJS)
 	@mkdir -p $(dir $@)
 	$(AR) rcs $@ $^
+
+$(CJSON_OBJ): $(CJSON_SRC)
+	@mkdir -p $(dir $@)
+	$(CC) $(CJSON_CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/src/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
