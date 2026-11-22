@@ -17,7 +17,7 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
   - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases — *Implemented*
   - CLI apps: `train_app` (train/resume/save) and `predict_app` (inference + `--show-neurons` inspection) — *Implemented*
 - **Inference Server**
-  - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) so external applications (e.g., games, scripts, robotics controllers) can query a live model over localhost or LAN
+  - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) with a fixed worker pool (`server_app`) — *Implemented*
 
 ## Quick Start
 
@@ -45,3 +45,4 @@ All project specifications, architecture decisions, math derivations, and workfl
 - [`docs/03-layers-workspace-and-network.md`](docs/03-layers-workspace-and-network.md) — Architecture and equations for `DenseLayer`, `NetworkWorkspace`, and `Network`.
 - [`docs/04-training-and-threading.md`](docs/04-training-and-threading.md) — Loss functions, `Dataset` CSV/shuffling, `ThreadPool`, and parallel mini-batch SGD.
 - [`docs/05-config-and-serialization.md`](docs/05-config-and-serialization.md) — `cJSON` integration, `config.json` reference, `model.json` format, and CLI apps.
+- [`docs/06-inference-server-api.md`](docs/06-inference-server-api.md) — POSIX TCP + HTTP/1.1 REST inference server architecture, endpoints, and client examples.
