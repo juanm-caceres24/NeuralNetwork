@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace nn {
@@ -39,6 +40,12 @@ public:
     // Restores traversal order to 0, 1, ..., size() - 1.
     void reset_order();
 
+    // Splits the dataset into (train, validation).
+    // Set shuffle_before_split = false for chronological time-series splits (e.g., trading).
+    std::pair<Dataset, Dataset> split(Scalar validation_fraction,
+                                      bool shuffle_before_split = true,
+                                      std::uint32_t seed = 42) const;
+
     // Loads a CSV file where each row has `input_cols` followed by `target_cols` floats.
     // Skips empty lines and lines starting with '#'.
     static Dataset load_csv(const std::string& path,
@@ -70,6 +77,9 @@ Dataset make_linear_separable(std::size_t num_samples, std::uint32_t seed = 42);
 
 // Non-linear 2D points in [-1, 1]^2 labeled 1 if inside radius 0.65 else 0.
 Dataset make_circle_classification(std::size_t num_samples, std::uint32_t seed = 42);
+
+// 4-class 2D quadrant classification with one-hot targets (ideal for Softmax + CCE).
+Dataset make_quadrant_multiclass(std::size_t num_samples, std::uint32_t seed = 42);
 
 }  // namespace datasets
 }  // namespace nn

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <numeric>
@@ -79,6 +80,43 @@ void Dataset::shuffle(std::mt19937& rng) {
 
 void Dataset::reset_order() {
     std::iota(indices_.begin(), indices_.end(), static_cast<std::size_t>(0));
+}
+
+std::pair<Dataset, Dataset> Dataset::split(Scalar validation_fraction,
+                                           bool shuffle_before_split,
+                                           std::uint32_t seed) const {
+    if (validation_fraction <= Scalar{0} || validation_fraction >= Scalar{1}) {
+        throw std::invalid_argument("Dataset::split validation_fraction must be in (0, 1)");
+    }
+    if (size() < 2) {
+        throw std::invalid_argument("Dataset::split requires at least 2 samples");
+    }
+
+    const std::size_t raw_val = static_cast<std::size_t>(
+        std::lround(static_cast<double>(size()) * static_cast<double>(validation_fraction)));
+    const std::size_t val_count = std::max<std::size_t>(1, std::min<std::size_t>(size() - 1, raw_val));
+    const std::size_t train_count = size() - val_count;
+
+    std::vector<std::size_t> order(size());
+    std::iota(order.begin(), order.end(), static_cast<std::size_t>(0));
+    if (shuffle_before_split) {
+        std::mt19937 rng(seed);
+        std::shuffle(order.begin(), order.end(), rng);
+    }
+
+    Dataset train_ds(input_size_, target_size_);
+    Dataset val_ds(input_size_, target_size_);
+
+    for (std::size_t i = 0; i < train_count; ++i) {
+        const std::size_t idx = order[i];
+        train_ds.add_sample(inputs_[idx], targets_[idx]);
+    }
+    for (std::size_t i = train_count; i < size(); ++i) {
+        const std::size_t idx = order[i];
+        val_ds.add_sample(inputs_[idx], targets_[idx]);
+    }
+
+    return {std::move(train_ds), std::move(val_ds)};
 }
 
 Dataset Dataset::load_csv(const std::string& path,
@@ -239,6 +277,30 @@ Dataset make_circle_classification(std::size_t num_samples, std::uint32_t seed) 
         const Scalar y = dist(rng);
         const Scalar label = (x * x + y * y < kRadiusSq) ? Scalar{1} : Scalar{0};
         ds.add_sample({x, y}, {label});
+    }
+    return ds;
+}
+
+Dataset make_quadrant_multiclass(std::size_t num_samples, std::uint32_t seed) {
+    Dataset ds(2, 4);
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<Scalar> dist(-1.0f, 1.0f);
+    for (std::size_t i = 0; i < num_samples; ++i) {
+        const Scalar x = dist(rng);
+        const Scalar y = dist(rng);
+        std::size_t cls = 0;
+        if (x >= Scalar{0} && y >= Scalar{0}) {
+            cls = 0;
+        } else if (x < Scalar{0} && y >= Scalar{0}) {
+            cls = 1;
+        } else if (x < Scalar{0} && y < Scalar{0}) {
+            cls = 2;
+        } else {
+            cls = 3;
+        }
+        std::vector<Scalar> target(4, Scalar{0});
+        target[cls] = Scalar{1};
+        ds.add_sample({x, y}, std::move(target));
     }
     return ds;
 }

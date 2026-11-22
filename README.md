@@ -9,13 +9,13 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
   - Activation functions & exact derivatives (`Linear`, `Sigmoid`, `Tanh`, `ReLU`, `LeakyReLU`, numerically stable `Softmax`) — *Implemented*
   - `DenseLayer`, thread-safe `NetworkWorkspace` (full inspection of weights, biases, and neuron activations), and `Network` (forward + backpropagation + gradient updates) — *Implemented*
 - **Training Engine**
-  - Backpropagation with configurable learning rate, loss functions (`MSE`, `BinaryCrossEntropy`), mini-batches, and epoch-level index shuffling — *Implemented*
+  - Backpropagation with `SGD` and `Adam` optimizers, loss functions (`MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`), mini-batches, epoch-level index shuffling, and train/validation split (random or chronological) with accuracy & best-model checkpointing — *Implemented*
   - Synchronous intra-batch multi-threading via a reusable `ThreadPool` — *Implemented*
-  - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle) — *Implemented*
-- **Persistence & Configuration**
+  - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle, 4-class quadrants) — *Implemented*
+- **Persistence, CLI Apps & Benchmarks**
   - Zero hardcoded settings: external `config.json` for hyperparameters, architecture, paths, and server port (`cJSON` v1.7.18 vendored) — *Implemented*
   - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases — *Implemented*
-  - CLI apps: `train_app` (train/resume/save) and `predict_app` (inference + `--show-neurons` inspection) — *Implemented*
+  - CLI apps: `train_app`, `predict_app`, `server_app`, and `bench_app` (`./scripts/benchmark.sh`) — *Implemented*
 - **Inference Server**
   - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) with a fixed worker pool (`server_app`) — *Implemented*
 
@@ -33,6 +33,9 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
 
 # Build and run the full unit test suite
 ./scripts/test.sh
+
+# Build in release mode and run performance benchmarks
+./scripts/benchmark.sh
 ```
 
 ## Documentation
@@ -46,3 +49,4 @@ All project specifications, architecture decisions, math derivations, and workfl
 - [`docs/04-training-and-threading.md`](docs/04-training-and-threading.md) — Loss functions, `Dataset` CSV/shuffling, `ThreadPool`, and parallel mini-batch SGD.
 - [`docs/05-config-and-serialization.md`](docs/05-config-and-serialization.md) — `cJSON` integration, `config.json` reference, `model.json` format, and CLI apps.
 - [`docs/06-inference-server-api.md`](docs/06-inference-server-api.md) — POSIX TCP + HTTP/1.1 REST inference server architecture, endpoints, and client examples.
+- [`docs/07-optimizers-validation-and-benchmarks.md`](docs/07-optimizers-validation-and-benchmarks.md) — `CategoricalCrossEntropy`, `Adam`, train/validation splitting, accuracy metrics, and performance benchmarking.
