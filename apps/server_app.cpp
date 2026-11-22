@@ -5,6 +5,7 @@
 #include <atomic>
 #include <csignal>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -53,34 +54,56 @@ int main(int argc, char* argv[]) {
 
     std::string override_model;
     std::string override_host;
-    int override_port = -1;
-    std::size_t override_workers = 0;
+    std::optional<int> override_port;
+    std::optional<std::size_t> override_workers;
 
-    for (int i = 2; i < argc; ++i) {
-        const std::string arg = argv[i];
-        if (arg == "--model" && i + 1 < argc) {
-            override_model = argv[++i];
-        } else if (arg == "--host" && i + 1 < argc) {
-            override_host = argv[++i];
-        } else if (arg == "--port" && i + 1 < argc) {
-            override_port = std::stoi(argv[++i]);
-        } else if (arg == "--workers" && i + 1 < argc) {
-            override_workers = static_cast<std::size_t>(std::stoul(argv[++i]));
-        } else if (arg == "--help" || arg == "-h") {
-            print_usage(argv[0]);
-            return 0;
-        } else {
-            std::cerr << "Unknown or incomplete option: " << arg << "\n";
-            print_usage(argv[0]);
-            return 1;
+    auto parse_strict_int = [](const std::string& val, const char* flag) -> int {
+        try {
+            std::size_t consumed = 0;
+            const int parsed = std::stoi(val, &consumed);
+            if (consumed != val.size()) {
+                throw std::invalid_argument("trailing characters");
+            }
+            return parsed;
+        } catch (const std::exception&) {
+            throw std::invalid_argument(std::string("Invalid integer for ") + flag + ": '" + val +
+                                        "'");
         }
-    }
+    };
 
     try {
+        for (int i = 2; i < argc; ++i) {
+            const std::string arg = argv[i];
+            if (arg == "--model" && i + 1 < argc) {
+                override_model = argv[++i];
+            } else if (arg == "--host" && i + 1 < argc) {
+                override_host = argv[++i];
+            } else if (arg == "--port" && i + 1 < argc) {
+                const int p = parse_strict_int(argv[++i], "--port");
+                if (p < 0 || p > 65535) {
+                    throw std::invalid_argument("--port must be in range 0..65535");
+                }
+                override_port = p;
+            } else if (arg == "--workers" && i + 1 < argc) {
+                const int w = parse_strict_int(argv[++i], "--workers");
+                if (w <= 0) {
+                    throw std::invalid_argument("--workers must be >= 1");
+                }
+                override_workers = static_cast<std::size_t>(w);
+            } else if (arg == "--help" || arg == "-h") {
+                print_usage(argv[0]);
+                return 0;
+            } else {
+                std::cerr << "Unknown or incomplete option: " << arg << "\n";
+                print_usage(argv[0]);
+                return 1;
+            }
+        }
+
         nn::AppConfig cfg = nn::load_config_json(first_arg);
         if (!override_host.empty()) cfg.server.host = override_host;
-        if (override_port >= 0) cfg.server.port = override_port;
-        if (override_workers > 0) cfg.server.num_workers = override_workers;
+        if (override_port.has_value()) cfg.server.port = *override_port;
+        if (override_workers.has_value()) cfg.server.num_workers = *override_workers;
 
         // Model resolution priority: --model > model.load_path > model.save_path
         std::string model_path = override_model;

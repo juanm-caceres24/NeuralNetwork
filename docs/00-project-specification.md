@@ -205,7 +205,7 @@ NeuralNetwork/
 │   └── server.hpp              # HTTP/1.1 + JSON InferenceServer over POSIX sockets
 ├── src/                        # Implementations mirroring include/nn/
 ├── apps/                       # train_app.cpp, predict_app.cpp, server_app.cpp, bench_app.cpp
-└── tests/                      # Zero-dependency unit & integration tests (31 test cases)
+└── tests/                      # Zero-dependency unit & integration tests (32 test cases)
 ```
 
 ---

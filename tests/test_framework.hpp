@@ -69,7 +69,7 @@ inline int run_all_tests() {
     do {                                                                          \
         const double a_val = static_cast<double>(actual);                         \
         const double e_val = static_cast<double>(expected);                       \
-        if (std::fabs(a_val - e_val) > static_cast<double>(eps)) {                \
+        if (!(std::fabs(a_val - e_val) <= static_cast<double>(eps))) {            \
             std::ostringstream oss;                                               \
             oss << __FILE__ << ":" << __LINE__ << " CHECK_NEAR failed: "          \
                 << #actual << " (" << a_val << ") != " << #expected << " ("       \

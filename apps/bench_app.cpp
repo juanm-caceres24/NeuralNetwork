@@ -262,13 +262,31 @@ void benchmark_http_loopback(const nn::Network& net, std::size_t num_requests) {
               << std::setprecision(0) << rps << " req/s\n";
 }
 
+std::size_t parse_strict_positive_size(const std::string& val, const char* label) {
+    if (val.empty() || val[0] == '-') {
+        throw std::invalid_argument(std::string("Invalid ") + label + ": '" + val + "'");
+    }
+    try {
+        std::size_t consumed = 0;
+        const unsigned long parsed = std::stoul(val, &consumed);
+        if (consumed != val.size() || parsed == 0) {
+            throw std::invalid_argument("bad value");
+        }
+        return static_cast<std::size_t>(parsed);
+    } catch (const std::exception&) {
+        throw std::invalid_argument(std::string("Invalid ") + label + ": '" + val + "'");
+    }
+}
+
 std::vector<std::size_t> parse_thread_list(const std::string& csv) {
     std::vector<std::size_t> out;
     std::stringstream ss(csv);
     std::string tok;
     while (std::getline(ss, tok, ',')) {
-        const std::size_t n = static_cast<std::size_t>(std::stoul(tok));
-        if (n >= 1) out.push_back(n);
+        out.push_back(parse_strict_positive_size(tok, "thread count"));
+    }
+    if (out.empty()) {
+        throw std::invalid_argument("--threads list must not be empty");
     }
     return out;
 }
@@ -285,16 +303,25 @@ int main(int argc, char* argv[]) {
     }
     std::size_t iters = 20000;
 
-    for (int i = 1; i < argc; ++i) {
-        const std::string arg = argv[i];
-        if (arg == "--threads" && i + 1 < argc) {
-            thread_counts = parse_thread_list(argv[++i]);
-        } else if (arg == "--iters" && i + 1 < argc) {
-            iters = static_cast<std::size_t>(std::stoul(argv[++i]));
-        } else if (arg == "--help" || arg == "-h") {
-            std::cout << "Usage: " << argv[0] << " [--threads 1,2,4,8] [--iters 20000]\n";
-            return 0;
+    try {
+        for (int i = 1; i < argc; ++i) {
+            const std::string arg = argv[i];
+            if (arg == "--threads" && i + 1 < argc) {
+                thread_counts = parse_thread_list(argv[++i]);
+            } else if (arg == "--iters" && i + 1 < argc) {
+                iters = parse_strict_positive_size(argv[++i], "--iters value");
+            } else if (arg == "--help" || arg == "-h") {
+                std::cout << "Usage: " << argv[0] << " [--threads 1,2,4,8] [--iters 20000]\n";
+                return 0;
+            } else {
+                std::cerr << "[bench_app] Unknown or incomplete option: " << arg << "\n";
+                std::cerr << "Usage: " << argv[0] << " [--threads 1,2,4,8] [--iters 20000]\n";
+                return 1;
+            }
         }
+    } catch (const std::exception& ex) {
+        std::cerr << "[bench_app] Error: " << ex.what() << "\n";
+        return 1;
     }
 
     std::cout << "====================================================================\n";
