@@ -37,6 +37,7 @@ struct DataConfig {
 struct ServerConfig {
     std::string host = "127.0.0.1";
     int port = 8080;
+    std::size_t num_workers = 4;
 };
 
 struct AppConfig {
