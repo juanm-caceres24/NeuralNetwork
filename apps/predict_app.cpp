@@ -18,6 +18,13 @@ void print_usage(const char* prog) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    if (argc >= 2) {
+        const std::string first_arg = argv[1];
+        if (first_arg == "--help" || first_arg == "-h") {
+            print_usage(argv[0]);
+            return 0;
+        }
+    }
     if (argc < 3) {
         print_usage(argv[0]);
         return 1;

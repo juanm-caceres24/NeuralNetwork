@@ -99,6 +99,17 @@ TEST_CASE(softmax_jacobian_matches_finite_differences) {
     nn::activation::apply_derivative_vector(ActivationType::Softmax, z, grad_a, analytic_grad_z);
     CHECK(analytic_grad_z.size() == z.size());
 
+    // Zero-allocation path reusing forward output `a` must match identically
+    std::vector<Scalar> a_forward;
+    nn::activation::apply_vector(ActivationType::Softmax, z, a_forward);
+    std::vector<Scalar> fast_grad_z;
+    nn::activation::apply_derivative_vector_with_output(ActivationType::Softmax, z, a_forward,
+                                                        grad_a, fast_grad_z);
+    CHECK(fast_grad_z.size() == analytic_grad_z.size());
+    for (std::size_t i = 0; i < fast_grad_z.size(); ++i) {
+        CHECK_NEAR(fast_grad_z[i], analytic_grad_z[i], 0.0f);
+    }
+
     const Scalar eps = 1e-3f;
     auto eval_objective = [&](const std::vector<Scalar>& z_in) {
         std::vector<Scalar> a;
@@ -123,6 +134,17 @@ TEST_CASE(softmax_jacobian_matches_finite_differences) {
     CHECK_THROWS(
         nn::activation::apply_derivative_vector(ActivationType::Softmax, z, {1.0f}, bad_out),
         std::invalid_argument);
+}
+
+TEST_CASE(check_near_rejects_nan) {
+    const Scalar nan_val = std::nanf("");
+    bool caught = false;
+    try {
+        CHECK_NEAR(nan_val, 0.0f, 1.0f);
+    } catch (const std::runtime_error&) {
+        caught = true;
+    }
+    CHECK(caught);
 }
 
 int main() {

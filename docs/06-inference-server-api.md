@@ -70,6 +70,17 @@ Runs a forward pass and returns the output vector and execution latency in micro
   "latency_us": 4
 }
 ```
+When `"include_neurons": true` is passed, the response also includes a `"layers"` array with each layer's pre-activations (`z`) and activations (`a`):
+```json
+{
+  "output": [0.973478],
+  "latency_us": 4,
+  "layers": [
+    {"z": [-1.24, 3.36], "a": [-0.84, 0.99]},
+    {"z": [3.60], "a": [0.973478]}
+  ]
+}
+```
 
 **Error Responses & CORS:**
 - `400 Bad Request` — Malformed HTTP request/headers, invalid JSON, missing `"input"`, wrong vector length, or non-numeric elements.

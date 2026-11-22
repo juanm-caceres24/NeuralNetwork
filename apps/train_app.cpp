@@ -37,6 +37,10 @@ int main(int argc, char* argv[]) {
     }
 
     const std::string config_path = argv[1];
+    if (config_path == "--help" || config_path == "-h") {
+        print_usage(argv[0]);
+        return 0;
+    }
     bool ask_save = false;
     bool force_no_save = false;
     std::string override_load;

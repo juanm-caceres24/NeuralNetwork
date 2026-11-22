@@ -82,16 +82,17 @@ void DenseLayer::backward(const std::vector<Scalar>& prev_activation,
     if (grad_output.size() != out_n) {
         throw std::invalid_argument("DenseLayer::backward grad_output size mismatch");
     }
-    if (state.z.size() != out_n) {
-        throw std::invalid_argument("DenseLayer::backward state.z size mismatch");
+    if (state.z.size() != out_n || state.a.size() != out_n) {
+        throw std::invalid_argument("DenseLayer::backward LayerState size mismatch");
     }
     if (grads.grad_weights.rows() != out_n || grads.grad_weights.cols() != in_n ||
         grads.grad_biases.size() != out_n) {
         throw std::invalid_argument("DenseLayer::backward LayerGrads dimension mismatch");
     }
 
-    // 1. delta = dL/dz
-    activation::apply_derivative_vector(activation_, state.z, grad_output, delta_buf);
+    // 1. delta = dL/dz (reuses forward state.a to avoid recomputation/allocations for Softmax)
+    activation::apply_derivative_vector_with_output(activation_, state.z, state.a, grad_output,
+                                                    delta_buf);
 
     // 2. Accumulate dL/dW += delta * prev_activation^T
     grads.grad_weights.add_outer_product(delta_buf, prev_activation);
