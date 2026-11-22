@@ -158,13 +158,22 @@ bool read_http_request(int fd, HttpRequest& out_req, HttpResponse& error_resp) {
                 const std::string key = to_lower_ascii(trim_copy(line.substr(0, colon)));
                 if (key == "content-length") {
                     const std::string val = trim_copy(line.substr(colon + 1));
+                    const bool all_digits =
+                        !val.empty() &&
+                        std::all_of(val.begin(), val.end(),
+                                    [](unsigned char c) { return std::isdigit(c) != 0; });
+                    if (!all_digits) {
+                        error_resp =
+                            make_error_response(400, "Bad Request", "Invalid Content-Length");
+                        return false;
+                    }
                     try {
-                        std::size_t consumed = 0;
-                        const unsigned long parsed = std::stoul(val, &consumed);
-                        if (consumed != val.size()) {
-                            throw std::invalid_argument("bad length");
-                        }
+                        const unsigned long parsed = std::stoul(val);
                         content_length = static_cast<std::size_t>(parsed);
+                    } catch (const std::out_of_range&) {
+                        error_resp = make_error_response(413, "Payload Too Large",
+                                                         "Request body exceeds maximum allowed size");
+                        return false;
                     } catch (const std::exception&) {
                         error_resp =
                             make_error_response(400, "Bad Request", "Invalid Content-Length");
@@ -319,6 +328,8 @@ void InferenceServer::serve_forever() {
         }
     }
 
+    running_.store(false);
+
     // Drain and join worker threads cleanly
     {
         std::lock_guard<std::mutex> lock(queue_mutex_);
@@ -427,6 +438,10 @@ HttpResponse InferenceServer::handle_request(const HttpRequest& req,
         }
 
         CStringPtr rendered(cJSON_PrintUnformatted(root.get()), &std::free);
+        if (!rendered) {
+            return make_error_response(500, "Internal Server Error",
+                                       "Failed to serialize /info response");
+        }
         return HttpResponse{200, "OK", "application/json", std::string(rendered.get())};
     }
 
@@ -491,6 +506,10 @@ HttpResponse InferenceServer::handle_request(const HttpRequest& req,
         }
 
         CStringPtr rendered(cJSON_PrintUnformatted(resp_obj.get()), &std::free);
+        if (!rendered) {
+            return make_error_response(500, "Internal Server Error",
+                                       "Failed to serialize /predict response");
+        }
         return HttpResponse{200, "OK", "application/json", std::string(rendered.get())};
     }
 
