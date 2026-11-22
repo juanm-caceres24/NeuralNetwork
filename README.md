@@ -2,27 +2,28 @@
 
 A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network library, training engine, and inference server written in modern **C++17** with minimal dependencies.
 
-## Features (Planned & Implemented)
+## Features
 
 - **Core Engine (`libnn`)**
-  - Contiguous row-major 1D-backed `Matrix` math primitives (`matvec`, `matvec_transpose`, `add_outer_product`, `add_scaled`) — *Implemented*
-  - Activation functions & exact derivatives (`Linear`, `Sigmoid`, `Tanh`, `ReLU`, `LeakyReLU`, numerically stable `Softmax`) — *Implemented*
-  - `DenseLayer`, thread-safe `NetworkWorkspace` (full inspection of weights, biases, and neuron activations), and `Network` (forward + backpropagation + gradient updates) — *Implemented*
+  - Contiguous row-major 1D-backed `Matrix` math primitives (`matvec`, `matvec_transpose`, `add_outer_product`, `add_scaled`)
+  - Activation functions & exact derivatives (`Linear`, `Sigmoid`, `Tanh`, `ReLU`, `LeakyReLU`, numerically stable `Softmax`)
+  - `DenseLayer`, thread-safe `NetworkWorkspace` (full inspection of weights, biases, and neuron activations), and `Network` (forward + backpropagation + gradient updates)
 - **Training Engine**
-  - Backpropagation with `SGD` and `Adam` optimizers, loss functions (`MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`), mini-batches, epoch-level index shuffling, and train/validation split (random or chronological) with accuracy & best-model checkpointing — *Implemented*
-  - Synchronous intra-batch multi-threading via a reusable `ThreadPool` — *Implemented*
-  - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle, 4-class quadrants) — *Implemented*
+  - Backpropagation with `SGD` and `Adam` optimizers, loss functions (`MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`), mini-batches, epoch-level index shuffling, and train/validation split (random or chronological) with accuracy & best-model checkpointing
+  - Synchronous intra-batch multi-threading via a reusable `ThreadPool`
+  - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle, 4-class quadrants)
 - **Persistence, CLI Apps & Benchmarks**
-  - Zero hardcoded settings: external `config.json` for hyperparameters, architecture, paths, and server port (`cJSON` v1.7.18 vendored) — *Implemented*
-  - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases — *Implemented*
-  - CLI apps: `train_app`, `predict_app`, `server_app`, and `bench_app` (`./scripts/benchmark.sh`) — *Implemented*
+  - Zero hardcoded settings: external `config.json` for hyperparameters, architecture, paths, and server port (`cJSON` v1.7.18 vendored)
+  - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases
+  - CLI apps: `train_app`, `predict_app`, `server_app`, and `bench_app` (`./scripts/benchmark.sh`)
 - **Inference Server**
-  - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) with a fixed worker pool (`server_app`) — *Implemented*
+  - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) with a fixed worker pool (`server_app`)
 
 ## Quick Start
 
 ### Requirements
 - `g++` (C++17 support, e.g., GCC 9+)
+- `gcc` (C99 support, for vendored `third_party/cjson/cJSON.c`)
 - `make`
 
 ### Build & Run Tests

@@ -71,10 +71,13 @@ Runs a forward pass and returns the output vector and execution latency in micro
 }
 ```
 
-**Error Responses:**
-- `400 Bad Request` — Invalid JSON, missing `"input"`, wrong vector length, or non-numeric elements.
+**Error Responses & CORS:**
+- `400 Bad Request` — Malformed HTTP request/headers, invalid JSON, missing `"input"`, wrong vector length, or non-numeric elements.
 - `404 Not Found` — Unknown endpoint path.
 - `405 Method Not Allowed` — Wrong HTTP verb (e.g., `GET /predict`).
+- `413 Payload Too Large` — Request body exceeds the 4 MB limit.
+- `431 Request Header Fields Too Large` — HTTP headers exceed the 64 KB limit.
+- `OPTIONS *` → `204 No Content` (all responses include `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: GET, POST, OPTIONS`, and `Access-Control-Allow-Headers: Content-Type`).
 
 ---
 
@@ -86,7 +89,7 @@ Runs a forward pass and returns the output vector and execution latency in micro
 ./build/release/apps/train_app configs/xor.json
 ./build/release/apps/server_app configs/xor.json
 ```
-*(Optional overrides: `--model models/custom.json --host 0.0.0.0 --port 9000 --workers 4`.)*
+*(Optional overrides: `--model models/custom.json --host 0.0.0.0 --port 9000 --workers 4`; `--port 0` lets the OS pick an ephemeral port.)*
 
 ### 2. Query from Terminal (`curl` or helper script)
 ```bash
