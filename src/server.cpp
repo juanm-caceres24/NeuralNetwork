@@ -13,6 +13,7 @@
 #include <cctype>
 #include <cerrno>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
@@ -472,11 +473,16 @@ HttpResponse InferenceServer::handle_request(const HttpRequest& req,
         input.reserve(network_.input_size());
         const cJSON* elem = nullptr;
         cJSON_ArrayForEach(elem, input_arr) {
-            if (!cJSON_IsNumber(elem)) {
+            if (!cJSON_IsNumber(elem) || !std::isfinite(elem->valuedouble)) {
                 return make_error_response(400, "Bad Request",
-                                           "All elements in 'input' must be numeric");
+                                           "All elements in 'input' must be finite numbers");
             }
-            input.push_back(static_cast<Scalar>(elem->valuedouble));
+            const Scalar val = static_cast<Scalar>(elem->valuedouble);
+            if (!std::isfinite(val)) {
+                return make_error_response(400, "Bad Request",
+                                           "All elements in 'input' must be within float range");
+            }
+            input.push_back(val);
         }
 
         bool include_neurons = false;

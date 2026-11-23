@@ -6,6 +6,7 @@
 #include "nn/workspace.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -16,6 +17,15 @@
 namespace nn {
 
 namespace {
+
+bool all_finite(const std::vector<Scalar>& vec) {
+    for (Scalar v : vec) {
+        if (!std::isfinite(v)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 std::size_t argmax_index(const std::vector<Scalar>& vec) {
     std::size_t best = 0;
@@ -234,6 +244,10 @@ Scalar Trainer::evaluate_loss(const Network& network,
     if (network.empty() || dataset.empty()) {
         throw std::invalid_argument("evaluate_loss requires non-empty Network and Dataset");
     }
+    if (dataset.input_size() != network.input_size() ||
+        dataset.target_size() != network.output_size()) {
+        throw std::invalid_argument("evaluate_loss dataset dimensions do not match Network");
+    }
     NetworkWorkspace ws = network.create_workspace(false);
     Scalar total_loss = Scalar{0};
     for (std::size_t i = 0; i < dataset.size(); ++i) {
@@ -247,12 +261,19 @@ Scalar Trainer::evaluate_accuracy(const Network& network, const Dataset& dataset
     if (network.empty() || dataset.empty()) {
         throw std::invalid_argument("evaluate_accuracy requires non-empty Network and Dataset");
     }
+    if (dataset.input_size() != network.input_size() ||
+        dataset.target_size() != network.output_size()) {
+        throw std::invalid_argument("evaluate_accuracy dataset dimensions do not match Network");
+    }
     NetworkWorkspace ws = network.create_workspace(false);
     std::size_t correct = 0;
     const bool is_binary = (network.output_size() == 1);
 
     for (std::size_t i = 0; i < dataset.size(); ++i) {
         const std::vector<Scalar>& pred = network.forward(dataset.raw_input(i), ws);
+        if (!all_finite(pred)) {
+            continue;
+        }
         const std::vector<Scalar>& target = dataset.raw_target(i);
         if (is_binary) {
             const bool pred_cls = (pred[0] >= Scalar{0.5f});

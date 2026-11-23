@@ -119,12 +119,14 @@ TEST_CASE(http_router_health_info_predict_and_errors) {
     const cJSON* layers_arr = cJSON_GetObjectItemCaseSensitive(pred_json.get(), "layers");
     CHECK(cJSON_IsArray(layers_arr) && cJSON_GetArraySize(layers_arr) == 2);
 
-    // Error cases: 400 (bad JSON, wrong size, non-numeric), 404, 405
+    // Error cases: 400 (bad JSON, wrong size, non-numeric, float overflow), 404, 405
     CHECK(server.handle_request({"POST", "/predict", "not json"}, ws).status_code == 400);
     CHECK(server.handle_request({"POST", "/predict", R"({"input": [1.0]})"}, ws).status_code ==
           400);
     CHECK(server.handle_request({"POST", "/predict", R"({"input": [1.0, "x"]})"}, ws).status_code ==
           400);
+    CHECK(server.handle_request({"POST", "/predict", R"({"input": [1e308, 0.0]})"}, ws)
+              .status_code == 400);
     CHECK(server.handle_request({"GET", "/predict", ""}, ws).status_code == 405);
     CHECK(server.handle_request({"GET", "/unknown", ""}, ws).status_code == 404);
     CHECK(server.handle_request({"OPTIONS", "/predict", ""}, ws).status_code == 204);
@@ -168,7 +170,7 @@ TEST_CASE(live_tcp_server_endpoints_and_concurrent_clients) {
         const cJSON* out_arr = cJSON_GetObjectItemCaseSensitive(pred_json.get(), "output");
         CHECK_NEAR(cJSON_GetArrayItem(out_arr, 0)->valuedouble, 1.0, 1e-6);
 
-        // 3. Live 404 and negative Content-Length (400 Bad Request) checks
+        // 3. Live 404, bad/oversized Content-Length (400/413), oversized headers (431), and CORS OPTIONS
         const std::string not_found = send_raw_http_tcp(
             port, "GET /nope HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
         CHECK(not_found.find("HTTP/1.1 404 Not Found") == 0);
@@ -177,6 +179,33 @@ TEST_CASE(live_tcp_server_endpoints_and_concurrent_clients) {
             port,
             "POST /predict HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: -5\r\n\r\n");
         CHECK(bad_cl.find("HTTP/1.1 400 Bad Request") == 0);
+
+        const std::string alpha_cl = send_raw_http_tcp(
+            port,
+            "POST /predict HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: abc\r\n\r\n");
+        CHECK(alpha_cl.find("HTTP/1.1 400 Bad Request") == 0);
+
+        const std::string huge_cl = send_raw_http_tcp(
+            port,
+            "POST /predict HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 99999999\r\n\r\n");
+        CHECK(huge_cl.find("HTTP/1.1 413 Payload Too Large") == 0);
+
+        const std::string overflow_cl = send_raw_http_tcp(
+            port,
+            "POST /predict HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+            "Content-Length: 999999999999999999999999999999\r\n\r\n");
+        CHECK(overflow_cl.find("HTTP/1.1 413 Payload Too Large") == 0);
+
+        const std::string huge_headers =
+            "GET /health HTTP/1.1\r\nHost: 127.0.0.1\r\nX-Pad: " + std::string(70000, 'a') +
+            "\r\n\r\n";
+        const std::string too_large_hdr = send_raw_http_tcp(port, huge_headers);
+        CHECK(too_large_hdr.find("HTTP/1.1 431 Request Header Fields Too Large") == 0);
+
+        const std::string cors_opt = send_raw_http_tcp(
+            port, "OPTIONS /predict HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
+        CHECK(cors_opt.find("HTTP/1.1 204 No Content") == 0);
+        CHECK(cors_opt.find("Access-Control-Allow-Origin: *") != std::string::npos);
 
         // 4. Concurrent client stress test: 8 threads x 20 live TCP requests = 160 requests
         const std::vector<std::pair<std::string, double>> cases = {

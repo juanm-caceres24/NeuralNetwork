@@ -1,6 +1,7 @@
 #include "nn/serializer.hpp"
 #include "nn/workspace.hpp"
 
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
@@ -50,8 +51,8 @@ int main(int argc, char* argv[]) {
             try {
                 std::size_t consumed = 0;
                 const nn::Scalar val = std::stof(arg, &consumed);
-                if (consumed != arg.size()) {
-                    throw std::invalid_argument("Trailing characters");
+                if (consumed != arg.size() || !std::isfinite(val)) {
+                    throw std::invalid_argument("Invalid or non-finite input");
                 }
                 input.push_back(val);
             } catch (const std::exception&) {

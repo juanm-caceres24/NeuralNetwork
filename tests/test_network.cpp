@@ -296,6 +296,26 @@ TEST_CASE(network_validation_errors) {
     net.forward({1.0f, 2.0f, 3.0f}, ws_no_grads);
     CHECK_THROWS(net.backward({1.0f, 2.0f, 3.0f}, {0.1f, 0.2f, 0.3f, 0.4f}, ws_no_grads),
                  std::invalid_argument);
+
+    // backward_from_output_delta & DenseLayer::backward_from_delta validation
+    CHECK_THROWS(empty_net.backward_from_output_delta({1.0f}, {1.0f}, ws), std::logic_error);
+    CHECK_THROWS(
+        net.backward_from_output_delta({1.0f, 2.0f, 3.0f}, {0.1f, 0.2f, 0.3f, 0.4f}, ws_no_grads),
+        std::invalid_argument);
+    NetworkWorkspace ws_grads = net.create_workspace(true);
+    net.forward({1.0f, 2.0f, 3.0f}, ws_grads);
+    CHECK_THROWS(net.backward_from_output_delta({1.0f, 2.0f}, {0.1f, 0.2f, 0.3f, 0.4f}, ws_grads),
+                 std::invalid_argument);
+    CHECK_THROWS(net.backward_from_output_delta({1.0f, 2.0f, 3.0f}, {0.1f, 0.2f}, ws_grads),
+                 std::invalid_argument);
+
+    std::vector<Scalar> grad_in;
+    CHECK_THROWS(net.layer(0).backward_from_delta({1.0f, 2.0f}, {0.1f, 0.2f, 0.3f, 0.4f},
+                                                  ws_grads.grads[0], grad_in),
+                 std::invalid_argument);
+    CHECK_THROWS(net.layer(0).backward_from_delta({1.0f, 2.0f, 3.0f}, {0.1f}, ws_grads.grads[0],
+                                                  grad_in),
+                 std::invalid_argument);
 }
 
 int main() {
