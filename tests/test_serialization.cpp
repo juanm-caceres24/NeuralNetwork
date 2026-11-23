@@ -98,6 +98,29 @@ TEST_CASE(config_json_load_and_validation) {
     // Missing activation on hidden/output layer
     CHECK_THROWS(nn::parse_config_json(R"({"model": {"layers": [{"size": 2}, {"size": 1}]}})"),
                  std::runtime_error);
+
+    AppConfig ttt_cfg = nn::load_config_json("configs/tictactoe.json");
+    CHECK(ttt_cfg.model.layers.size() == 4);
+    CHECK(ttt_cfg.model.layers[0].size == 9);
+    CHECK(ttt_cfg.model.layers[3].size == 41);
+    CHECK(ttt_cfg.model.layers[3].activation == ActivationType::Softmax);
+    CHECK(ttt_cfg.training.loss == LossType::CategoricalCrossEntropy);
+    CHECK(ttt_cfg.training.optimizer == nn::OptimizerType::Adam);
+    CHECK(ttt_cfg.data.dataset_path == "data/tictactoe_dataset.csv");
+    CHECK(ttt_cfg.data.has_header == false);
+}
+
+TEST_CASE(config_json_rejects_unknown_keys) {
+    CHECK_THROWS(nn::parse_config_json(R"({"unknown_section": {}})"), std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"training": {"lr": 0.001}})"), std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"data": {"filepath": "data.csv"}})"),
+                 std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"model": {"output_path": "m.json"}})"),
+                 std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"model": {"layers": [{"size": 2, "units": 2}]}})"),
+                 std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"server": {"bind": "127.0.0.1"}})"),
+                 std::runtime_error);
 }
 
 TEST_CASE(end_to_end_config_train_save_reload_resume) {
