@@ -59,6 +59,13 @@ public:
                   std::vector<Scalar>& delta_buf,
                   std::vector<Scalar>& grad_input) const;
 
+    // Stateless, thread-safe backward pass using a precomputed pre-activation gradient
+    // `delta = dL/dz` (e.g., fused Softmax + CategoricalCrossEntropy output delta).
+    void backward_from_delta(const std::vector<Scalar>& prev_activation,
+                             const std::vector<Scalar>& delta,
+                             LayerGrads& grads,
+                             std::vector<Scalar>& grad_input) const;
+
     // Applies accumulated gradients: W += scale * grad_W, b += scale * grad_b.
     // Typically scale = -learning_rate / batch_size.
     void apply_gradients(const LayerGrads& grads, Scalar scale);

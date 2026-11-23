@@ -94,16 +94,39 @@ void DenseLayer::backward(const std::vector<Scalar>& prev_activation,
     activation::apply_derivative_vector_with_output(activation_, state.z, state.a, grad_output,
                                                     delta_buf);
 
-    // 2. Accumulate dL/dW += delta * prev_activation^T
-    grads.grad_weights.add_outer_product(delta_buf, prev_activation);
+    backward_from_delta(prev_activation, delta_buf, grads, grad_input);
+}
 
-    // 3. Accumulate dL/db += delta
-    for (std::size_t i = 0; i < out_n; ++i) {
-        grads.grad_biases[i] += delta_buf[i];
+void DenseLayer::backward_from_delta(const std::vector<Scalar>& prev_activation,
+                                     const std::vector<Scalar>& delta,
+                                     LayerGrads& grads,
+                                     std::vector<Scalar>& grad_input) const {
+    const std::size_t in_n = input_size();
+    const std::size_t out_n = output_size();
+
+    if (prev_activation.size() != in_n) {
+        throw std::invalid_argument(
+            "DenseLayer::backward_from_delta prev_activation size mismatch");
+    }
+    if (delta.size() != out_n) {
+        throw std::invalid_argument("DenseLayer::backward_from_delta delta size mismatch");
+    }
+    if (grads.grad_weights.rows() != out_n || grads.grad_weights.cols() != in_n ||
+        grads.grad_biases.size() != out_n) {
+        throw std::invalid_argument(
+            "DenseLayer::backward_from_delta LayerGrads dimension mismatch");
     }
 
-    // 4. Propagate gradient to previous layer: dL/d(prev_a) = W^T * delta
-    weights_.matvec_transpose(delta_buf, grad_input);
+    // 1. Accumulate dL/dW += delta * prev_activation^T
+    grads.grad_weights.add_outer_product(delta, prev_activation);
+
+    // 2. Accumulate dL/db += delta
+    for (std::size_t i = 0; i < out_n; ++i) {
+        grads.grad_biases[i] += delta[i];
+    }
+
+    // 3. Propagate gradient to previous layer: dL/d(prev_a) = W^T * delta
+    weights_.matvec_transpose(delta, grad_input);
 }
 
 void DenseLayer::apply_gradients(const LayerGrads& grads, Scalar scale) {
