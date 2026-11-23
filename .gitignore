@@ -17,8 +17,9 @@ build/
 .DS_Store
 Thumbs.db
 
-# Local/temporary experiments and trained model outputs
+# Local/temporary experiments, external datasets, and trained model outputs
 *.tmp
 *.log
 models/
+data/
 
