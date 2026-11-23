@@ -54,6 +54,13 @@ public:
                   const std::vector<Scalar>& grad_output,
                   NetworkWorkspace& workspace) const;
 
+    // Runs backpropagation given the original input and a precomputed output-layer
+    // pre-activation gradient `delta_output = dL/dz^(L)` (e.g., fused Softmax + CCE).
+    // Requires a prior forward() call on the same `workspace` for this sample.
+    void backward_from_output_delta(const std::vector<Scalar>& input,
+                                    const std::vector<Scalar>& delta_output,
+                                    NetworkWorkspace& workspace) const;
+
     // Applies accumulated gradients across all layers: param += scale * grad.
     void apply_gradients(const NetworkWorkspace& workspace, Scalar scale);
 

@@ -73,7 +73,9 @@ public:
                                 LossType loss_type);
 
     // Evaluates classification accuracy in [0, 1].
-    // Uses threshold 0.5 for single-output binary models and argmax for multi-output models.
+    // Uses threshold 0.5 for single-output binary models and tie-aware top-1 argmax for
+    // multi-output models (counts any predicted class achieving the row's max target value,
+    // supporting both one-hot and soft targets).
     static Scalar evaluate_accuracy(const Network& network, const Dataset& dataset);
 
 private:

@@ -10,7 +10,11 @@ For mutually exclusive class selection (e.g., RC actions `[forward, left, right,
 
 $$L(y, t) = -\sum_{i=0}^{K-1} t_i \ln(\hat{y}_i), \qquad \frac{\partial L}{\partial y_i} = -\frac{t_i}{\hat{y}_i}$$
 
-Combined with `Softmax`'s Jacobian in `activation::apply_derivative_vector()`, the gradient with respect to logits cleanly simplifies to $a_i - t_i$ for one-hot targets.
+During training, `Trainer::fit()` detects the `Softmax` + `CategoricalCrossEntropy` pairing and computes the exact fused pre-activation gradient directly via `Network::backward_from_output_delta()`:
+
+$$\delta_i = \frac{\partial L}{\partial z_i} = a_i \sum_{k=0}^{K-1} t_k - t_i$$
+
+For normalized one-hot or soft-target distributions ($\sum_k t_k = 1$), this simplifies to $a_i - t_i$ while remaining exact even under decimal rounding (e.g., $\sum_k t_k = 0.999999$) and avoiding `1e-7` clamp underflow when output probabilities are tiny across many classes.
 
 ---
 
@@ -36,7 +40,7 @@ Configure directly in `config.json`:
 ```
 - Set `"validation_shuffle": false` for **chronological splits** in time-series domains (such as financial trading) to prevent future data leakage.
 - `keep_best_validation_model: true` automatically restores the weights from the epoch with the lowest validation loss when `fit()` finishes.
-- `Trainer::evaluate_accuracy()` computes binary accuracy (threshold `0.5`) for 1-output networks and top-1 `argmax` accuracy for multi-output networks.
+- `Trainer::evaluate_accuracy()` computes binary accuracy (threshold `0.5`) for 1-output networks and tie-aware top-1 accuracy for multi-output networks (`target[argmax(pred)] >= max(target) - 1e-5`), supporting both one-hot labels and soft-target distributions with multiple tied optimal classes.
 
 ---
 

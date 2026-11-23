@@ -2,6 +2,7 @@
 #include "nn/serializer.hpp"
 #include "nn/trainer.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -15,8 +16,19 @@ void print_usage(const char* prog) {
               << "Options:\n"
               << "  --ask-save     Prompt interactively before saving the trained model\n"
               << "  --no-save      Skip saving the model even if save_on_finish is true\n"
+              << "  --compact      Print compact class summary instead of full vectors in preview\n"
               << "  --load <path>  Override model.load_path (resume training an existing model)\n"
               << "  --save <path>  Override model.save_path\n";
+}
+
+std::size_t argmax_index(const std::vector<nn::Scalar>& vec) {
+    std::size_t best = 0;
+    for (std::size_t i = 1; i < vec.size(); ++i) {
+        if (vec[i] > vec[best]) {
+            best = i;
+        }
+    }
+    return best;
 }
 
 void print_topology(const nn::Network& net) {
@@ -43,6 +55,7 @@ int main(int argc, char* argv[]) {
     }
     bool ask_save = false;
     bool force_no_save = false;
+    bool compact_preview = false;
     std::string override_load;
     std::string override_save;
 
@@ -52,6 +65,8 @@ int main(int argc, char* argv[]) {
             ask_save = true;
         } else if (arg == "--no-save") {
             force_no_save = true;
+        } else if (arg == "--compact") {
+            compact_preview = true;
         } else if (arg == "--load" && i + 1 < argc) {
             override_load = argv[++i];
         } else if (arg == "--save" && i + 1 < argc) {
@@ -127,6 +142,33 @@ int main(int argc, char* argv[]) {
             const auto& x = dataset.raw_input(i);
             const auto& t = dataset.raw_target(i);
             const auto pred = net.predict(x);
+
+            if (compact_preview) {
+                std::cout << "  row " << i << ": ";
+                if (t.size() == 1) {
+                    const bool ok = ((pred[0] >= 0.5f) == (t[0] >= 0.5f));
+                    std::cout << "target=" << std::setprecision(4) << t[0]
+                              << " pred=" << pred[0] << (ok ? " [OK]" : " [MISS]") << "\n";
+                } else {
+                    const std::size_t pred_idx = argmax_index(pred);
+                    const nn::Scalar max_t = *std::max_element(t.begin(), t.end());
+                    constexpr nn::Scalar kTieEps = nn::Scalar{1e-5f};
+                    const bool ok = (t[pred_idx] >= max_t - kTieEps);
+                    std::cout << "pred=idx " << pred_idx << " (" << std::setprecision(4)
+                              << pred[pred_idx] << ") | target_best=[";
+                    bool first = true;
+                    for (std::size_t j = 0; j < t.size(); ++j) {
+                        if (t[j] >= max_t - kTieEps) {
+                            if (!first) std::cout << ", ";
+                            std::cout << j;
+                            first = false;
+                        }
+                    }
+                    std::cout << "] (" << std::setprecision(4) << max_t << ")"
+                              << (ok ? " [OK]" : " [MISS]") << "\n";
+                }
+                continue;
+            }
 
             std::cout << "  in=[";
             for (std::size_t j = 0; j < x.size(); ++j) {

@@ -9,13 +9,13 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
   - Activation functions & exact derivatives (`Linear`, `Sigmoid`, `Tanh`, `ReLU`, `LeakyReLU`, numerically stable `Softmax`)
   - `DenseLayer`, thread-safe `NetworkWorkspace` (full inspection of weights, biases, and neuron activations), and `Network` (forward + backpropagation + gradient updates)
 - **Training Engine**
-  - Backpropagation with `SGD` and `Adam` optimizers, loss functions (`MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`), mini-batches, epoch-level index shuffling, and train/validation split (random or chronological) with accuracy & best-model checkpointing
+  - Backpropagation with `SGD` and `Adam` optimizers, loss functions (`MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy` with fused numerically stable `Softmax + CCE` gradients), mini-batches, epoch-level index shuffling, and train/validation split (random or chronological) with tie-aware accuracy (one-hot and soft targets) & best-model checkpointing
   - Synchronous intra-batch multi-threading via a reusable `ThreadPool`
   - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle, 4-class quadrants)
 - **Persistence, CLI Apps & Benchmarks**
-  - Zero hardcoded settings: external `config.json` for hyperparameters, architecture, paths, and server port (`cJSON` v1.7.18 vendored)
+  - Zero hardcoded settings: strictly validated external `config.json` for hyperparameters, architecture, paths, and server port (`cJSON` v1.7.18 vendored)
   - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases
-  - CLI apps: `train_app`, `predict_app`, `server_app`, and `bench_app` (`./scripts/benchmark.sh`)
+  - CLI apps: `train_app` (with optional `--compact` preview), `predict_app` (with optional `--show-neurons` / `--compact`), `server_app`, and `bench_app` (`./scripts/benchmark.sh`)
 - **Inference Server**
   - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) with a fixed worker pool (`server_app`)
 
