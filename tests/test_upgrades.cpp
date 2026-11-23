@@ -169,6 +169,107 @@ TEST_CASE(multiclass_quadrants_softmax_cce_adam_with_validation) {
     CHECK(res.final_val_accuracy >= 0.90f);
 }
 
+TEST_CASE(fused_softmax_cce_soft_targets_and_extreme_logits) {
+    // 1. Finite-difference gradient check for Network::backward_from_output_delta() with
+    //    rounded soft targets (sum = 0.999999 != 1.0 exactly).
+    std::mt19937 rng(4321);
+    Network net(3);
+    net.add_layer(4, ActivationType::Tanh, rng);
+    net.add_layer(4, ActivationType::Softmax, rng);
+
+    const std::vector<Scalar> x = {0.35f, -0.8f, 0.6f};
+    const std::vector<Scalar> t = {0.0f, 0.333333f, 0.333333f, 0.333333f};
+
+    NetworkWorkspace ws = net.create_workspace(true);
+    ws.zero_gradients();
+    const auto& pred = net.forward(x, ws);
+    Scalar target_sum = 0.0f;
+    for (Scalar tv : t) target_sum += tv;
+    std::vector<Scalar> delta(pred.size());
+    for (std::size_t i = 0; i < pred.size(); ++i) {
+        delta[i] = pred[i] * target_sum - t[i];
+    }
+    net.backward_from_output_delta(x, delta, ws);
+
+    const Scalar eps = 1e-3f;
+    NetworkWorkspace eval_ws = net.create_workspace(false);
+    for (std::size_t l = 0; l < net.num_layers(); ++l) {
+        auto& layer = net.layer(l);
+        for (std::size_t r = 0; r < layer.output_size(); ++r) {
+            for (std::size_t c = 0; c < layer.input_size(); ++c) {
+                const Scalar orig = layer.weight(r, c);
+                layer.weight(r, c) = orig + eps;
+                const Scalar lp = nn::loss::compute(LossType::CategoricalCrossEntropy,
+                                                    net.forward(x, eval_ws), t);
+                layer.weight(r, c) = orig - eps;
+                const Scalar lm = nn::loss::compute(LossType::CategoricalCrossEntropy,
+                                                    net.forward(x, eval_ws), t);
+                layer.weight(r, c) = orig;
+                CHECK_NEAR(ws.grads[l].grad_weights(r, c), (lp - lm) / (2.0f * eps), 5e-3f);
+            }
+            const Scalar orig_b = layer.bias(r);
+            layer.bias(r) = orig_b + eps;
+            const Scalar lp = nn::loss::compute(LossType::CategoricalCrossEntropy,
+                                                net.forward(x, eval_ws), t);
+            layer.bias(r) = orig_b - eps;
+            const Scalar lm = nn::loss::compute(LossType::CategoricalCrossEntropy,
+                                                net.forward(x, eval_ws), t);
+            layer.bias(r) = orig_b;
+            CHECK_NEAR(ws.grads[l].grad_biases[r], (lp - lm) / (2.0f * eps), 5e-3f);
+        }
+    }
+
+    // 2. Extreme logit stability check: predicted probability for true class < 1e-10 (far below
+    //    the 1e-7 loss clamp). Fused Softmax + CCE must still produce exact O(1) gradient instead
+    //    of collapsing toward 0.
+    Network extreme(2);
+    nn::Matrix zero_w(4, 2, 0.0f);
+    std::vector<Scalar> extreme_b = {25.0f, 0.0f, 0.0f, 0.0f};
+    extreme.add_layer(nn::DenseLayer(zero_w, extreme_b, ActivationType::Softmax));
+
+    const auto init_pred = extreme.predict({0.0f, 0.0f});
+    CHECK(init_pred[2] < 1e-9f);
+
+    Dataset ds(2, 4);
+    ds.add_sample({0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.0f});
+
+    TrainingConfig cfg;
+    cfg.loss = LossType::CategoricalCrossEntropy;
+    cfg.optimizer = OptimizerType::SGD;
+    cfg.epochs = 1;
+    cfg.batch_size = 1;
+    cfg.learning_rate = 0.5f;
+    cfg.shuffle = false;
+    cfg.num_threads = 1;
+
+    Trainer(cfg).fit(extreme, ds);
+    // Exact delta = pred - target ~= (+1, 0, -1, 0) -> bias update ~= (-0.5, 0, +0.5, 0)
+    CHECK_NEAR(extreme.layer(0).bias(0), 24.5f, 1e-4f);
+    CHECK_NEAR(extreme.layer(0).bias(2), 0.5f, 1e-4f);
+}
+
+TEST_CASE(evaluate_accuracy_soft_targets_with_ties) {
+    // Identity 4 -> 4 linear network so output equals input directly
+    Network net(4);
+    nn::Matrix eye(4, 4, 0.0f);
+    for (std::size_t i = 0; i < 4; ++i) {
+        eye(i, i) = 1.0f;
+    }
+    net.add_layer(nn::DenseLayer(eye, {0.0f, 0.0f, 0.0f, 0.0f}, ActivationType::Linear));
+
+    Dataset ds(4, 4);
+    // 1. One-hot hit (argmax = 1)
+    ds.add_sample({0.1f, 0.9f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 0.0f});
+    // 2. Tied soft target hit on third tied winner (index 3, not first tied index 0)
+    ds.add_sample({0.1f, 0.0f, 0.2f, 0.7f}, {0.333333f, 0.0f, 0.333333f, 0.333333f});
+    // 3. Tied soft target hit on second tied winner (index 2)
+    ds.add_sample({0.0f, 0.2f, 0.8f, 0.0f}, {0.0f, 0.5f, 0.5f, 0.0f});
+    // 4. Tied soft target miss (predicts non-optimal index 1)
+    ds.add_sample({0.1f, 0.8f, 0.05f, 0.05f}, {0.5f, 0.0f, 0.5f, 0.0f});
+
+    CHECK_NEAR(Trainer::evaluate_accuracy(net, ds), 0.75f, 1e-6f);
+}
+
 int main() {
     return nn_test::run_all_tests();
 }

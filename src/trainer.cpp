@@ -81,6 +81,9 @@ TrainingResult Trainer::fit(Network& network,
     }
 
     const bool use_validation = (val_dataset != nullptr && !val_dataset->empty());
+    const bool use_fused_softmax_cce =
+        (config_.loss == LossType::CategoricalCrossEntropy &&
+         network.layers().back().activation() == ActivationType::Softmax);
     const std::size_t num_samples = train_dataset.size();
 
     OptimizerConfig opt_cfg;
@@ -146,8 +149,19 @@ TrainingResult Trainer::fit(Network& network,
 
                         const std::vector<Scalar>& pred = network.forward(x, ws);
                         local_loss += loss::compute(config_.loss, pred, t);
-                        loss::gradient(config_.loss, pred, t, grad_out);
-                        network.backward(x, grad_out, ws);
+                        if (use_fused_softmax_cce) {
+                            Scalar target_sum = Scalar{0};
+                            for (Scalar tv : t) {
+                                target_sum += tv;
+                            }
+                            for (std::size_t k = 0; k < pred.size(); ++k) {
+                                grad_out[k] = pred[k] * target_sum - t[k];
+                            }
+                            network.backward_from_output_delta(x, grad_out, ws);
+                        } else {
+                            loss::gradient(config_.loss, pred, t, grad_out);
+                            network.backward(x, grad_out, ws);
+                        }
                     }
 
                     worker_losses[worker_id] = local_loss;
@@ -245,7 +259,12 @@ Scalar Trainer::evaluate_accuracy(const Network& network, const Dataset& dataset
             const bool target_cls = (target[0] >= Scalar{0.5f});
             if (pred_cls == target_cls) ++correct;
         } else {
-            if (argmax_index(pred) == argmax_index(target)) ++correct;
+            const std::size_t pred_idx = argmax_index(pred);
+            const Scalar max_target = *std::max_element(target.begin(), target.end());
+            constexpr Scalar kTargetTieTolerance = Scalar{1e-5f};
+            if (target[pred_idx] >= max_target - kTargetTieTolerance) {
+                ++correct;
+            }
         }
     }
     return static_cast<Scalar>(correct) / static_cast<Scalar>(dataset.size());

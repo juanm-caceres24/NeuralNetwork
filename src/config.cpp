@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <initializer_list>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -97,6 +98,27 @@ int get_optional_int(const cJSON* obj, const char* key, int fallback) {
     return static_cast<int>(item->valuedouble);
 }
 
+void validate_allowed_keys(const cJSON* obj,
+                           const char* section_name,
+                           std::initializer_list<const char*> allowed_keys) {
+    for (const cJSON* child = obj->child; child != nullptr; child = child->next) {
+        if (!child->string) {
+            continue;
+        }
+        const std::string key(child->string);
+        bool known = false;
+        for (const char* allowed : allowed_keys) {
+            if (key == allowed) {
+                known = true;
+                break;
+            }
+        }
+        if (!known) {
+            throw std::runtime_error("Unknown config key '" + key + "' in " + section_name);
+        }
+    }
+}
+
 }  // namespace
 
 AppConfig parse_config_json(const std::string& json_text) {
@@ -104,6 +126,7 @@ AppConfig parse_config_json(const std::string& json_text) {
     if (!root || !cJSON_IsObject(root.get())) {
         throw std::runtime_error("Invalid JSON syntax in config");
     }
+    validate_allowed_keys(root.get(), "root", {"model", "training", "data", "server"});
 
     AppConfig cfg;
 
@@ -113,6 +136,12 @@ AppConfig parse_config_json(const std::string& json_text) {
         if (!cJSON_IsObject(train_obj)) {
             throw std::runtime_error("Config section 'training' must be an object");
         }
+        validate_allowed_keys(
+            train_obj, "section 'training'",
+            {"loss", "optimizer", "epochs", "batch_size", "learning_rate", "adam_beta1",
+             "adam_beta2", "adam_epsilon", "shuffle", "num_threads", "seed", "log_every_epochs",
+             "validation_split", "validation_shuffle", "keep_best_validation_model", "dataset_path",
+             "dataset_has_header", "dataset_generator", "generator_samples", "generator_seed"});
         const std::string loss_str = get_optional_string(train_obj, "loss", "mse");
         cfg.training.loss = parse_loss(loss_str);
         const std::string opt_str = get_optional_string(train_obj, "optimizer", "sgd");
@@ -160,6 +189,8 @@ AppConfig parse_config_json(const std::string& json_text) {
         if (!cJSON_IsObject(data_obj)) {
             throw std::runtime_error("Config section 'data' must be an object");
         }
+        validate_allowed_keys(data_obj, "section 'data'",
+                              {"path", "has_header", "generator", "samples", "seed"});
         cfg.data.dataset_path = get_optional_string(data_obj, "path", cfg.data.dataset_path);
         cfg.data.has_header = get_optional_bool(data_obj, "has_header", cfg.data.has_header);
         cfg.data.generator = get_optional_string(data_obj, "generator", cfg.data.generator);
@@ -175,6 +206,8 @@ AppConfig parse_config_json(const std::string& json_text) {
         if (!cJSON_IsObject(model_obj)) {
             throw std::runtime_error("Config section 'model' must be an object");
         }
+        validate_allowed_keys(model_obj, "section 'model'",
+                              {"layers", "load_path", "save_path", "save_on_finish", "init_seed"});
         cfg.model.load_path = get_optional_string(model_obj, "load_path", "");
         cfg.model.save_path = get_optional_string(model_obj, "save_path", "");
         cfg.model.save_on_finish = get_optional_bool(model_obj, "save_on_finish", true);
@@ -191,6 +224,8 @@ AppConfig parse_config_json(const std::string& json_text) {
                 if (!cJSON_IsObject(layer_item)) {
                     throw std::runtime_error("Each entry in 'model.layers' must be an object");
                 }
+                validate_allowed_keys(layer_item, "layer entry in 'model.layers'",
+                                      {"size", "activation"});
                 LayerSpec spec;
                 spec.size = get_optional_size(layer_item, "size", 0);
                 if (spec.size == 0) {
@@ -220,6 +255,7 @@ AppConfig parse_config_json(const std::string& json_text) {
         if (!cJSON_IsObject(server_obj)) {
             throw std::runtime_error("Config section 'server' must be an object");
         }
+        validate_allowed_keys(server_obj, "section 'server'", {"host", "port", "num_workers"});
         cfg.server.host = get_optional_string(server_obj, "host", cfg.server.host);
         cfg.server.port = get_optional_int(server_obj, "port", cfg.server.port);
         cfg.server.num_workers =

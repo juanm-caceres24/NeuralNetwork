@@ -10,9 +10,11 @@
 namespace {
 
 void print_usage(const char* prog) {
-    std::cout << "Usage: " << prog << " <model.json> <x0> [x1 ...] [--show-neurons]\n"
+    std::cout << "Usage: " << prog
+              << " <model.json> <x0> [x1 ...] [--show-neurons] [--compact]\n"
               << "Options:\n"
-              << "  --show-neurons   Print every layer's pre-activations (z) and activations (a)\n";
+              << "  --show-neurons   Print every layer's pre-activations (z) and activations (a)\n"
+              << "  --compact        Print top predicted index and value instead of full vector\n";
 }
 
 }  // namespace
@@ -33,11 +35,14 @@ int main(int argc, char* argv[]) {
     const std::string model_path = argv[1];
     std::vector<nn::Scalar> input;
     bool show_neurons = false;
+    bool compact_output = false;
 
     for (int i = 2; i < argc; ++i) {
         const std::string arg = argv[i];
         if (arg == "--show-neurons") {
             show_neurons = true;
+        } else if (arg == "--compact") {
+            compact_output = true;
         } else if (arg == "--help" || arg == "-h") {
             print_usage(argv[0]);
             return 0;
@@ -96,12 +101,22 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        std::cout << "Output: [";
-        for (std::size_t i = 0; i < output.size(); ++i) {
-            if (i > 0) std::cout << ", ";
-            std::cout << output[i];
+        if (compact_output) {
+            std::size_t best_idx = 0;
+            for (std::size_t i = 1; i < output.size(); ++i) {
+                if (output[i] > output[best_idx]) {
+                    best_idx = i;
+                }
+            }
+            std::cout << "Top prediction: index " << best_idx << " (" << output[best_idx] << ")\n";
+        } else {
+            std::cout << "Output: [";
+            for (std::size_t i = 0; i < output.size(); ++i) {
+                if (i > 0) std::cout << ", ";
+                std::cout << output[i];
+            }
+            std::cout << "]\n";
         }
-        std::cout << "]\n";
         return 0;
     } catch (const std::exception& ex) {
         std::cerr << "[predict_app] Error: " << ex.what() << "\n";

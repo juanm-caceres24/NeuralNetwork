@@ -1,0 +1,35 @@
+{
+  "model": {
+    "layers": [
+      { "size": 9 },
+      { "size": 128, "activation": "relu" },
+      { "size": 128, "activation": "relu" },
+      { "size": 41, "activation": "softmax" }
+    ],
+    "init_seed": 42,
+    "load_path": "",
+    "save_path": "models/tictactoe_model.json",
+    "save_on_finish": true
+  },
+  "training": {
+    "dataset_path": "data/tictactoe_dataset.csv",
+    "dataset_has_header": false,
+    "loss": "cce",
+    "optimizer": "adam",
+    "epochs": 150,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "shuffle": true,
+    "num_threads": 4,
+    "seed": 42,
+    "validation_split": 0.0,
+    "validation_shuffle": true,
+    "keep_best_validation_model": false,
+    "log_every_epochs": 25
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080,
+    "num_workers": 4
+  }
+}

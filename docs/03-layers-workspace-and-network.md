@@ -58,6 +58,9 @@ Given a scalar loss $L$ and the upstream output gradient $g_a^{(L)} = \frac{\par
 3. **Propagate gradient to previous layer:**
    $$g_a^{(l-1)} = \left(W^{(l)}\right)^T \delta^{(l)}$$
 
+### Precomputed Output Delta (`backward_from_delta` & `backward_from_output_delta`)
+When a loss function and output activation have a known closed-form pre-activation gradient $\delta^{(L)} = \frac{\partial L}{\partial z^{(L)}}$ — most notably `Softmax` paired with `CategoricalCrossEntropy`, where $\delta_i^{(L)} = a_i^{(L)} \sum_k t_k - t_i$ — callers can pass $\delta^{(L)}$ directly into `Network::backward_from_output_delta()`. The output layer runs `DenseLayer::backward_from_delta()` directly (steps 2 and 3 above, skipping step 1), avoiding numerical clamping distortion when output probabilities are tiny while keeping all preceding layers identical.
+
 ### Mini-Batch Reduction & SGD Step
 When parallelizing a mini-batch of size $B$ across $T$ worker threads:
 1. Each worker resets its private workspace with `ws.zero_gradients()`.

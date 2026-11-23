@@ -135,6 +135,44 @@ void Network::backward(const std::vector<Scalar>& input,
     }
 }
 
+void Network::backward_from_output_delta(const std::vector<Scalar>& input,
+                                         const std::vector<Scalar>& delta_output,
+                                         NetworkWorkspace& workspace) const {
+    if (layers_.empty()) {
+        throw std::logic_error("Cannot run backward_from_output_delta() on an empty Network");
+    }
+    if (input.size() != input_size_) {
+        throw std::invalid_argument("Network::backward_from_output_delta input size mismatch");
+    }
+    if (delta_output.size() != output_size()) {
+        throw std::invalid_argument(
+            "Network::backward_from_output_delta delta_output size mismatch");
+    }
+    if (workspace.states.size() != layers_.size() || workspace.grads.size() != layers_.size()) {
+        throw std::invalid_argument(
+            "Network::backward_from_output_delta requires a workspace initialized with gradients");
+    }
+
+    const std::size_t last = layers_.size() - 1;
+    const std::vector<Scalar>& last_prev_a = (last == 0) ? input : workspace.states[last - 1].a;
+    layers_[last].backward_from_delta(last_prev_a, delta_output, workspace.grads[last],
+                                      workspace.grad_a_buf);
+
+    for (std::size_t idx = last; idx > 0; --idx) {
+        const std::size_t l = idx - 1;
+        const std::vector<Scalar>& prev_a = (l == 0) ? input : workspace.states[l - 1].a;
+
+        layers_[l].backward(prev_a,
+                            workspace.grad_a_buf,
+                            workspace.states[l],
+                            workspace.grads[l],
+                            workspace.delta_buf,
+                            workspace.grad_b_buf);
+
+        std::swap(workspace.grad_a_buf, workspace.grad_b_buf);
+    }
+}
+
 void Network::apply_gradients(const NetworkWorkspace& workspace, Scalar scale) {
     if (workspace.grads.size() != layers_.size()) {
         throw std::invalid_argument("Network::apply_gradients workspace layer count mismatch");

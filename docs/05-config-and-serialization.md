@@ -42,7 +42,9 @@ Handled by `nn::serializer::save_network_json()` and `nn::serializer::load_netwo
 
 ## 3. External Configuration (`config.json`)
 
-Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, and `configs/quadrants.json`.
+Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), and `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv` inside the gitignored `data/` folder).
+
+`parse_config_json()` strictly rejects unknown keys in every section (`root`, `model`, `model.layers[]`, `training`, `data`, `server`) so configuration typos fail fast instead of silently falling back to defaults.
 
 | Section | Field | Type | Description |
 | :--- | :--- | :--- | :--- |
@@ -84,6 +86,7 @@ Every hyperparameter, topology setting, file path, and server setting is externa
 Supported options:
 - `--ask-save` — Prompt interactively `[y/N]` before saving the trained model.
 - `--no-save` — Skip saving even if `save_on_finish` is `true`.
+- `--compact` — Print compact class summary (predicted index/value, optimal target indices, `[OK]`/`[MISS]`) instead of full vectors in the final sample preview.
 - `--load <path>` — Override `model.load_path` (resume training an existing model).
 - `--save <path>` — Override `model.save_path`.
 
@@ -96,15 +99,25 @@ Supported options:
 # Train 4-class quadrants with Adam + CCE + validation without saving to disk
 ./build/release/apps/train_app configs/quadrants.json --no-save
 
+# Train a large multi-class CSV model with compact preview output
+./build/release/apps/train_app configs/tictactoe.json --compact
+
 # Resume training from a saved model and ask interactively before saving to a new path
 ./build/release/apps/train_app configs/xor.json --load models/xor_model.json --save models/xor_v2.json --ask-save
 ```
 
 ### Run Predictions & Inspect Neurons (`predict_app`)
+Supported options:
+- `--show-neurons` — Print every layer's pre-activations (`z`) and activations (`a`).
+- `--compact` — Print only the top predicted index and value (`Top prediction: index K (val)`) instead of the full output vector.
+
 ```bash
 # Query trained XOR model with input [1, 0]
 ./build/release/apps/predict_app models/xor_model.json 1 0
 
 # Inspect every hidden and output neuron's pre-activation (z) and activation (a)
 ./build/release/apps/predict_app models/xor_model.json 1 0 --show-neurons
+
+# Print only the top predicted class index and probability for large multi-class models
+./build/release/apps/predict_app models/tictactoe_model.json 0 0 0 0 0 0 0 0 0 --compact
 ```
