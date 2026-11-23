@@ -57,6 +57,7 @@ public:
     // Runs backpropagation given the original input and a precomputed output-layer
     // pre-activation gradient `delta_output = dL/dz^(L)` (e.g., fused Softmax + CCE).
     // Requires a prior forward() call on the same `workspace` for this sample.
+    // `delta_output` must not alias buffers inside `workspace`.
     void backward_from_output_delta(const std::vector<Scalar>& input,
                                     const std::vector<Scalar>& delta_output,
                                     NetworkWorkspace& workspace) const;

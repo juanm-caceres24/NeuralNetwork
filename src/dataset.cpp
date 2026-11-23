@@ -145,6 +145,11 @@ Dataset Dataset::load_csv(const std::string& path,
             continue;
         }
 
+        if (trimmed.back() == ',') {
+            throw std::runtime_error("Trailing comma in CSV row at " + path + ":" +
+                                     std::to_string(line_num));
+        }
+
         std::vector<Scalar> values;
         values.reserve(expected_cols);
         std::stringstream ss(trimmed);
@@ -167,6 +172,10 @@ Dataset Dataset::load_csv(const std::string& path,
             if (consumed != cell.size()) {
                 throw std::runtime_error("Trailing characters in CSV value '" + cell + "' at " +
                                          path + ":" + std::to_string(line_num));
+            }
+            if (!std::isfinite(parsed)) {
+                throw std::runtime_error("Non-finite numeric value '" + cell + "' at " + path +
+                                         ":" + std::to_string(line_num));
             }
             values.push_back(parsed);
         }
