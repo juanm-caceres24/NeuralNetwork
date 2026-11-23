@@ -113,6 +113,25 @@ TEST_CASE(dataset_shuffle_and_csv_roundtrip) {
     CHECK(loaded_xor.size() == 4);
     CHECK_NEAR(loaded_xor.raw_target(1)[0], 1.0f, 1e-6f);
     CHECK_NEAR(loaded_xor.raw_target(3)[0], 0.0f, 1e-6f);
+
+    // CSV must reject trailing commas and non-finite literals (nan/inf)
+    const std::string tmp_bad = "/tmp/nn_unit_test_bad.csv";
+    {
+        std::ofstream out(tmp_bad);
+        out << "0,1,1,\n";
+    }
+    CHECK_THROWS(Dataset::load_csv(tmp_bad, 2, 1, false), std::runtime_error);
+    {
+        std::ofstream out(tmp_bad);
+        out << "0,nan,1\n";
+    }
+    CHECK_THROWS(Dataset::load_csv(tmp_bad, 2, 1, false), std::runtime_error);
+    {
+        std::ofstream out(tmp_bad);
+        out << "0,inf,1\n";
+    }
+    CHECK_THROWS(Dataset::load_csv(tmp_bad, 2, 1, false), std::runtime_error);
+    std::remove(tmp_bad.c_str());
 }
 
 TEST_CASE(thread_pool_parallel_chunks_and_exception_safety) {

@@ -2,10 +2,12 @@
 
 #include "cJSON.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -29,12 +31,15 @@ const cJSON* require_object_item(const cJSON* obj, const char* key) {
 
 std::size_t require_positive_size(const cJSON* obj, const char* key) {
     const cJSON* item = require_object_item(obj, key);
-    if (!cJSON_IsNumber(item) || item->valuedouble <= 0.0 ||
-        static_cast<double>(static_cast<std::size_t>(item->valuedouble)) != item->valuedouble) {
+    constexpr double kMaxSafeSize =
+        (sizeof(std::size_t) >= 8) ? 9007199254740992.0 : 4294967295.0;
+    const double val = item->valuedouble;
+    if (!cJSON_IsNumber(item) || !std::isfinite(val) || val <= 0.0 || val > kMaxSafeSize ||
+        std::floor(val) != val) {
         throw std::runtime_error(std::string("JSON field '") + key +
                                  "' must be a positive integer");
     }
-    return static_cast<std::size_t>(item->valuedouble);
+    return static_cast<std::size_t>(val);
 }
 
 std::vector<Scalar> parse_scalar_array(const cJSON* array_item,
@@ -54,11 +59,16 @@ std::vector<Scalar> parse_scalar_array(const cJSON* array_item,
     values.reserve(expected_size);
     const cJSON* elem = nullptr;
     cJSON_ArrayForEach(elem, array_item) {
-        if (!cJSON_IsNumber(elem)) {
+        if (!cJSON_IsNumber(elem) || !std::isfinite(elem->valuedouble)) {
             throw std::runtime_error(std::string("Non-numeric element in JSON array '") +
                                      field_name + "'");
         }
-        values.push_back(static_cast<Scalar>(elem->valuedouble));
+        const Scalar val = static_cast<Scalar>(elem->valuedouble);
+        if (!std::isfinite(val)) {
+            throw std::runtime_error(std::string("Out-of-range float element in JSON array '") +
+                                     field_name + "'");
+        }
+        values.push_back(val);
     }
     return values;
 }

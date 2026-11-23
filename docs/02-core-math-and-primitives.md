@@ -63,11 +63,11 @@ Every operation writes into pre-allocated output buffers to avoid heap allocatio
 | `LeakyReLU` | $z \text{ if } z > 0 \text{ else } \alpha z$ | $1 \text{ if } z > 0 \text{ else } \alpha$ | $\alpha = 0.01$; avoids dead neurons |
 | `Softmax` | $\frac{e^{z_i - m}}{\sum_k e^{z_k - m}}$ | Full Jacobian-vector product | $m = \max_k z_k$ ensures numerical stability even for large logits |
 
-### Vectorized Backward Pass (`apply_derivative_vector`)
+### Vectorized Backward Pass (`apply_derivative_vector` & `apply_derivative_vector_with_output`)
 Given the pre-activation vector $z$ and upstream gradient $g_a = \frac{\partial L}{\partial a}$, `apply_derivative_vector` computes $g_z = \frac{\partial L}{\partial z}$:
 
 - **Element-wise activations:** $g_{z,i} = f'(z_i) \cdot g_{a,i}$.
 - **Softmax:** Computes the exact Jacobian-vector product in $O(n)$ time:
   $$g_{z,i} = a_i \left(g_{a,i} - \sum_{k} a_k \, g_{a,k}\right)$$
 
-This unified interface lets `DenseLayer::backward()` handle both scalar activations and `Softmax` identically.
+`DenseLayer::backward()` calls the zero-allocation overload `apply_derivative_vector_with_output(type, z, a, grad_a, grad_z)` to reuse the already computed forward activation `state.a`, avoiding recomputing `exp()` and temporary heap allocations for `Softmax` while handling scalar activations and `Softmax` uniformly.

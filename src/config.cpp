@@ -6,8 +6,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <fstream>
 #include <initializer_list>
+#include <limits>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -54,12 +56,16 @@ std::size_t get_optional_size(const cJSON* obj, const char* key, std::size_t fal
     if (!item || cJSON_IsNull(item)) {
         return fallback;
     }
-    if (!cJSON_IsNumber(item) || item->valuedouble < 0.0 ||
-        static_cast<double>(static_cast<std::size_t>(item->valuedouble)) != item->valuedouble) {
+    constexpr double kMaxSafeSize = (sizeof(std::size_t) >= 8)
+                                        ? 9007199254740992.0  // 2^53 (exact IEEE-754 double int)
+                                        : 4294967295.0;       // UINT32_MAX on 32-bit targets
+    const double val = item->valuedouble;
+    if (!cJSON_IsNumber(item) || !std::isfinite(val) || val < 0.0 || val > kMaxSafeSize ||
+        std::floor(val) != val) {
         throw std::runtime_error(std::string("Config field '") + key +
                                  "' must be a non-negative integer");
     }
-    return static_cast<std::size_t>(item->valuedouble);
+    return static_cast<std::size_t>(val);
 }
 
 std::uint32_t get_optional_u32(const cJSON* obj, const char* key, std::uint32_t fallback) {
@@ -67,12 +73,14 @@ std::uint32_t get_optional_u32(const cJSON* obj, const char* key, std::uint32_t 
     if (!item || cJSON_IsNull(item)) {
         return fallback;
     }
-    if (!cJSON_IsNumber(item) || item->valuedouble < 0.0 ||
-        static_cast<double>(static_cast<std::uint32_t>(item->valuedouble)) != item->valuedouble) {
+    const double val = item->valuedouble;
+    if (!cJSON_IsNumber(item) || !std::isfinite(val) || val < 0.0 ||
+        val > static_cast<double>(std::numeric_limits<std::uint32_t>::max()) ||
+        std::floor(val) != val) {
         throw std::runtime_error(std::string("Config field '") + key +
                                  "' must be a non-negative 32-bit integer");
     }
-    return static_cast<std::uint32_t>(item->valuedouble);
+    return static_cast<std::uint32_t>(val);
 }
 
 Scalar get_optional_scalar(const cJSON* obj, const char* key, Scalar fallback) {
@@ -80,10 +88,14 @@ Scalar get_optional_scalar(const cJSON* obj, const char* key, Scalar fallback) {
     if (!item || cJSON_IsNull(item)) {
         return fallback;
     }
-    if (!cJSON_IsNumber(item)) {
-        throw std::runtime_error(std::string("Config field '") + key + "' must be a number");
+    if (!cJSON_IsNumber(item) || !std::isfinite(item->valuedouble)) {
+        throw std::runtime_error(std::string("Config field '") + key + "' must be a finite number");
     }
-    return static_cast<Scalar>(item->valuedouble);
+    const Scalar result = static_cast<Scalar>(item->valuedouble);
+    if (!std::isfinite(result)) {
+        throw std::runtime_error(std::string("Config field '") + key + "' is out of float range");
+    }
+    return result;
 }
 
 int get_optional_int(const cJSON* obj, const char* key, int fallback) {
@@ -91,11 +103,13 @@ int get_optional_int(const cJSON* obj, const char* key, int fallback) {
     if (!item || cJSON_IsNull(item)) {
         return fallback;
     }
-    if (!cJSON_IsNumber(item) ||
-        static_cast<double>(static_cast<int>(item->valuedouble)) != item->valuedouble) {
+    const double val = item->valuedouble;
+    if (!cJSON_IsNumber(item) || !std::isfinite(val) ||
+        val < static_cast<double>(std::numeric_limits<int>::min()) ||
+        val > static_cast<double>(std::numeric_limits<int>::max()) || std::floor(val) != val) {
         throw std::runtime_error(std::string("Config field '") + key + "' must be an integer");
     }
-    return static_cast<int>(item->valuedouble);
+    return static_cast<int>(val);
 }
 
 void validate_allowed_keys(const cJSON* obj,
@@ -191,9 +205,22 @@ AppConfig parse_config_json(const std::string& json_text) {
         }
         validate_allowed_keys(data_obj, "section 'data'",
                               {"path", "has_header", "generator", "samples", "seed"});
-        cfg.data.dataset_path = get_optional_string(data_obj, "path", cfg.data.dataset_path);
+        const bool has_data_path = (cJSON_GetObjectItemCaseSensitive(data_obj, "path") != nullptr);
+        const bool has_data_gen =
+            (cJSON_GetObjectItemCaseSensitive(data_obj, "generator") != nullptr);
+        if (has_data_path) {
+            cfg.data.dataset_path = get_optional_string(data_obj, "path", "");
+            if (!cfg.data.dataset_path.empty() && !has_data_gen) {
+                cfg.data.generator.clear();
+            }
+        }
+        if (has_data_gen) {
+            cfg.data.generator = get_optional_string(data_obj, "generator", "");
+            if (!cfg.data.generator.empty() && !has_data_path) {
+                cfg.data.dataset_path.clear();
+            }
+        }
         cfg.data.has_header = get_optional_bool(data_obj, "has_header", cfg.data.has_header);
-        cfg.data.generator = get_optional_string(data_obj, "generator", cfg.data.generator);
         cfg.data.generator_samples =
             get_optional_size(data_obj, "samples", cfg.data.generator_samples);
         cfg.data.generator_seed = get_optional_u32(data_obj, "seed", cfg.data.generator_seed);

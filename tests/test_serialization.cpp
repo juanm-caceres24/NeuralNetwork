@@ -66,6 +66,14 @@ TEST_CASE(model_json_validation_errors) {
         nn::serializer::network_from_json(
             R"({"format_version":1,"input_size":2,"layers":[{"in_size":2,"out_size":1,"activation":"sigmoid","weights":[0.5],"biases":[0.0]}]})"),
         std::runtime_error);
+    // Out-of-range integer / float overflow in model JSON
+    CHECK_THROWS(nn::serializer::network_from_json(
+                     R"({"format_version": 1, "input_size": 1e30, "layers": []})"),
+                 std::runtime_error);
+    CHECK_THROWS(
+        nn::serializer::network_from_json(
+            R"({"format_version":1,"input_size":2,"layers":[{"in_size":2,"out_size":1,"activation":"sigmoid","weights":[1e308,0.5],"biases":[0.0]}]})"),
+        std::runtime_error);
     CHECK_THROWS(nn::serializer::load_network_json("/tmp/nonexistent_nn_model_12345.json"),
                  std::runtime_error);
 }
@@ -93,11 +101,34 @@ TEST_CASE(config_json_load_and_validation) {
     CHECK(circle_cfg.data.generator == "circle");
     CHECK(circle_cfg.data.generator_samples == 200);
 
-    // Invalid port check
+    // Invalid port / workers / out-of-range JSON numbers
     CHECK_THROWS(nn::parse_config_json(R"({"server": {"port": 70000}})"), std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"server": {"port": 1e30}})"), std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"server": {"num_workers": 0}})"), std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"training": {"epochs": 1e30}})"), std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"training": {"seed": 1e30}})"), std::runtime_error);
+    CHECK_THROWS(nn::parse_config_json(R"({"training": {"learning_rate": 1e308}})"),
+                 std::runtime_error);
+    // Ephemeral port 0 is valid
+    AppConfig port0_cfg = nn::parse_config_json(R"({"server": {"port": 0}})");
+    CHECK(port0_cfg.server.port == 0);
     // Missing activation on hidden/output layer
     CHECK_THROWS(nn::parse_config_json(R"({"model": {"layers": [{"size": 2}, {"size": 1}]}})"),
                  std::runtime_error);
+
+    // Dedicated "data" section cleanly overrides "training" dataset fields
+    AppConfig data_gen_override = nn::parse_config_json(
+        R"({"training": {"dataset_path": "stale.csv"}, "data": {"generator": "xor", "samples": 50, "seed": 7}})");
+    CHECK(data_gen_override.data.dataset_path.empty());
+    CHECK(data_gen_override.data.generator == "xor");
+    CHECK(data_gen_override.data.generator_samples == 50);
+    CHECK(data_gen_override.data.generator_seed == 7);
+
+    AppConfig data_path_override = nn::parse_config_json(
+        R"({"training": {"dataset_generator": "xor"}, "data": {"path": "custom.csv", "has_header": true}})");
+    CHECK(data_path_override.data.dataset_path == "custom.csv");
+    CHECK(data_path_override.data.generator.empty());
+    CHECK(data_path_override.data.has_header == true);
 
     AppConfig ttt_cfg = nn::load_config_json("configs/tictactoe.json");
     CHECK(ttt_cfg.model.layers.size() == 4);

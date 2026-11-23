@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
@@ -19,6 +20,15 @@ void print_usage(const char* prog) {
               << "  --compact      Print compact class summary instead of full vectors in preview\n"
               << "  --load <path>  Override model.load_path (resume training an existing model)\n"
               << "  --save <path>  Override model.save_path\n";
+}
+
+bool all_finite(const std::vector<nn::Scalar>& vec) {
+    for (nn::Scalar v : vec) {
+        if (!std::isfinite(v)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 std::size_t argmax_index(const std::vector<nn::Scalar>& vec) {
@@ -145,6 +155,10 @@ int main(int argc, char* argv[]) {
 
             if (compact_preview) {
                 std::cout << "  row " << i << ": ";
+                if (!all_finite(pred)) {
+                    std::cout << "pred=non-finite [MISS]\n";
+                    continue;
+                }
                 if (t.size() == 1) {
                     const bool ok = ((pred[0] >= 0.5f) == (t[0] >= 0.5f));
                     std::cout << "target=" << std::setprecision(4) << t[0]

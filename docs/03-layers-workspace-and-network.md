@@ -50,8 +50,8 @@ $$a^{(l)} = f^{(l)}\!\left(z^{(l)}\right)$$
 Given a scalar loss $L$ and the upstream output gradient $g_a^{(L)} = \frac{\partial L}{\partial a^{(L)}}$, `Network::backward()` walks layers in reverse order $l = L \dots 1$:
 
 1. **Local pre-activation gradient ($\delta^{(l)}$):**
-   $$\delta^{(l)} = \frac{\partial L}{\partial z^{(l)}} = \text{apply\_derivative\_vector}\!\left(f^{(l)}, z^{(l)}, g_a^{(l)}\right)$$
-   *(Handles element-wise activations and the full Softmax Jacobian identically.)*
+   $$\delta^{(l)} = \frac{\partial L}{\partial z^{(l)}} = \text{apply\_derivative\_vector\_with\_output}\!\left(f^{(l)}, z^{(l)}, a^{(l)}, g_a^{(l)}\right)$$
+   *(Handles element-wise activations and the full Softmax Jacobian identically with zero steady-state heap allocations by reusing forward `state.a`.)*
 2. **Accumulate parameter gradients into `workspace.grads[l]`:**
    $$\Delta W^{(l)} \mathrel{+}= \delta^{(l)} \left(a^{(l-1)}\right)^T$$
    $$\Delta b^{(l)} \mathrel{+}= \delta^{(l)}$$

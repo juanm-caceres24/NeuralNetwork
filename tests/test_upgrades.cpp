@@ -43,7 +43,7 @@ TEST_CASE(cce_loss_numerical_gradient_and_softmax_backprop) {
         CHECK_NEAR(analytic[i], numeric, 5e-3f);
     }
 
-    // 2. End-to-end Gradient Checking: 3 -> 4 (ReLU) -> 4 (Softmax) + CCE
+    // 2. End-to-end Gradient Checking: 3 -> 4 (Tanh) -> 4 (Softmax) + CCE
     std::mt19937 rng(1234);
     Network net(3);
     net.add_layer(4, ActivationType::Tanh, rng);
@@ -268,6 +268,66 @@ TEST_CASE(evaluate_accuracy_soft_targets_with_ties) {
     ds.add_sample({0.1f, 0.8f, 0.05f, 0.05f}, {0.5f, 0.0f, 0.5f, 0.0f});
 
     CHECK_NEAR(Trainer::evaluate_accuracy(net, ds), 0.75f, 1e-6f);
+
+    // NaN predictions must never count as accurate (even when index 0 is optimal in target)
+    Dataset nan_ds(4, 4);
+    const Scalar qnan = std::nanf("");
+    nan_ds.add_sample({qnan, qnan, qnan, qnan}, {1.0f, 0.0f, 0.0f, 0.0f});
+    CHECK_NEAR(Trainer::evaluate_accuracy(net, nan_ds), 0.0f, 1e-6f);
+
+    // Dimension mismatches and empty inputs must throw
+    Dataset wrong_target(4, 2);
+    wrong_target.add_sample({1.0f, 0.0f, 0.0f, 0.0f}, {1.0f, 0.0f});
+    CHECK_THROWS(Trainer::evaluate_accuracy(net, wrong_target), std::invalid_argument);
+    Dataset wrong_input(2, 4);
+    wrong_input.add_sample({1.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 0.0f});
+    CHECK_THROWS(Trainer::evaluate_accuracy(net, wrong_input), std::invalid_argument);
+    CHECK_THROWS(Trainer::evaluate_accuracy(Network(), ds), std::invalid_argument);
+    CHECK_THROWS(Trainer::evaluate_accuracy(net, Dataset(4, 4)), std::invalid_argument);
+}
+
+TEST_CASE(multilayer_adam_soft_targets_1_vs_4_thread_parity) {
+    // Multilayer ReLU + Softmax + CCE + Adam trained on a mix of one-hot and tied soft targets.
+    Dataset ds1(3, 4);
+    for (int r = 0; r < 16; ++r) {
+        const Scalar jitter = static_cast<Scalar>(r - 8) * 0.01f;
+        ds1.add_sample({1.0f + jitter, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 0.0f});
+        ds1.add_sample({0.0f, 1.0f + jitter, 0.0f}, {0.0f, 0.5f, 0.5f, 0.0f});
+        ds1.add_sample({0.0f, 0.0f, 1.0f + jitter}, {0.333333f, 0.0f, 0.333333f, 0.333333f});
+        ds1.add_sample({-1.0f + jitter, -1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f});
+    }
+    Dataset ds4 = ds1;
+
+    std::mt19937 rng(2027);
+    Network net1(3);
+    net1.add_layer(16, ActivationType::ReLU, rng);
+    net1.add_layer(16, ActivationType::ReLU, rng);
+    net1.add_layer(4, ActivationType::Softmax, rng);
+    Network net4 = net1;
+
+    TrainingConfig cfg1;
+    cfg1.loss = LossType::CategoricalCrossEntropy;
+    cfg1.optimizer = OptimizerType::Adam;
+    cfg1.epochs = 80;
+    cfg1.batch_size = 16;
+    cfg1.learning_rate = 0.01f;
+    cfg1.shuffle = true;
+    cfg1.num_threads = 1;
+    cfg1.seed = 42;
+
+    TrainingConfig cfg4 = cfg1;
+    cfg4.num_threads = 4;
+
+    const TrainingResult r1 = Trainer(cfg1).fit(net1, ds1);
+    const TrainingResult r4 = Trainer(cfg4).fit(net4, ds4);
+
+    CHECK(r1.loss_history.size() == r4.loss_history.size());
+    for (std::size_t i = 0; i < r1.loss_history.size(); ++i) {
+        CHECK_NEAR(r1.loss_history[i], r4.loss_history[i], 1e-4f);
+    }
+    CHECK(net1.approx_equal(net4, 1e-4f));
+    CHECK(r4.final_loss < r4.initial_loss);
+    CHECK(r4.final_train_accuracy >= 0.98f);
 }
 
 int main() {

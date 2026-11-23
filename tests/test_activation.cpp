@@ -39,7 +39,16 @@ TEST_CASE(types_string_roundtrip) {
     CHECK(nn::parse_loss(nn::to_string(LossType::BinaryCrossEntropy)) ==
           LossType::BinaryCrossEntropy);
     CHECK(nn::parse_loss("binary_cross_entropy") == LossType::BinaryCrossEntropy);
+    CHECK(nn::parse_loss(nn::to_string(LossType::CategoricalCrossEntropy)) ==
+          LossType::CategoricalCrossEntropy);
+    CHECK(nn::parse_loss("categorical_cross_entropy") == LossType::CategoricalCrossEntropy);
+    CHECK(nn::parse_loss("cross_entropy") == LossType::CategoricalCrossEntropy);
     CHECK_THROWS(nn::parse_loss("unknown"), std::invalid_argument);
+
+    CHECK(nn::parse_optimizer(nn::to_string(nn::OptimizerType::SGD)) == nn::OptimizerType::SGD);
+    CHECK(nn::parse_optimizer(nn::to_string(nn::OptimizerType::Adam)) == nn::OptimizerType::Adam);
+    CHECK(nn::parse_optimizer("ADAM") == nn::OptimizerType::Adam);
+    CHECK_THROWS(nn::parse_optimizer("unknown"), std::invalid_argument);
 }
 
 TEST_CASE(activation_forward_values_and_stability) {
@@ -134,6 +143,9 @@ TEST_CASE(softmax_jacobian_matches_finite_differences) {
     CHECK_THROWS(
         nn::activation::apply_derivative_vector(ActivationType::Softmax, z, {1.0f}, bad_out),
         std::invalid_argument);
+    CHECK_THROWS(nn::activation::apply_derivative_vector_with_output(
+                     ActivationType::Softmax, z, {0.5f, 0.5f}, grad_a, bad_out),
+                 std::invalid_argument);
 }
 
 TEST_CASE(check_near_rejects_nan) {
