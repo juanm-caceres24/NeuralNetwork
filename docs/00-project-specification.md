@@ -46,7 +46,7 @@ Core guiding principles:
 
 ### 3.3 Persistence & Configuration
 - **Model persistence (`model.json`):** Save and load the complete network state (format version, input size, layer sizes, per-layer activation functions, weights, and biases). Supports starting a process directly from a saved model, training further, and optionally saving updated parameters at the end.
-- **External configuration (`config.json`):** Store all runtime parameters outside source code, including layer topology, `init_seed`, `load_path`, `save_path`, `save_on_finish`, dataset path/generator, `loss`, `optimizer`, Adam parameters, `epochs`, `batch_size`, `learning_rate`, `shuffle`, `num_threads`, `seed`, validation split settings, logging frequency, and server `host`/`port`/`num_workers`.
+- **External configuration (`config.json`):** Store all runtime parameters outside source code, including layer topology, `init_seed`, `load_path`, `save_path`, `save_on_finish`, dataset path/generator, `loss`, `optimizer`, Adam parameters, `epochs`, `batch_size`, `learning_rate`, `shuffle`, `num_threads`, `seed`, validation split settings, logging frequency, and server `host`/`port`/`num_workers`. Unknown JSON keys are strictly rejected to catch configuration typos early.
 
 ### 3.4 Inference Server API
 - Run the neural network as a standalone PC server listening on a configurable host and TCP port.
@@ -170,8 +170,8 @@ When `num_threads <= 1` or the mini-batch has 1 sample, execution runs directly 
 
 ### 4.7 Library vs. Executables Separation
 All reusable logic lives in static library **`libnn.a`** (no `main()`). Thin executables in `apps/` link against `libnn.a`:
-- `train_app` — reads `config.json`, loads/creates network, runs training + validation metrics, optionally saves `model.json`.
-- `predict_app` — loads `model.json`, evaluates an input vector from CLI, prints outputs and optional per-layer neuron states (`--show-neurons`).
+- `train_app` — reads `config.json`, loads/creates network, runs training + validation metrics, prints sample predictions (with optional `--compact` summary), and optionally saves `model.json`.
+- `predict_app` — loads `model.json`, evaluates an input vector from CLI, prints outputs (full vector or `--compact` top index/value) and optional per-layer neuron states (`--show-neurons`).
 - `server_app` — loads `model.json` once into RAM, listens on `host:port`, and serves `/health`, `/info`, and `/predict`.
 - `bench_app` — measures single-sample inference latency/throughput (mean, p50, p95, p99), multi-threaded training scaling (speedup & efficiency), and live HTTP loopback round-trip latency.
 
@@ -186,26 +186,26 @@ NeuralNetwork/
 ├── README.md
 ├── docs/                       # Living Markdown documentation (English)
 ├── scripts/                    # build.sh, test.sh, test_api.sh, benchmark.sh
-├── configs/                    # Example configs: xor.json, circle.json, quadrants.json
+├── configs/                    # Example configs: xor.json, circle.json, quadrants.json, tictactoe.json
 ├── third_party/cjson/          # Vendored cJSON v1.7.18 (cJSON.h, cJSON.c, LICENSE)
 ├── include/nn/                 # Public C++17 headers (namespace nn)
 │   ├── types.hpp               # Scalar, ActivationType, LossType, OptimizerType + parsers
 │   ├── matrix.hpp              # Contiguous row-major Matrix & linear algebra ops
 │   ├── activation.hpp          # Activation functions and exact derivatives (incl. Softmax Jacobian)
 │   ├── workspace.hpp           # LayerState, LayerGrads, NetworkWorkspace
-│   ├── layer.hpp               # DenseLayer (weights, biases, forward, backward, apply_gradients)
-│   ├── network.hpp             # Network container (forward/predict const, backward, apply_gradients)
+│   ├── layer.hpp               # DenseLayer (weights, biases, forward, backward, backward_from_delta, apply_gradients)
+│   ├── network.hpp             # Network container (forward/predict const, backward, backward_from_output_delta, apply_gradients)
 │   ├── serializer.hpp          # JSON model serialization/deserialization (cJSON)
 │   ├── loss.hpp                # Loss functions (MSE, BinaryCrossEntropy, CategoricalCrossEntropy)
 │   ├── optimizer.hpp           # Optimizer (SGD and Adam with bias correction)
 │   ├── dataset.hpp             # Dataset (CSV, index shuffling, split) & synthetic generators
 │   ├── thread_pool.hpp         # Reusable ThreadPool with parallel_for_chunks()
-│   ├── trainer.hpp             # Trainer (mini-batch parallel backprop, validation, accuracy)
-│   ├── config.hpp              # AppConfig structs + JSON loader + network/dataset builders
+│   ├── trainer.hpp             # Trainer (mini-batch parallel backprop, fused Softmax+CCE, validation, tie-aware accuracy)
+│   ├── config.hpp              # AppConfig structs + strict JSON loader + network/dataset builders
 │   └── server.hpp              # HTTP/1.1 + JSON InferenceServer over POSIX sockets
 ├── src/                        # Implementations mirroring include/nn/
 ├── apps/                       # train_app.cpp, predict_app.cpp, server_app.cpp, bench_app.cpp
-└── tests/                      # Zero-dependency unit & integration tests (32 test cases)
+└── tests/                      # Zero-dependency unit & integration tests (35 test cases)
 ```
 
 ---
@@ -219,4 +219,5 @@ NeuralNetwork/
 | **`v0.3.0`** | Completed | Vendored `cJSON`, `serializer.hpp` (`model.json`), `config.hpp` (`config.json`), `train_app`, `predict_app`, example configs. | Bit-exact (`eps = 0.0f`) JSON model round-trip, config validation tests, end-to-end train → save → reload → resume test. |
 | **`v0.4.0`** | Completed | `InferenceServer` (POSIX TCP + HTTP/1.1 + JSON + worker pool), `server_app`, `scripts/test_api.sh`. | Router unit tests (`200`/`204`/`400`/`404`/`405`) + live TCP integration test with 160 concurrent client requests. |
 | **`v0.5.0`** | Completed | `CategoricalCrossEntropy`, `Adam` optimizer, `Dataset::split()` (random & chronological), validation metrics + best-model checkpointing, `quadrants` multiclass generator, `bench_app` + `scripts/benchmark.sh`. | `CCE + Softmax` numerical gradient check, `Adam` 1-vs-4 thread parity, multiclass validation convergence, release benchmark suite. |
-| **`v0.6.0+`** | Future | Optional extensions as needed: compact binary `.nn` format for very large models, HTTP Keep-Alive / `/predict_batch` endpoint, synthetic RC proximity-sensor dataset generator, ARM/Raspberry Pi cross-build guide. | Backwards-compatible with `v0.5.0` configs and `model.json` v1. |
+| **`v0.6.0`** | Completed | Numerically stable fused `Softmax + CCE` backward path (`backward_from_delta` / `backward_from_output_delta`), tie-aware soft-target accuracy in `Trainer::evaluate_accuracy()`, strict unknown-key rejection in `config.json`, `--compact` CLI flag in `train_app` & `predict_app`, external-CSV config template (`configs/tictactoe.json`). | Soft-target & extreme-logit (`p < 1e-10`) fused gradient check, tied soft-target accuracy test, unknown config key rejection tests (35/35 passing). |
+| **`v0.7.0+`** | Future | Optional extensions as needed: compact binary `.nn` format for very large models, HTTP Keep-Alive / `/predict_batch` endpoint, synthetic RC proximity-sensor dataset generator, ARM/Raspberry Pi cross-build guide. | Backwards-compatible with `v0.6.0` configs and `model.json` v1. |

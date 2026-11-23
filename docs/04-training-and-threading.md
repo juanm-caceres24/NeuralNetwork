@@ -14,7 +14,7 @@ This document describes the training components in `include/nn/loss.hpp`, `inclu
 | `BinaryCrossEntropy` | $-\frac{1}{K}\sum_{i=0}^{K-1}\left[t_i \ln(\hat{y}_i) + (1-t_i)\ln(1-\hat{y}_i)\right]$ | $\frac{1}{K}\frac{\hat{y}_i - t_i}{\hat{y}_i(1-\hat{y}_i)}$ | `Sigmoid` |
 | `CategoricalCrossEntropy` | $-\sum_{i=0}^{K-1} t_i \ln(\hat{y}_i)$ | $-\frac{t_i}{\hat{y}_i}$ (0 when $t_i = 0$) | `Softmax` |
 
-For `BinaryCrossEntropy` and `CategoricalCrossEntropy`, predicted probabilities are clamped to $\hat{y}_i \in [10^{-7}, 1 - 10^{-7}]$ to guarantee finite logarithms and derivatives even at exact `0.0` or `1.0` outputs.
+For `BinaryCrossEntropy` and `CategoricalCrossEntropy`, predicted probabilities are clamped to $\hat{y}_i \in [10^{-7}, 1 - 10^{-7}]$ inside standalone `loss::compute()` / `loss::gradient()` to guarantee finite logarithms and derivatives even at exact `0.0` or `1.0` outputs. During training, whenever `CategoricalCrossEntropy` is paired with a `Softmax` output layer, `Trainer::fit()` automatically uses the fused pre-activation gradient $\delta_i = a_i \sum_k t_k - t_i$ via `Network::backward_from_output_delta()`, avoiding clamping distortion even when predicted probabilities drop below $10^{-7}$ and handling both one-hot and soft targets accurately.
 
 ---
 
