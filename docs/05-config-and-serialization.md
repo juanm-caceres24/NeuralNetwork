@@ -100,6 +100,7 @@ Supported options:
 ./build/release/apps/train_app configs/quadrants.json --no-save
 
 # Train a large multi-class CSV model with compact preview output
+# (requires placing the dataset CSV at data/tictactoe_dataset.csv)
 ./build/release/apps/train_app configs/tictactoe.json --compact
 
 # Resume training from a saved model and ask interactively before saving to a new path

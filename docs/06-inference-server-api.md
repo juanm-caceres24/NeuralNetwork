@@ -76,18 +76,22 @@ When `"include_neurons": true` is passed, the response also includes a `"layers"
   "output": [0.973478],
   "latency_us": 4,
   "layers": [
-    {"z": [-1.24, 3.36], "a": [-0.84, 0.99]},
+    {
+      "z": [-1.24, 3.36, 0.42, -0.81, 1.95, -2.10],
+      "a": [-0.84, 0.99, 0.40, -0.67, 0.96, -0.97]
+    },
     {"z": [3.60], "a": [0.973478]}
   ]
 }
 ```
 
 **Error Responses & CORS:**
-- `400 Bad Request` — Malformed HTTP request/headers, invalid JSON, missing `"input"`, wrong vector length, or non-numeric elements.
+- `400 Bad Request` — Malformed HTTP request/headers, invalid JSON, missing `"input"`, wrong vector length, or non-numeric / non-finite elements.
 - `404 Not Found` — Unknown endpoint path.
 - `405 Method Not Allowed` — Wrong HTTP verb (e.g., `GET /predict`).
 - `413 Payload Too Large` — Request body exceeds the 4 MB limit.
 - `431 Request Header Fields Too Large` — HTTP headers exceed the 64 KB limit.
+- `500 Internal Server Error` — Internal JSON serialization failure while constructing `/info` or `/predict` responses.
 - `OPTIONS *` → `204 No Content` (all responses include `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: GET, POST, OPTIONS`, and `Access-Control-Allow-Headers: Content-Type`).
 
 ---

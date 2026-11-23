@@ -205,7 +205,7 @@ NeuralNetwork/
 │   └── server.hpp              # HTTP/1.1 + JSON InferenceServer over POSIX sockets
 ├── src/                        # Implementations mirroring include/nn/
 ├── apps/                       # train_app.cpp, predict_app.cpp, server_app.cpp, bench_app.cpp
-└── tests/                      # Zero-dependency unit & integration tests (35 test cases)
+└── tests/                      # Zero-dependency unit & integration tests (36 test cases)
 ```
 
 ---
@@ -219,5 +219,5 @@ NeuralNetwork/
 | **`v0.3.0`** | Completed | Vendored `cJSON`, `serializer.hpp` (`model.json`), `config.hpp` (`config.json`), `train_app`, `predict_app`, example configs. | Bit-exact (`eps = 0.0f`) JSON model round-trip, config validation tests, end-to-end train → save → reload → resume test. |
 | **`v0.4.0`** | Completed | `InferenceServer` (POSIX TCP + HTTP/1.1 + JSON + worker pool), `server_app`, `scripts/test_api.sh`. | Router unit tests (`200`/`204`/`400`/`404`/`405`) + live TCP integration test with 160 concurrent client requests. |
 | **`v0.5.0`** | Completed | `CategoricalCrossEntropy`, `Adam` optimizer, `Dataset::split()` (random & chronological), validation metrics + best-model checkpointing, `quadrants` multiclass generator, `bench_app` + `scripts/benchmark.sh`. | `CCE + Softmax` numerical gradient check, `Adam` 1-vs-4 thread parity, multiclass validation convergence, release benchmark suite. |
-| **`v0.6.0`** | Completed | Numerically stable fused `Softmax + CCE` backward path (`backward_from_delta` / `backward_from_output_delta`), tie-aware soft-target accuracy in `Trainer::evaluate_accuracy()`, strict unknown-key rejection in `config.json`, `--compact` CLI flag in `train_app` & `predict_app`, external-CSV config template (`configs/tictactoe.json`). | Soft-target & extreme-logit (`p < 1e-10`) fused gradient check, tied soft-target accuracy test, unknown config key rejection tests (35/35 passing). |
+| **`v0.6.0`** | Completed | Numerically stable fused `Softmax + CCE` backward path (`backward_from_delta` / `backward_from_output_delta`), tie-aware soft-target accuracy in `Trainer::evaluate_accuracy()`, strict unknown-key rejection in `config.json`, `--compact` CLI flag in `train_app` & `predict_app`, external-CSV config template (`configs/tictactoe.json`). | Soft-target & extreme-logit (`p < 1e-10`) fused gradient check, tied soft-target accuracy & `NaN`/bounds hardening tests, unknown config key rejection tests (36/36 passing). |
 | **`v0.7.0+`** | Future | Optional extensions as needed: compact binary `.nn` format for very large models, HTTP Keep-Alive / `/predict_batch` endpoint, synthetic RC proximity-sensor dataset generator, ARM/Raspberry Pi cross-build guide. | Backwards-compatible with `v0.6.0` configs and `model.json` v1. |

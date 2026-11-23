@@ -13,7 +13,7 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
   - Synchronous intra-batch multi-threading via a reusable `ThreadPool`
   - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle, 4-class quadrants)
 - **Persistence, CLI Apps & Benchmarks**
-  - Zero hardcoded settings: strictly validated external `config.json` for hyperparameters, architecture, paths, and server port (`cJSON` v1.7.18 vendored)
+  - Zero hardcoded settings: strictly validated external `config.json` for hyperparameters, architecture, paths, and server settings (`cJSON` v1.7.18 vendored)
   - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases
   - CLI apps: `train_app` (with optional `--compact` preview), `predict_app` (with optional `--show-neurons` / `--compact`), `server_app`, and `bench_app` (`./scripts/benchmark.sh`)
 - **Inference Server**
@@ -50,4 +50,4 @@ All project specifications, architecture decisions, math derivations, and workfl
 - [`docs/04-training-and-threading.md`](docs/04-training-and-threading.md) — Loss functions, `Dataset` CSV/shuffling/splitting, `ThreadPool`, and parallel mini-batch `SGD`/`Adam`.
 - [`docs/05-config-and-serialization.md`](docs/05-config-and-serialization.md) — `cJSON` integration, `config.json` reference, `model.json` format, and CLI apps.
 - [`docs/06-inference-server-api.md`](docs/06-inference-server-api.md) — POSIX TCP + HTTP/1.1 REST inference server architecture, endpoints, and client examples.
-- [`docs/07-optimizers-validation-and-benchmarks.md`](docs/07-optimizers-validation-and-benchmarks.md) — `CategoricalCrossEntropy`, `Adam`, train/validation splitting, accuracy metrics, and performance benchmarking.
+- [`docs/07-optimizers-validation-and-benchmarks.md`](docs/07-optimizers-validation-and-benchmarks.md) — Fused `Softmax + CategoricalCrossEntropy`, `Adam`, train/validation splitting, tie-aware soft-target accuracy metrics, and performance benchmarking.
