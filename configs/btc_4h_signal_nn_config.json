@@ -1,0 +1,50 @@
+{
+  "model": {
+    "layers": [
+      {
+        "size": 341
+      },
+      {
+        "size": 128,
+        "activation": "relu"
+      },
+      {
+        "size": 64,
+        "activation": "relu"
+      },
+      {
+        "size": 3,
+        "activation": "softmax"
+      }
+    ],
+    "init_seed": 42,
+    "load_path": "",
+    "save_path": "models/btc_4h_signal.json",
+    "save_on_finish": true
+  },
+  "training": {
+    "dataset_path": "data/btc_4h_signal_31to7.csv",
+    "dataset_has_header": true,
+    "dataset_generator": "",
+    "loss": "cce",
+    "optimizer": "adam",
+    "epochs": 200,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "adam_beta1": 0.9,
+    "adam_beta2": 0.999,
+    "adam_epsilon": 1e-08,
+    "shuffle": true,
+    "num_threads": 4,
+    "seed": 100,
+    "validation_split": 0.2,
+    "validation_shuffle": false,
+    "keep_best_validation_model": true,
+    "log_every_epochs": 10
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8083,
+    "num_workers": 4
+  }
+}

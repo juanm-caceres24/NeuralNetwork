@@ -186,7 +186,7 @@ NeuralNetwork/
 ├── README.md
 ├── docs/                       # Living Markdown documentation (English)
 ├── scripts/                    # build.sh, test.sh, test_api.sh, benchmark.sh
-├── configs/                    # Example configs: xor.json, circle.json, quadrants.json, tictactoe.json
+├── configs/                    # Example configs: xor, circle, quadrants, tictactoe, btc_*_nn_config
 ├── third_party/cjson/          # Vendored cJSON v1.7.18 (cJSON.h, cJSON.c, LICENSE)
 ├── include/nn/                 # Public C++17 headers (namespace nn)
 │   ├── types.hpp               # Scalar, ActivationType, LossType, OptimizerType + parsers
