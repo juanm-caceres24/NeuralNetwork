@@ -104,7 +104,7 @@ When `"include_neurons": true` is passed, the response also includes a `"layers"
 ./build/release/apps/train_app configs/xor.json
 ./build/release/apps/server_app configs/xor.json
 ```
-*(Optional overrides: `--model models/custom.json --host 0.0.0.0 --port 9000 --workers 4`; `--port 0` lets the OS pick an ephemeral port.)*
+*(Optional overrides: `--model models/custom.json --host 0.0.0.0 --port 9000 --workers 4`; `--port 0` lets the OS pick an ephemeral port. Multiple `server_app` instances can run side by side on distinct ports — for example ports `8080`–`8085` for the six BTC TradingBot configs.)*
 
 ### 2. Query from Terminal (`curl` or helper script)
 ```bash

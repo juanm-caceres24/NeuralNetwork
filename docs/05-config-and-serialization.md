@@ -42,7 +42,16 @@ Handled by `nn::serializer::save_network_json()` and `nn::serializer::load_netwo
 
 ## 3. External Configuration (`config.json`)
 
-Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv`), and the BTC TradingBot templates `configs/btc_{1h,4h,1d}_{candles,signal}_nn_config.json` (external CSV templates with chronological validation splits and non-overlapping server ports `8080`–`8085`, expecting their datasets inside the gitignored `data/` folder).
+Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv`), and the six BTC TradingBot templates `configs/btc_{1h,4h,1d}_{candles,signal}_nn_config.json` (external CSV templates with 24-candle windows = `264` inputs, chronological validation splits, and non-overlapping server ports `8080`–`8085`, expecting their datasets inside the gitignored `data/` folder):
+
+| Config Template | Expected CSV (`data/`) | Topology | Loss / Optimizer | Server Port |
+| :--- | :--- | :--- | :--- | :---: |
+| `configs/btc_1h_candles_nn_config.json` | `data/btc_1h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `mse` / `adam` | `8080` |
+| `configs/btc_1h_signal_nn_config.json` | `data/btc_1h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` | `8081` |
+| `configs/btc_4h_candles_nn_config.json` | `data/btc_4h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `mse` / `adam` | `8082` |
+| `configs/btc_4h_signal_nn_config.json` | `data/btc_4h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` | `8083` |
+| `configs/btc_1d_candles_nn_config.json` | `data/btc_1d_candles_24to7.csv` | `264 → 32 → 16 → 28 (linear)` | `mse` / `adam` | `8084` |
+| `configs/btc_1d_signal_nn_config.json` | `data/btc_1d_signal_24to7.csv` | `264 → 32 → 16 → 3 (softmax)` | `cce` / `adam` | `8085` |
 
 `parse_config_json()` strictly rejects unknown keys in every section (`root`, `model`, `model.layers[]`, `training`, `data`, `server`) so configuration typos fail fast instead of silently falling back to defaults.
 
@@ -102,6 +111,10 @@ Supported options:
 # Train a large multi-class CSV model with compact preview output
 # (requires placing the dataset CSV at data/tictactoe_dataset.csv)
 ./build/release/apps/train_app configs/tictactoe.json --compact
+
+# Train a BTC TradingBot time-series model with chronological validation
+# (requires exporting the matching 24to6/24to7 CSV into data/)
+./build/release/apps/train_app configs/btc_1h_signal_nn_config.json --compact
 
 # Resume training from a saved model and ask interactively before saving to a new path
 ./build/release/apps/train_app configs/xor.json --load models/xor_model.json --save models/xor_v2.json --ask-save
