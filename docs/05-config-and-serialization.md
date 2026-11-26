@@ -42,7 +42,7 @@ Handled by `nn::serializer::save_network_json()` and `nn::serializer::load_netwo
 
 ## 3. External Configuration (`config.json`)
 
-Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), and `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv` inside the gitignored `data/` folder).
+Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv`), and the BTC TradingBot templates `configs/btc_{1h,4h,1d}_{candles,signal}_nn_config.json` (external CSV templates with chronological validation splits and non-overlapping server ports `8080`–`8085`, expecting their datasets inside the gitignored `data/` folder).
 
 `parse_config_json()` strictly rejects unknown keys in every section (`root`, `model`, `model.layers[]`, `training`, `data`, `server`) so configuration typos fail fast instead of silently falling back to defaults.
 
