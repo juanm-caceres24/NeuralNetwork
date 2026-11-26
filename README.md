@@ -13,7 +13,7 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
   - Synchronous intra-batch multi-threading via a reusable `ThreadPool`
   - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle, 4-class quadrants)
 - **Persistence, CLI Apps & Benchmarks**
-  - Zero hardcoded settings: strictly validated external `config.json` for hyperparameters, architecture, paths, and server settings (`cJSON` v1.7.18 vendored)
+  - Zero hardcoded settings: strictly validated external `config.json` for hyperparameters, architecture, paths, and server settings (`cJSON` v1.7.18 vendored), with example configs for synthetic benchmarks (`xor`, `circle`, `quadrants`) and external CSV workflows (`tictactoe`, BTC TradingBot `1h`/`4h`/`1d` `candles` & `signal`)
   - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases
   - CLI apps: `train_app` (with optional `--compact` preview), `predict_app` (with optional `--show-neurons` / `--compact`), `server_app`, and `bench_app` (`./scripts/benchmark.sh`)
 - **Inference Server**

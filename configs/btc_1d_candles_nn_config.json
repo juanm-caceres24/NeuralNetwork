@@ -2,14 +2,14 @@
   "model": {
     "layers": [
       {
-        "size": 341
-      },
-      {
-        "size": 64,
-        "activation": "relu"
+        "size": 264
       },
       {
         "size": 32,
+        "activation": "relu"
+      },
+      {
+        "size": 16,
         "activation": "relu"
       },
       {
@@ -23,14 +23,14 @@
     "save_on_finish": true
   },
   "training": {
-    "dataset_path": "data/btc_1d_candles_31to7.csv",
+    "dataset_path": "data/btc_1d_candles_24to7.csv",
     "dataset_has_header": true,
     "dataset_generator": "",
     "loss": "mse",
     "optimizer": "adam",
-    "epochs": 200,
+    "epochs": 50,
     "batch_size": 32,
-    "learning_rate": 0.001,
+    "learning_rate": 0.0003,
     "adam_beta1": 0.9,
     "adam_beta2": 0.999,
     "adam_epsilon": 1e-08,
