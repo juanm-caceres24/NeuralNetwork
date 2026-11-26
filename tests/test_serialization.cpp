@@ -142,30 +142,39 @@ TEST_CASE(config_json_load_and_validation) {
 
     struct BtcConfigSpec {
         const char* path;
+        const char* dataset_path;
+        std::size_t hidden1;
+        std::size_t hidden2;
         std::size_t out_size;
         ActivationType out_act;
         LossType loss;
         int port;
     };
     const std::vector<BtcConfigSpec> btc_specs = {
-        {"configs/btc_1h_candles_nn_config.json", 28, ActivationType::Linear, LossType::MSE, 8080},
-        {"configs/btc_1h_signal_nn_config.json", 3, ActivationType::Softmax,
-         LossType::CategoricalCrossEntropy, 8081},
-        {"configs/btc_4h_candles_nn_config.json", 28, ActivationType::Linear, LossType::MSE, 8082},
-        {"configs/btc_4h_signal_nn_config.json", 3, ActivationType::Softmax,
-         LossType::CategoricalCrossEntropy, 8083},
-        {"configs/btc_1d_candles_nn_config.json", 28, ActivationType::Linear, LossType::MSE, 8084},
-        {"configs/btc_1d_signal_nn_config.json", 3, ActivationType::Softmax,
-         LossType::CategoricalCrossEntropy, 8085},
+        {"configs/btc_1h_candles_nn_config.json", "data/btc_1h_candles_24to6.csv", 64, 32, 24,
+         ActivationType::Linear, LossType::MSE, 8080},
+        {"configs/btc_1h_signal_nn_config.json", "data/btc_1h_signal_24to6.csv", 64, 32, 3,
+         ActivationType::Softmax, LossType::CategoricalCrossEntropy, 8081},
+        {"configs/btc_4h_candles_nn_config.json", "data/btc_4h_candles_24to6.csv", 64, 32, 24,
+         ActivationType::Linear, LossType::MSE, 8082},
+        {"configs/btc_4h_signal_nn_config.json", "data/btc_4h_signal_24to6.csv", 64, 32, 3,
+         ActivationType::Softmax, LossType::CategoricalCrossEntropy, 8083},
+        {"configs/btc_1d_candles_nn_config.json", "data/btc_1d_candles_24to7.csv", 32, 16, 28,
+         ActivationType::Linear, LossType::MSE, 8084},
+        {"configs/btc_1d_signal_nn_config.json", "data/btc_1d_signal_24to7.csv", 32, 16, 3,
+         ActivationType::Softmax, LossType::CategoricalCrossEntropy, 8085},
     };
     for (const BtcConfigSpec& spec : btc_specs) {
         AppConfig btc_cfg = nn::load_config_json(spec.path);
         CHECK(btc_cfg.model.layers.size() == 4);
-        CHECK(btc_cfg.model.layers[0].size == 341);
+        CHECK(btc_cfg.model.layers[0].size == 264);
+        CHECK(btc_cfg.model.layers[1].size == spec.hidden1);
+        CHECK(btc_cfg.model.layers[2].size == spec.hidden2);
         CHECK(btc_cfg.model.layers[3].size == spec.out_size);
         CHECK(btc_cfg.model.layers[3].activation == spec.out_act);
         CHECK(btc_cfg.training.loss == spec.loss);
         CHECK(btc_cfg.training.optimizer == nn::OptimizerType::Adam);
+        CHECK(btc_cfg.data.dataset_path == spec.dataset_path);
         CHECK(btc_cfg.data.has_header == true);
         CHECK(btc_cfg.training.validation_shuffle == false);
         CHECK(btc_cfg.training.keep_best_validation_model == true);
