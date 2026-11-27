@@ -42,16 +42,9 @@ Handled by `nn::serializer::save_network_json()` and `nn::serializer::load_netwo
 
 ## 3. External Configuration (`config.json`)
 
-Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv`), and the six BTC TradingBot templates `configs/btc_{1h,4h,1d}_{candles,signal}_nn_config.json` (external CSV templates with 24-candle windows = `384` inputs, chronological validation splits, and non-overlapping server ports `8080`–`8085`, expecting their datasets inside the gitignored `data/` folder):
+Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. The repository tracks only three self-contained, runnable example configs using built-in synthetic generators: `configs/xor.json`, `configs/circle.json`, and `configs/quadrants.json`.
 
-| Config Template | Expected CSV (`data/`) | Topology | Loss / Optimizer | Server Port |
-| :--- | :--- | :--- | :--- | :---: |
-| `configs/btc_1h_candles_nn_config.json` | `data/btc_1h_candles_24to6.csv` | `384 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8080` |
-| `configs/btc_1h_signal_nn_config.json` | `data/btc_1h_signal_24to6.csv` | `384 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8081` |
-| `configs/btc_4h_candles_nn_config.json` | `data/btc_4h_candles_24to6.csv` | `384 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8082` |
-| `configs/btc_4h_signal_nn_config.json` | `data/btc_4h_signal_24to6.csv` | `384 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8083` |
-| `configs/btc_1d_candles_nn_config.json` | `data/btc_1d_candles_24to7.csv` | `384 → 32 → 16 → 28 (linear)` | `huber` / `adam` (`AdamW`) | `8084` |
-| `configs/btc_1d_signal_nn_config.json` | `data/btc_1d_signal_24to7.csv` | `384 → 32 → 16 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8085` |
+Any custom project configs placed in `configs/*.json` — along with external CSV datasets (`data/`), trained models (`models/`), evaluation reports (`reports/`), and runtime logs (`logs/`) — are intentionally ignored by `.gitignore` so the repository remains a clean, domain-agnostic core while project-specific data lives locally.
 
 `parse_config_json()` strictly rejects unknown keys in every section (`root`, `model`, `model.layers[]`, `training`, `data`, `server`) so configuration typos fail fast instead of silently falling back to defaults.
 
@@ -118,13 +111,8 @@ Supported options:
 # Train 4-class quadrants with Adam + CCE + validation and export a JSON evaluation report
 ./build/release/apps/train_app configs/quadrants.json --no-save --compact --report reports/quadrants_report.json
 
-# Train a large multi-class CSV model with compact preview output
-# (requires placing the dataset CSV at data/tictactoe_dataset.csv)
-./build/release/apps/train_app configs/tictactoe.json --compact
-
-# Train a BTC TradingBot time-series model with chronological validation
-# (requires exporting the matching 24to6/24to7 CSV into data/)
-./build/release/apps/train_app configs/btc_1h_signal_nn_config.json --compact
+# Train a custom external-CSV model using a local config (gitignored under configs/ and data/)
+./build/release/apps/train_app configs/my_project.json --compact --report reports/my_project_report.json
 
 # Resume training from a saved model and ask interactively before saving to a new path
 ./build/release/apps/train_app configs/xor.json --load models/xor_model.json --save models/xor_v2.json --ask-save
@@ -142,6 +130,6 @@ Supported options:
 # Inspect every hidden and output neuron's pre-activation (z) and activation (a)
 ./build/release/apps/predict_app models/xor_model.json 1 0 --show-neurons
 
-# Print only the top predicted class index and probability for large multi-class models
-./build/release/apps/predict_app models/tictactoe_model.json 0 0 0 0 0 0 0 0 0 --compact
+# Print only the top predicted class index and probability for multi-class models
+./build/release/apps/predict_app models/quadrants_model.json 0.5 -0.5 --compact
 ```
