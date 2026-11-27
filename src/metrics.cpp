@@ -93,6 +93,12 @@ void add_json_string(cJSON* obj, const char* key, const std::string& value) {
     }
 }
 
+void add_json_null(cJSON* obj, const char* key) {
+    if (!cJSON_AddNullToObject(obj, key)) {
+        throw std::runtime_error(std::string("Failed to add JSON null '") + key + "'");
+    }
+}
+
 ModelSummary summarize_model(const Network& network) {
     ModelSummary summary;
     summary.input_size = network.input_size();
@@ -185,6 +191,7 @@ ClassificationMetrics evaluate_classification(const Network& network,
     std::size_t correct = 0;
     std::size_t majority_correct = 0;
     std::size_t finite_predictions = 0;
+    std::vector<std::size_t> class_support(num_classes, 0);
     std::vector<double> pred_prob_sum(num_classes, 0.0);
 
     for (std::size_t i = 0; i < n_eval; ++i) {
@@ -197,6 +204,7 @@ ClassificationMetrics evaluate_classification(const Network& network,
 
         if (is_binary_single_output) {
             const std::size_t true_cls = (t[0] >= Scalar{0.5f}) ? 1 : 0;
+            ++class_support[true_cls];
             if (true_cls == train_majority_class) {
                 ++majority_correct;
             }
@@ -218,12 +226,14 @@ ClassificationMetrics evaluate_classification(const Network& network,
                 ++majority_correct;
             }
             if (!all_finite(pred)) {
+                ++class_support[argmax_index(t)];
                 continue;
             }
             ++finite_predictions;
             const std::size_t pred_cls = argmax_index(pred);
             const bool is_tie_match = (t[pred_cls] >= max_target - kTargetTieTolerance);
             const std::size_t true_cls = is_tie_match ? pred_cls : argmax_index(t);
+            ++class_support[true_cls];
             if (is_tie_match) {
                 ++correct;
             }
@@ -245,10 +255,9 @@ ClassificationMetrics evaluate_classification(const Network& network,
 
     double f1_sum = 0.0;
     for (std::size_t c = 0; c < num_classes; ++c) {
-        std::size_t row_sum = 0;
+        const std::size_t support = class_support[c];
         std::size_t col_sum = 0;
         for (std::size_t j = 0; j < num_classes; ++j) {
-            row_sum += out.confusion_matrix[c][j];
             col_sum += out.confusion_matrix[j][c];
         }
         const std::size_t tp = out.confusion_matrix[c][c];
@@ -256,14 +265,14 @@ ClassificationMetrics evaluate_classification(const Network& network,
         const double precision =
             (col_sum > 0) ? (static_cast<double>(tp) / static_cast<double>(col_sum)) : 0.0;
         const double recall =
-            (row_sum > 0) ? (static_cast<double>(tp) / static_cast<double>(row_sum)) : 0.0;
+            (support > 0) ? (static_cast<double>(tp) / static_cast<double>(support)) : 0.0;
         const double f1 =
             (precision + recall > 0.0) ? (2.0 * precision * recall / (precision + recall)) : 0.0;
 
         ClassMetrics cm;
         cm.class_index = c;
-        cm.support = row_sum;
-        cm.actual_frequency = static_cast<Scalar>(static_cast<double>(row_sum) * inv_n_eval);
+        cm.support = support;
+        cm.actual_frequency = static_cast<Scalar>(static_cast<double>(support) * inv_n_eval);
         cm.mean_predicted_prob =
             (finite_predictions > 0)
                 ? static_cast<Scalar>(pred_prob_sum[c] / static_cast<double>(finite_predictions))
@@ -424,7 +433,8 @@ std::string report_to_json(const EvaluationReport& report, bool pretty) {
         throw std::runtime_error("Failed to create root cJSON object for report");
     }
 
-    add_json_size(root.get(), "format_version", static_cast<std::size_t>(report.format_version));
+    add_json_number_or_null(root.get(), "format_version",
+                            static_cast<double>(report.format_version));
     add_json_string(root.get(), "task", to_string(report.task));
     add_json_string(root.get(), "eval_split", report.eval_split);
 
@@ -494,9 +504,9 @@ std::string report_to_json(const EvaluationReport& report, bool pretty) {
         add_json_number_or_null(train_obj, "final_val_loss",
                                 static_cast<double>(res.final_val_loss));
     } else {
-        cJSON_AddNullToObject(train_obj, "best_val_epoch");
-        cJSON_AddNullToObject(train_obj, "best_val_loss");
-        cJSON_AddNullToObject(train_obj, "final_val_loss");
+        add_json_null(train_obj, "best_val_epoch");
+        add_json_null(train_obj, "best_val_loss");
+        add_json_null(train_obj, "final_val_loss");
     }
 
     // 3. Evaluation metrics section

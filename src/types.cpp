@@ -101,7 +101,7 @@ std::string to_string(LrScheduleType type) {
 
 LrScheduleType parse_lr_schedule(const std::string& name) {
     const std::string key = to_lower_ascii(name);
-    if (key == "none" || key == "constant") return LrScheduleType::None;
+    if (key == "none") return LrScheduleType::None;
     if (key == "cosine") return LrScheduleType::Cosine;
     throw std::invalid_argument("Unsupported lr_schedule: '" + name + "'");
 }

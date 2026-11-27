@@ -258,11 +258,14 @@ TrainingResult Trainer::fit(Network& network,
         if (use_validation) {
             val_loss = evaluate_loss(network, *val_dataset, config_.loss, config_.huber_delta);
             result.val_loss_history.push_back(val_loss);
+            const Scalar effective_min_delta = (config_.early_stopping_patience > 0)
+                                                   ? config_.early_stopping_min_delta
+                                                   : Scalar{0};
             const bool improved =
                 (result.best_val_epoch == 0)
                     ? std::isfinite(val_loss)
                     : (std::isfinite(val_loss) &&
-                       val_loss < result.best_val_loss - config_.early_stopping_min_delta);
+                       val_loss < result.best_val_loss - effective_min_delta);
             if (improved) {
                 result.best_val_loss = val_loss;
                 result.best_val_epoch = epoch;
