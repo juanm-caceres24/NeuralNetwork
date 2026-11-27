@@ -25,3 +25,9 @@ data/
 reports/
 logs/
 
+# Project-specific configs live locally (only core self-contained examples are tracked)
+configs/*.json
+!configs/xor.json
+!configs/circle.json
+!configs/quadrants.json
+
