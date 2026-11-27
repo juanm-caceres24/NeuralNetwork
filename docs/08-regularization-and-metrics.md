@@ -163,7 +163,7 @@ Top-level JSON structure (`format_version: 1`):
     "validation_shuffle": true,
     "keep_best_validation_model": true,
     "seed": 42,
-    "num_threads": 2,
+    "num_threads": 4,
     "train_samples": 320,
     "val_samples": 80,
     "elapsed_ms": 14.2,
