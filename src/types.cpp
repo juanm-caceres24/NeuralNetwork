@@ -55,6 +55,8 @@ std::string to_string(LossType type) {
             return "bce";
         case LossType::CategoricalCrossEntropy:
             return "cce";
+        case LossType::Huber:
+            return "huber";
     }
     throw std::invalid_argument("Unknown LossType");
 }
@@ -66,6 +68,7 @@ LossType parse_loss(const std::string& name) {
     if (key == "cce" || key == "categorical_cross_entropy" || key == "cross_entropy") {
         return LossType::CategoricalCrossEntropy;
     }
+    if (key == "huber" || key == "smooth_l1") return LossType::Huber;
     throw std::invalid_argument("Unsupported loss function: '" + name + "'");
 }
 
@@ -84,6 +87,23 @@ OptimizerType parse_optimizer(const std::string& name) {
     if (key == "sgd") return OptimizerType::SGD;
     if (key == "adam") return OptimizerType::Adam;
     throw std::invalid_argument("Unsupported optimizer: '" + name + "'");
+}
+
+std::string to_string(LrScheduleType type) {
+    switch (type) {
+        case LrScheduleType::None:
+            return "none";
+        case LrScheduleType::Cosine:
+            return "cosine";
+    }
+    throw std::invalid_argument("Unknown LrScheduleType");
+}
+
+LrScheduleType parse_lr_schedule(const std::string& name) {
+    const std::string key = to_lower_ascii(name);
+    if (key == "none" || key == "constant") return LrScheduleType::None;
+    if (key == "cosine") return LrScheduleType::Cosine;
+    throw std::invalid_argument("Unsupported lr_schedule: '" + name + "'");
 }
 
 }  // namespace nn
