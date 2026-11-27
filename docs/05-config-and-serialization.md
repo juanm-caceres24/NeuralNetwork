@@ -46,12 +46,12 @@ Every hyperparameter, topology setting, file path, and server setting is externa
 
 | Config Template | Expected CSV (`data/`) | Topology | Loss / Optimizer | Server Port |
 | :--- | :--- | :--- | :--- | :---: |
-| `configs/btc_1h_candles_nn_config.json` | `data/btc_1h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `mse` / `adam` | `8080` |
-| `configs/btc_1h_signal_nn_config.json` | `data/btc_1h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` | `8081` |
-| `configs/btc_4h_candles_nn_config.json` | `data/btc_4h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `mse` / `adam` | `8082` |
-| `configs/btc_4h_signal_nn_config.json` | `data/btc_4h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` | `8083` |
-| `configs/btc_1d_candles_nn_config.json` | `data/btc_1d_candles_24to7.csv` | `264 → 32 → 16 → 28 (linear)` | `mse` / `adam` | `8084` |
-| `configs/btc_1d_signal_nn_config.json` | `data/btc_1d_signal_24to7.csv` | `264 → 32 → 16 → 3 (softmax)` | `cce` / `adam` | `8085` |
+| `configs/btc_1h_candles_nn_config.json` | `data/btc_1h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8080` |
+| `configs/btc_1h_signal_nn_config.json` | `data/btc_1h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8081` |
+| `configs/btc_4h_candles_nn_config.json` | `data/btc_4h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8082` |
+| `configs/btc_4h_signal_nn_config.json` | `data/btc_4h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8083` |
+| `configs/btc_1d_candles_nn_config.json` | `data/btc_1d_candles_24to7.csv` | `264 → 32 → 16 → 28 (linear)` | `huber` / `adam` (`AdamW`) | `8084` |
+| `configs/btc_1d_signal_nn_config.json` | `data/btc_1d_signal_24to7.csv` | `264 → 32 → 16 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8085` |
 
 `parse_config_json()` strictly rejects unknown keys in every section (`root`, `model`, `model.layers[]`, `training`, `data`, `server`) so configuration typos fail fast instead of silently falling back to defaults.
 
