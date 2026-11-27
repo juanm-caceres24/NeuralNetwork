@@ -174,7 +174,7 @@ TEST_CASE(config_json_load_and_validation) {
     for (const BtcConfigSpec& spec : btc_specs) {
         AppConfig btc_cfg = nn::load_config_json(spec.path);
         CHECK(btc_cfg.model.layers.size() == 4);
-        CHECK(btc_cfg.model.layers[0].size == 264);
+        CHECK(btc_cfg.model.layers[0].size == 384);
         CHECK(btc_cfg.model.layers[1].size == spec.hidden1);
         CHECK(btc_cfg.model.layers[2].size == spec.hidden2);
         CHECK(btc_cfg.model.layers[3].size == spec.out_size);
