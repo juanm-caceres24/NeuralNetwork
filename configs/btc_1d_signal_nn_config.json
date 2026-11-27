@@ -2,7 +2,7 @@
   "model": {
     "layers": [
       {
-        "size": 264
+        "size": 384
       },
       {
         "size": 32,
@@ -29,16 +29,16 @@
     "loss": "cce",
     "huber_delta": 1.0,
     "optimizer": "adam",
-    "epochs": 300,
+    "epochs": 80,
     "batch_size": 32,
-    "learning_rate": 0.001,
+    "learning_rate": 0.0003,
     "lr_schedule": "cosine",
-    "min_learning_rate": 0.0001,
+    "min_learning_rate": 3e-05,
     "adam_beta1": 0.9,
     "adam_beta2": 0.999,
     "adam_epsilon": 1e-08,
-    "weight_decay": 0.002,
-    "dropout_rate": 0.25,
+    "weight_decay": 0.015,
+    "dropout_rate": 0.3,
     "grad_clip_norm": 1.0,
     "shuffle": true,
     "num_threads": 4,
@@ -46,7 +46,7 @@
     "validation_split": 0.2,
     "validation_shuffle": false,
     "keep_best_validation_model": true,
-    "early_stopping_patience": 30,
+    "early_stopping_patience": 25,
     "early_stopping_min_delta": 0.0001,
     "report_path": "reports/btc_1d_signal_report.json",
     "log_every_epochs": 10
