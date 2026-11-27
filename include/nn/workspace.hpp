@@ -9,8 +9,9 @@ namespace nn {
 
 // Per-layer neuron values computed during a forward pass.
 struct LayerState {
-    std::vector<Scalar> z;  // Pre-activations: z = W * x + b
-    std::vector<Scalar> a;  // Post-activations: a = activation(z)
+    std::vector<Scalar> z;             // Pre-activations: z = W * x + b
+    std::vector<Scalar> a;             // Post-activations: a = activation(z) (scaled if dropout active)
+    std::vector<Scalar> dropout_mask;  // Inverted dropout mask (0 or 1/(1-p)) during training
 };
 
 // Per-layer accumulated parameter gradients computed during backpropagation.
@@ -36,6 +37,9 @@ struct NetworkWorkspace {
     std::vector<Scalar> delta_buf;
     std::vector<Scalar> grad_a_buf;
     std::vector<Scalar> grad_b_buf;
+
+    // True when the most recent forward_train() call applied inverted dropout to hidden layers.
+    bool has_active_dropout = false;
 
     bool has_gradients() const noexcept { return !grads.empty(); }
 

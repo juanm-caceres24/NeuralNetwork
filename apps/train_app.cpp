@@ -1,4 +1,5 @@
 #include "nn/config.hpp"
+#include "nn/metrics.hpp"
 #include "nn/serializer.hpp"
 #include "nn/trainer.hpp"
 
@@ -15,11 +16,12 @@ namespace {
 void print_usage(const char* prog) {
     std::cout << "Usage: " << prog << " <config.json> [options]\n"
               << "Options:\n"
-              << "  --ask-save     Prompt interactively before saving the trained model\n"
-              << "  --no-save      Skip saving the model even if save_on_finish is true\n"
-              << "  --compact      Print compact class summary instead of full vectors in preview\n"
-              << "  --load <path>  Override model.load_path (resume training an existing model)\n"
-              << "  --save <path>  Override model.save_path\n";
+              << "  --ask-save       Prompt interactively before saving the trained model\n"
+              << "  --no-save        Skip saving the model even if save_on_finish is true\n"
+              << "  --compact        Print compact summary instead of full vectors in preview\n"
+              << "  --load <path>    Override model.load_path (resume training an existing model)\n"
+              << "  --save <path>    Override model.save_path\n"
+              << "  --report <path>  Export structured JSON evaluation report to <path>\n";
 }
 
 bool all_finite(const std::vector<nn::Scalar>& vec) {
@@ -68,6 +70,7 @@ int main(int argc, char* argv[]) {
     bool compact_preview = false;
     std::string override_load;
     std::string override_save;
+    std::string override_report;
 
     for (int i = 2; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -81,6 +84,8 @@ int main(int argc, char* argv[]) {
             override_load = argv[++i];
         } else if (arg == "--save" && i + 1 < argc) {
             override_save = argv[++i];
+        } else if (arg == "--report" && i + 1 < argc) {
+            override_report = argv[++i];
         } else if (arg == "--help" || arg == "-h") {
             print_usage(argv[0]);
             return 0;
@@ -95,6 +100,7 @@ int main(int argc, char* argv[]) {
         nn::AppConfig cfg = nn::load_config_json(config_path);
         if (!override_load.empty()) cfg.model.load_path = override_load;
         if (!override_save.empty()) cfg.model.save_path = override_save;
+        if (!override_report.empty()) cfg.training.report_path = override_report;
 
         std::cout << "[train_app] Loaded config: " << config_path << "\n";
 
@@ -116,41 +122,118 @@ int main(int argc, char* argv[]) {
                   << ", batch_size=" << cfg.training.batch_size
                   << ", optimizer=" << nn::to_string(cfg.training.optimizer)
                   << ", lr=" << cfg.training.learning_rate
-                  << ", loss=" << nn::to_string(cfg.training.loss)
-                  << ", threads=" << cfg.training.num_threads
+                  << ", loss=" << nn::to_string(cfg.training.loss);
+        if (cfg.training.loss == nn::LossType::Huber) {
+            std::cout << "(delta=" << cfg.training.huber_delta << ")";
+        }
+        if (cfg.training.lr_schedule != nn::LrScheduleType::None) {
+            std::cout << ", lr_schedule=" << nn::to_string(cfg.training.lr_schedule)
+                      << "(min_lr=" << cfg.training.min_learning_rate << ")";
+        }
+        if (cfg.training.weight_decay > nn::Scalar{0}) {
+            std::cout << ", wd=" << cfg.training.weight_decay;
+        }
+        if (cfg.training.dropout_rate > nn::Scalar{0}) {
+            std::cout << ", dropout=" << cfg.training.dropout_rate;
+        }
+        if (cfg.training.grad_clip_norm > nn::Scalar{0}) {
+            std::cout << ", grad_clip=" << cfg.training.grad_clip_norm;
+        }
+        std::cout << ", threads=" << cfg.training.num_threads
                   << ", shuffle=" << (cfg.training.shuffle ? "true" : "false");
-        if (cfg.training.validation_split > 0.0f) {
+        if (cfg.training.validation_split > nn::Scalar{0}) {
             std::cout << ", val_split=" << cfg.training.validation_split
                       << " (chronological="
                       << (cfg.training.validation_shuffle ? "false" : "true") << ")";
         }
+        if (cfg.training.early_stopping_patience > 0) {
+            std::cout << ", early_stop=" << cfg.training.early_stopping_patience
+                      << "(min_delta=" << cfg.training.early_stopping_min_delta << ")";
+        }
         std::cout << "\n";
 
-        const auto t_start = std::chrono::steady_clock::now();
         nn::Trainer trainer(cfg.training);
-        nn::TrainingResult result = trainer.fit(net, dataset);
+        nn::Dataset train_ds;
+        nn::Dataset val_ds;
+        const nn::Dataset* val_ptr = nullptr;
+        nn::TrainingResult result;
+
+        const auto t_start = std::chrono::steady_clock::now();
+        if (cfg.training.validation_split > nn::Scalar{0}) {
+            auto split_pair = dataset.split(cfg.training.validation_split,
+                                            cfg.training.validation_shuffle, cfg.training.seed);
+            train_ds = std::move(split_pair.first);
+            val_ds = std::move(split_pair.second);
+            val_ptr = &val_ds;
+            result = trainer.fit(net, train_ds, val_ptr);
+        } else {
+            train_ds = std::move(dataset);
+            result = trainer.fit(net, train_ds, nullptr);
+        }
         const auto t_end = std::chrono::steady_clock::now();
         const double elapsed_ms =
             std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
+        const nn::metrics::EvaluationReport report = nn::metrics::build_evaluation_report(
+            net, train_ds, val_ptr, cfg.training, result, elapsed_ms);
+        const bool is_classification = (report.task == nn::metrics::TaskType::Classification);
+
         std::cout << std::fixed << std::setprecision(6);
         std::cout << "[train_app] Finished in " << std::setprecision(2) << elapsed_ms
-                  << " ms | train_loss: " << std::setprecision(6) << result.initial_loss
-                  << " -> " << result.final_loss << " | train_acc=" << std::setprecision(2)
-                  << (result.final_train_accuracy * 100.0f) << "%\n";
-        if (result.has_validation) {
-            std::cout << "[train_app] Validation: val_loss=" << std::setprecision(6)
-                      << result.final_val_loss << " (best=" << result.best_val_loss
-                      << " @ epoch " << result.best_val_epoch << ") | val_acc="
-                      << std::setprecision(2) << (result.final_val_accuracy * 100.0f) << "%\n";
+                  << " ms (epochs=" << result.epochs_completed << "/" << cfg.training.epochs
+                  << (result.early_stopped ? ", early stopped" : "") << ") | train_loss: "
+                  << std::setprecision(6) << result.initial_loss << " -> " << result.final_loss;
+        if (is_classification) {
+            std::cout << " | train_acc=" << std::setprecision(2)
+                      << (result.final_train_accuracy * 100.0f) << "%";
+        }
+        std::cout << "\n";
+
+        const std::string eval_label =
+            result.has_validation ? "Validation" : "Evaluation (train)";
+        if (is_classification) {
+            const auto& cm = report.classification;
+            std::cout << "[train_app] " << eval_label << ": loss=" << std::setprecision(6)
+                      << cm.loss;
+            if (result.has_validation) {
+                std::cout << " (best=" << result.best_val_loss << " @ epoch "
+                          << result.best_val_epoch << ", baseline=" << cm.baseline_constant_loss
+                          << ")";
+            } else {
+                std::cout << " (baseline=" << cm.baseline_constant_loss << ")";
+            }
+            std::cout << " | acc=" << std::setprecision(2) << (cm.accuracy * 100.0f)
+                      << "% (majority=" << (cm.majority_baseline_accuracy * 100.0f)
+                      << "%) | macro_f1=" << std::setprecision(4) << cm.macro_f1 << "\n";
+        } else {
+            const auto& rm = report.regression;
+            std::cout << "[train_app] " << eval_label << ": loss=" << std::setprecision(6)
+                      << rm.loss;
+            if (result.has_validation) {
+                std::cout << " (best=" << result.best_val_loss << " @ epoch "
+                          << result.best_val_epoch << ", baseline=" << rm.baseline_constant_loss
+                          << ")";
+            } else {
+                std::cout << " (baseline=" << rm.baseline_constant_loss << ")";
+            }
+            std::cout << " | MAE=" << std::setprecision(6) << rm.mae << " | RMSE=" << rm.rmse
+                      << " | R2=" << std::setprecision(4) << rm.r2 << "\n";
         }
 
-        // Display sample predictions (up to 8 rows)
-        const std::size_t preview_count = std::min<std::size_t>(dataset.size(), 8);
-        std::cout << "[train_app] Sample predictions (first " << preview_count << " rows):\n";
+        if (!cfg.training.report_path.empty()) {
+            nn::metrics::save_report_json(report, cfg.training.report_path, true);
+            std::cout << "[train_app] Evaluation report saved to: " << cfg.training.report_path
+                      << "\n";
+        }
+
+        // Display sample predictions (up to 8 rows from evaluation split)
+        const nn::Dataset& preview_ds = (val_ptr != nullptr) ? *val_ptr : train_ds;
+        const std::size_t preview_count = std::min<std::size_t>(preview_ds.size(), 8);
+        std::cout << "[train_app] Sample predictions (first " << preview_count << " "
+                  << report.eval_split << " rows):\n";
         for (std::size_t i = 0; i < preview_count; ++i) {
-            const auto& x = dataset.raw_input(i);
-            const auto& t = dataset.raw_target(i);
+            const auto& x = preview_ds.raw_input(i);
+            const auto& t = preview_ds.raw_target(i);
             const auto pred = net.predict(x);
 
             if (compact_preview) {
@@ -159,7 +242,17 @@ int main(int argc, char* argv[]) {
                     std::cout << "pred=non-finite [MISS]\n";
                     continue;
                 }
-                if (t.size() == 1) {
+                if (!is_classification) {
+                    double abs_err = 0.0;
+                    for (std::size_t j = 0; j < t.size(); ++j) {
+                        abs_err += std::abs(static_cast<double>(pred[j]) -
+                                            static_cast<double>(t[j]));
+                    }
+                    const double row_mae = abs_err / static_cast<double>(t.size());
+                    std::cout << "mae=" << std::setprecision(6) << row_mae << " | pred[0]="
+                              << std::setprecision(4) << pred[0] << " vs target[0]=" << t[0]
+                              << "\n";
+                } else if (t.size() == 1) {
                     const bool ok = ((pred[0] >= 0.5f) == (t[0] >= 0.5f));
                     std::cout << "target=" << std::setprecision(4) << t[0]
                               << " pred=" << pred[0] << (ok ? " [OK]" : " [MISS]") << "\n";

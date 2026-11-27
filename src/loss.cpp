@@ -29,7 +29,8 @@ void validate_vectors(const std::vector<Scalar>& predicted, const std::vector<Sc
 
 Scalar compute(LossType type,
                const std::vector<Scalar>& predicted,
-               const std::vector<Scalar>& target) {
+               const std::vector<Scalar>& target,
+               Scalar huber_delta) {
     validate_vectors(predicted, target);
     const std::size_t n = predicted.size();
     const Scalar inv_n = Scalar{1} / static_cast<Scalar>(n);
@@ -63,6 +64,21 @@ Scalar compute(LossType type,
             }
             return sum;
         }
+        case LossType::Huber: {
+            if (!(huber_delta > Scalar{0}) || !std::isfinite(huber_delta)) {
+                throw std::invalid_argument("Huber loss delta must be finite and > 0");
+            }
+            Scalar sum = Scalar{0};
+            for (std::size_t i = 0; i < n; ++i) {
+                const Scalar abs_e = std::fabs(predicted[i] - target[i]);
+                if (abs_e <= huber_delta) {
+                    sum += Scalar{0.5f} * abs_e * abs_e;
+                } else {
+                    sum += huber_delta * (abs_e - Scalar{0.5f} * huber_delta);
+                }
+            }
+            return sum * inv_n;
+        }
     }
     throw std::invalid_argument("Unknown LossType");
 }
@@ -70,7 +86,8 @@ Scalar compute(LossType type,
 void gradient(LossType type,
               const std::vector<Scalar>& predicted,
               const std::vector<Scalar>& target,
-              std::vector<Scalar>& grad_out) {
+              std::vector<Scalar>& grad_out,
+              Scalar huber_delta) {
     validate_vectors(predicted, target);
     const std::size_t n = predicted.size();
     const Scalar inv_n = Scalar{1} / static_cast<Scalar>(n);
@@ -100,6 +117,21 @@ void gradient(LossType type,
                     grad_out[i] = -t / p;
                 } else {
                     grad_out[i] = Scalar{0};
+                }
+            }
+            return;
+        }
+        case LossType::Huber: {
+            if (!(huber_delta > Scalar{0}) || !std::isfinite(huber_delta)) {
+                throw std::invalid_argument("Huber loss delta must be finite and > 0");
+            }
+            for (std::size_t i = 0; i < n; ++i) {
+                const Scalar e = predicted[i] - target[i];
+                const Scalar abs_e = std::fabs(e);
+                if (abs_e <= huber_delta) {
+                    grad_out[i] = inv_n * e;
+                } else {
+                    grad_out[i] = inv_n * (e > Scalar{0} ? huber_delta : -huber_delta);
                 }
             }
             return;

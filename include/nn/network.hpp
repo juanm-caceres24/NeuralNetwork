@@ -5,6 +5,7 @@
 #include "nn/workspace.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <vector>
 
@@ -40,9 +41,21 @@ public:
     NetworkWorkspace create_workspace(bool with_gradients = false) const;
 
     // Runs forward pass storing every layer's pre/post activations in `workspace`.
+    // Never applies dropout (used for inference and validation).
     // Returns a const reference to the output layer's activation vector.
     const std::vector<Scalar>& forward(const std::vector<Scalar>& input,
                                        NetworkWorkspace& workspace) const;
+
+    // Runs training forward pass with optional deterministic inverted dropout on hidden layers
+    // (layers 0 .. num_layers()-2). Dropout masks are derived statelessly from
+    // (seed, epoch, sample_idx, layer_idx, neuron_idx) so single-thread and multi-thread
+    // runs produce identical masks with zero steady-state allocations.
+    const std::vector<Scalar>& forward_train(const std::vector<Scalar>& input,
+                                             NetworkWorkspace& workspace,
+                                             Scalar dropout_rate,
+                                             std::uint32_t seed,
+                                             std::size_t epoch,
+                                             std::size_t sample_idx) const;
 
     // Convenience thread-safe prediction helper (allocates a local workspace).
     std::vector<Scalar> predict(const std::vector<Scalar>& input) const;

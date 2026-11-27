@@ -67,20 +67,29 @@ Every hyperparameter, topology setting, file path, and server setting is externa
 | `training` | `dataset_generator` | string | Used when `dataset_path` is empty: `xor`, `and`, `or`, `nand`, `linear`, `circle`, or `quadrants`. |
 | `training` | `generator_samples` | size_t | Number of samples for `linear`, `circle`, or `quadrants` generators (default: `200`). |
 | `training` | `generator_seed` | uint32 | RNG seed for synthetic dataset generation (defaults to `training.seed`). |
-| `training` | `loss` | string | `mse`, `bce` (`binary_cross_entropy`), or `cce` (`categorical_cross_entropy` / `cross_entropy`). |
-| `training` | `optimizer` | string | `sgd` (default) or `adam`. |
+| `training` | `loss` | string | `mse`, `huber` (`smooth_l1`), `bce` (`binary_cross_entropy`), or `cce` (`categorical_cross_entropy` / `cross_entropy`). |
+| `training` | `huber_delta` | float | Transition threshold $\delta > 0$ for `huber` loss (default: `1.0`). |
+| `training` | `optimizer` | string | `sgd` (default) or `adam` (behaves as `AdamW` when `weight_decay > 0`). |
 | `training` | `epochs` | size_t | Number of training epochs. |
 | `training` | `batch_size` | size_t | Mini-batch size. |
-| `training` | `learning_rate` | float | Step size for `SGD` or `Adam`. |
+| `training` | `learning_rate` | float | Initial/base step size for `SGD` or `Adam`. |
+| `training` | `lr_schedule` | string | Learning rate schedule: `none` (default) or `cosine`. |
+| `training` | `min_learning_rate` | float | Minimum learning rate reached at the final epoch for `cosine` schedule in `[0, learning_rate]` (default: `0.0`). |
 | `training` | `adam_beta1` | float | Adam first-moment decay in `[0, 1)` (default: `0.9`). |
 | `training` | `adam_beta2` | float | Adam second-moment decay in `[0, 1)` (default: `0.999`). |
 | `training` | `adam_epsilon` | float | Adam numerical stability term (default: `1e-8`). |
+| `training` | `weight_decay` | float | Decoupled L2 weight decay applied strictly to weights (never biases), $\ge 0$ (default: `0.0`). |
+| `training` | `dropout_rate` | float | Deterministic inverted dropout rate on hidden layers in `[0, 1)` (default: `0.0`; disabled during validation/inference). |
+| `training` | `grad_clip_norm` | float | Global L2 gradient norm clipping threshold, $\ge 0$ (`0.0` disables; default: `0.0`). |
 | `training` | `shuffle` | bool | Randomize sample traversal order at the start of every epoch. |
 | `training` | `num_threads` | size_t | Number of worker threads for intra-batch parallelism. |
-| `training` | `seed` | uint32 | RNG seed for epoch shuffling and fallback for `init_seed` / `generator_seed`. |
+| `training` | `seed` | uint32 | RNG seed for epoch shuffling, deterministic dropout, and fallback for `init_seed` / `generator_seed`. |
 | `training` | `validation_split` | float | Fraction of samples held out for validation in `[0, 1)` (`0.0` disables split). |
 | `training` | `validation_shuffle` | bool | Shuffle before splitting (`true` default); set `false` for chronological time-series splits. |
 | `training` | `keep_best_validation_model` | bool | Restore weights from the epoch with lowest `val_loss` at the end of training (default: `false`). |
+| `training` | `early_stopping_patience` | size_t | Stop training after $P$ consecutive epochs without `val_loss` improvement (`0` disables; requires validation split). |
+| `training` | `early_stopping_min_delta` | float | Minimum `val_loss` decrease required to reset early stopping patience, $\ge 0$ (default: `0.0`). |
+| `training` | `report_path` | string | Optional destination path for `train_app` to export a structured JSON evaluation report (default: `""`). |
 | `training` | `log_every_epochs` | size_t | Print training/validation progress every $N$ epochs (`0` = silent). |
 | `data` *(optional)* | `path`, `has_header`, `generator`, `samples`, `seed` | object | Optional dedicated dataset section; overrides the corresponding `training.dataset_*` / `generator_*` fields when present. |
 | `server` | `host` | string | Bind IPv4 address for `server_app` (default: `"127.0.0.1"`). |
@@ -95,9 +104,10 @@ Every hyperparameter, topology setting, file path, and server setting is externa
 Supported options:
 - `--ask-save` — Prompt interactively `[y/N]` before saving the trained model.
 - `--no-save` — Skip saving even if `save_on_finish` is `true`.
-- `--compact` — Print compact class summary (predicted index/value, optimal target indices, `[OK]`/`[MISS]`) instead of full vectors in the final sample preview.
+- `--compact` — Print compact task-aware summary (class index + `[OK]`/`[MISS]` for classification, per-row `mae` for regression) instead of full vectors in the final sample preview.
 - `--load <path>` — Override `model.load_path` (resume training an existing model).
 - `--save <path>` — Override `model.save_path`.
+- `--report <path>` — Override `training.report_path` and export a structured JSON evaluation report (see [`08-regularization-and-metrics.md`](08-regularization-and-metrics.md)).
 
 ```bash
 ./scripts/build.sh release
@@ -105,8 +115,8 @@ Supported options:
 # Train XOR and save models/xor_model.json
 ./build/release/apps/train_app configs/xor.json
 
-# Train 4-class quadrants with Adam + CCE + validation without saving to disk
-./build/release/apps/train_app configs/quadrants.json --no-save
+# Train 4-class quadrants with Adam + CCE + validation and export a JSON evaluation report
+./build/release/apps/train_app configs/quadrants.json --no-save --compact --report reports/quadrants_report.json
 
 # Train a large multi-class CSV model with compact preview output
 # (requires placing the dataset CSV at data/tictactoe_dataset.csv)

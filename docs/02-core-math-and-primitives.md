@@ -8,9 +8,10 @@ This document explains the design, memory layout, and mathematics of the foundat
 
 - **`nn::Scalar`** is aliased to `float` (32-bit IEEE-754). Centralizing this alias makes precision explicit across the codebase.
 - **`nn::ActivationType`** enumerates supported layer activations: `Linear`, `Sigmoid`, `Tanh`, `ReLU`, `LeakyReLU`, `Softmax`.
-- **`nn::LossType`** enumerates supported training losses: `MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`.
-- **`nn::OptimizerType`** enumerates supported parameter update rules: `SGD`, `Adam`.
-- String helpers (`to_string`, `parse_activation`, `parse_loss`, `parse_optimizer`) normalize case and throw `std::invalid_argument` on unknown values, serving configuration loading, JSON serialization, and logging.
+- **`nn::LossType`** enumerates supported training losses: `MSE`, `Huber`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`.
+- **`nn::OptimizerType`** enumerates supported parameter update rules: `SGD`, `Adam` (supports decoupled weight decay / `AdamW` when `weight_decay > 0`).
+- **`nn::LrScheduleType`** enumerates supported learning rate schedules: `None`, `Cosine`.
+- String helpers (`to_string`, `parse_activation`, `parse_loss`, `parse_optimizer`, `parse_lr_schedule`) normalize case and throw `std::invalid_argument` on unknown values, serving configuration loading, JSON serialization, and logging.
 
 ---
 

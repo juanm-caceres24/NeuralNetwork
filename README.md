@@ -8,14 +8,16 @@ A lightweight, readable, from-scratch Multilayer Perceptron (MLP) neural network
   - Contiguous row-major 1D-backed `Matrix` math primitives (`matvec`, `matvec_transpose`, `add_outer_product`, `add_scaled`)
   - Activation functions & exact derivatives (`Linear`, `Sigmoid`, `Tanh`, `ReLU`, `LeakyReLU`, numerically stable `Softmax`)
   - `DenseLayer`, thread-safe `NetworkWorkspace` (full inspection of weights, biases, and neuron activations), and `Network` (forward + backpropagation + gradient updates)
-- **Training Engine**
-  - Backpropagation with `SGD` and `Adam` optimizers, loss functions (`MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy` with fused numerically stable `Softmax + CCE` gradients), mini-batches, epoch-level index shuffling, and train/validation split (random or chronological) with tie-aware accuracy (one-hot and soft targets) & best-model checkpointing
+- **Training Engine & Evaluation Metrics**
+  - Backpropagation with `SGD` and `Adam`/`AdamW` (decoupled L2 weight decay excluding biases), global L2 gradient clipping, `Cosine` LR schedule, deterministic inverted `Dropout` on hidden layers (preserving 1-vs-$N$ thread parity), and `Early Stopping`
+  - Loss functions: `MSE`, `Huber` (`smooth_l1`, robust regression), `BinaryCrossEntropy`, and `CategoricalCrossEntropy` (with fused numerically stable `Softmax + CCE` gradients)
+  - Mini-batches, epoch-level zero-copy index shuffling, train/validation splitting (random or chronological) with best-model checkpointing, and generic evaluation metrics (`nn::metrics`: confusion matrix, per-class precision/recall/F1, macro-F1, probability calibration, regression `MAE`/`RMSE`/`R²`, and leakage-free constant baselines)
   - Synchronous intra-batch multi-threading via a reusable `ThreadPool`
   - CSV dataset loader/writer and synthetic dataset generators (`XOR`, `AND`, `OR`, `NAND`, linear, circle, 4-class quadrants)
 - **Persistence, CLI Apps & Benchmarks**
   - Zero hardcoded settings: strictly validated external `config.json` for hyperparameters, architecture, paths, and server settings (`cJSON` v1.7.18 vendored), with example configs for synthetic benchmarks (`xor`, `circle`, `quadrants`) and external CSV workflows (`tictactoe`, BTC TradingBot `1h`/`4h`/`1d` `candles` & `signal`)
   - Exact `float` model save/load (`model.json`) preserving topology, activations, weights, and biases
-  - CLI apps: `train_app` (with optional `--compact` preview), `predict_app` (with optional `--show-neurons` / `--compact`), `server_app`, and `bench_app` (`./scripts/benchmark.sh`)
+  - CLI apps: `train_app` (with optional `--compact` preview and `--report <path>` structured JSON evaluation export), `predict_app` (with optional `--show-neurons` / `--compact`), `server_app`, and `bench_app` (`./scripts/benchmark.sh`)
 - **Inference Server**
   - Lightweight HTTP/1.1 + JSON REST API built directly on POSIX TCP sockets (`POST /predict`, `GET /info`, `GET /health`) with a fixed worker pool (`server_app`)
 
@@ -51,3 +53,4 @@ All project specifications, architecture decisions, math derivations, and workfl
 - [`docs/05-config-and-serialization.md`](docs/05-config-and-serialization.md) — `cJSON` integration, `config.json` reference, `model.json` format, and CLI apps.
 - [`docs/06-inference-server-api.md`](docs/06-inference-server-api.md) — POSIX TCP + HTTP/1.1 REST inference server architecture, endpoints, and client examples.
 - [`docs/07-optimizers-validation-and-benchmarks.md`](docs/07-optimizers-validation-and-benchmarks.md) — Fused `Softmax + CategoricalCrossEntropy`, `Adam`, train/validation splitting, tie-aware soft-target accuracy metrics, and performance benchmarking.
+- [`docs/08-regularization-and-metrics.md`](docs/08-regularization-and-metrics.md) — Huber loss, decoupled weight decay (`AdamW`/`SGD`), deterministic inverted dropout, Cosine LR schedule, global L2 gradient clipping, early stopping, `nn::metrics`, and the `--report` JSON schema.

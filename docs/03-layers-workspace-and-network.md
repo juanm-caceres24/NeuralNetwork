@@ -28,7 +28,9 @@ A key architectural rule of `libnn` is that **weights/biases live in `Network`/`
 ### Why this matters
 1. **Zero-lock concurrency:** Multiple training worker threads or multiple API server requests can call `Network::forward()` / `Network::backward()` simultaneously against the same `const Network&` without mutexes.
 2. **Full neuron inspectability:** After `net.forward(x, ws)`, every layer's pre-activations (`ws.states[l].z[i]`) and post-activations (`ws.states[l].a[i]`) remain directly readable.
-3. **Zero steady-state heap allocations:** Pre-allocating a `NetworkWorkspace` via `net.create_workspace(with_gradients)` reuses all vectors (`z`, `a`, `delta_buf`, `grad_a_buf`, `grad_b_buf`, `grads`) across thousands of samples.
+3. **Zero steady-state heap allocations:** Pre-allocating a `NetworkWorkspace` via `net.create_workspace(with_gradients)` reuses all vectors (`z`, `a`, `dropout_mask`, `delta_buf`, `grad_a_buf`, `grad_b_buf`, `grads`) across thousands of samples.
+
+> **Training Dropout Note:** Regular `Network::forward()` and `Network::predict()` never apply dropout. During training with `dropout_rate > 0`, `Trainer::fit()` calls `Network::forward_train()`, which fills `states[l].dropout_mask` deterministically for hidden layers only (`0 .. num_layers - 2`) and applies matching mask scaling inside `Network::backward()` / `Network::backward_from_output_delta()`. See [`08-regularization-and-metrics.md`](08-regularization-and-metrics.md) for details.
 
 ---
 

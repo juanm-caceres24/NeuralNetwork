@@ -23,10 +23,10 @@ For normalized one-hot or soft-target distributions ($\sum_k t_k = 1$), this sim
 Select `"optimizer": "sgd"` or `"optimizer": "adam"` in `config.json`.
 
 - **SGD:** $W \leftarrow W - \frac{\eta}{B} \Delta W$. Zero extra memory.
-- **Adam (Adaptive Moment Estimation):** Maintains per-parameter exponentially decaying moving averages of the gradient ($m_t$) and squared gradient ($v_t$) with bias correction:
+- **Adam / AdamW (Adaptive Moment Estimation):** Maintains per-parameter exponentially decaying moving averages of the gradient ($m_t$) and squared gradient ($v_t$) with bias correction:
   $$m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t, \qquad v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$$
   $$\hat{m}_t = \frac{m_t}{1 - \beta_1^t}, \qquad \hat{v}_t = \frac{v_t}{1 - \beta_2^t}, \qquad \theta_t = \theta_{t-1} - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
-  Moment buffers live inside `Optimizer` (never inside `Network`), so inference models pay zero memory overhead.
+  Moment buffers live inside `Optimizer` (never inside `Network`), so inference models pay zero memory overhead. Both optimizers also support optional decoupled L2 weight decay on weights (never biases) and global L2 gradient clipping — see [`08-regularization-and-metrics.md`](08-regularization-and-metrics.md).
 
 ---
 
