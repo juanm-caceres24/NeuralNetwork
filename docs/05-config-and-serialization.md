@@ -42,16 +42,16 @@ Handled by `nn::serializer::save_network_json()` and `nn::serializer::load_netwo
 
 ## 3. External Configuration (`config.json`)
 
-Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv`), and the six BTC TradingBot templates `configs/btc_{1h,4h,1d}_{candles,signal}_nn_config.json` (external CSV templates with 24-candle windows = `264` inputs, chronological validation splits, and non-overlapping server ports `8080`–`8085`, expecting their datasets inside the gitignored `data/` folder):
+Every hyperparameter, topology setting, file path, and server setting is externalized in JSON so nothing is hardcoded in source code. Ready-to-use examples live in `configs/xor.json`, `configs/circle.json`, `configs/quadrants.json` (synthetic generators), `configs/tictactoe.json` (external CSV template expecting `data/tictactoe_dataset.csv`), and the six BTC TradingBot templates `configs/btc_{1h,4h,1d}_{candles,signal}_nn_config.json` (external CSV templates with 24-candle windows = `384` inputs, chronological validation splits, and non-overlapping server ports `8080`–`8085`, expecting their datasets inside the gitignored `data/` folder):
 
 | Config Template | Expected CSV (`data/`) | Topology | Loss / Optimizer | Server Port |
 | :--- | :--- | :--- | :--- | :---: |
-| `configs/btc_1h_candles_nn_config.json` | `data/btc_1h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8080` |
-| `configs/btc_1h_signal_nn_config.json` | `data/btc_1h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8081` |
-| `configs/btc_4h_candles_nn_config.json` | `data/btc_4h_candles_24to6.csv` | `264 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8082` |
-| `configs/btc_4h_signal_nn_config.json` | `data/btc_4h_signal_24to6.csv` | `264 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8083` |
-| `configs/btc_1d_candles_nn_config.json` | `data/btc_1d_candles_24to7.csv` | `264 → 32 → 16 → 28 (linear)` | `huber` / `adam` (`AdamW`) | `8084` |
-| `configs/btc_1d_signal_nn_config.json` | `data/btc_1d_signal_24to7.csv` | `264 → 32 → 16 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8085` |
+| `configs/btc_1h_candles_nn_config.json` | `data/btc_1h_candles_24to6.csv` | `384 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8080` |
+| `configs/btc_1h_signal_nn_config.json` | `data/btc_1h_signal_24to6.csv` | `384 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8081` |
+| `configs/btc_4h_candles_nn_config.json` | `data/btc_4h_candles_24to6.csv` | `384 → 64 → 32 → 24 (linear)` | `huber` / `adam` (`AdamW`) | `8082` |
+| `configs/btc_4h_signal_nn_config.json` | `data/btc_4h_signal_24to6.csv` | `384 → 64 → 32 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8083` |
+| `configs/btc_1d_candles_nn_config.json` | `data/btc_1d_candles_24to7.csv` | `384 → 32 → 16 → 28 (linear)` | `huber` / `adam` (`AdamW`) | `8084` |
+| `configs/btc_1d_signal_nn_config.json` | `data/btc_1d_signal_24to7.csv` | `384 → 32 → 16 → 3 (softmax)` | `cce` / `adam` (`AdamW`) | `8085` |
 
 `parse_config_json()` strictly rejects unknown keys in every section (`root`, `model`, `model.layers[]`, `training`, `data`, `server`) so configuration typos fail fast instead of silently falling back to defaults.
 
