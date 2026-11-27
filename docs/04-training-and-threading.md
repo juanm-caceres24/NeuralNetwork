@@ -1,16 +1,17 @@
 # Training Engine & Multi-Threaded Mini-Batches
 
-This document describes the training components in `include/nn/loss.hpp`, `include/nn/dataset.hpp`, `include/nn/thread_pool.hpp`, and `include/nn/trainer.hpp`. For details on the `Adam` optimizer, validation splits, and benchmarking added in `v0.5.0`, also see [`07-optimizers-validation-and-benchmarks.md`](07-optimizers-validation-and-benchmarks.md).
+This document describes the training components in `include/nn/loss.hpp`, `include/nn/dataset.hpp`, `include/nn/thread_pool.hpp`, and `include/nn/trainer.hpp`. For details on the `Adam` optimizer, validation splits, and benchmarking, see [`07-optimizers-validation-and-benchmarks.md`](07-optimizers-validation-and-benchmarks.md). For `v0.7.0` regularization (`AdamW`, deterministic dropout, Cosine LR, gradient clipping, early stopping) and generic validation metrics (`nn::metrics`), see [`08-regularization-and-metrics.md`](08-regularization-and-metrics.md).
 
 ---
 
 ## 1. Loss Functions (`include/nn/loss.hpp`)
 
-`MSE` and `BinaryCrossEntropy` average over the output vector length $K$ so learning rates remain scale-consistent across output sizes. `CategoricalCrossEntropy` sums over classes without dividing by $K$, because target class probabilities sum to 1 (typically one-hot).
+`MSE`, `Huber`, and `BinaryCrossEntropy` average over the output vector length $K$ so learning rates remain scale-consistent across output sizes. `CategoricalCrossEntropy` sums over classes without dividing by $K$, because target class probabilities sum to 1 (typically one-hot).
 
 | Loss | Forward $L(y, t)$ | Gradient $\frac{\partial L}{\partial y_i}$ | Typical Output Activation |
 | :--- | :--- | :--- | :--- |
 | `MSE` | $\frac{1}{K}\sum_{i=0}^{K-1}(y_i - t_i)^2$ | $\frac{2}{K}(y_i - t_i)$ | `Linear`, `Sigmoid`, `Tanh` |
+| `Huber` (`huber_delta` $=\delta$) | $\frac{1}{K}\sum_{i=0}^{K-1} h_{\delta}(y_i - t_i)$ | $\frac{1}{K}\text{clip}(y_i - t_i, -\delta, +\delta)$ | `Linear` |
 | `BinaryCrossEntropy` | $-\frac{1}{K}\sum_{i=0}^{K-1}\left[t_i \ln(\hat{y}_i) + (1-t_i)\ln(1-\hat{y}_i)\right]$ | $\frac{1}{K}\frac{\hat{y}_i - t_i}{\hat{y}_i(1-\hat{y}_i)}$ | `Sigmoid` |
 | `CategoricalCrossEntropy` | $-\sum_{i=0}^{K-1} t_i \ln(\hat{y}_i)$ | $-\frac{t_i}{\hat{y}_i}$ (0 when $t_i = 0$) | `Softmax` |
 
@@ -50,11 +51,11 @@ Deterministic Reduction:
   workspaces[0].grads += workspaces[1].grads + workspaces[2].grads + workspaces[3].grads
        │
        ▼
-Single Synchronized Optimizer Step (SGD or Adam):
+Single Synchronized Optimizer Step (SGD or Adam/AdamW):
   optimizer.step(network, workspaces[0], actual_batch_size)
 ```
 
 ### Key Properties
 - **Zero locks during math:** Each worker writes only to its dedicated `NetworkWorkspace` (`workspaces[worker_id]`).
 - **Low overhead:** `ThreadPool(N)` spawns only `N - 1` background threads once before epoch 1 and reuses them across all epochs/batches; the calling thread executes chunk 0. When `num_threads == 1` or `batch_size == 1`, execution runs directly inline with zero synchronization overhead.
-- **Deterministic parity:** Because gradients are reduced in fixed worker order and passed once per mini-batch to `Optimizer::step()`, training with `num_threads = 1` and `num_threads = 4` produces mathematically equivalent weights and loss curves for both `SGD` and `Adam` (verified in `tests/test_training.cpp` and `tests/test_upgrades.cpp`).
+- **Deterministic parity:** Because gradients are reduced in fixed worker order and passed once per mini-batch to `Optimizer::step()`, and because optional hidden-layer dropout derives masks statelessly from `(seed, epoch, sample_idx, layer_idx, neuron_idx)`, training with `num_threads = 1` and `num_threads = 4` produces mathematically equivalent weights and loss curves across `SGD`, `Adam`/`AdamW`, dropout, cosine LR, and gradient clipping (verified in `tests/test_training.cpp`, `tests/test_upgrades.cpp`, and `tests/test_v07.cpp`).

@@ -20,12 +20,18 @@ enum class ActivationType {
 enum class LossType {
     MSE,
     BinaryCrossEntropy,
-    CategoricalCrossEntropy
+    CategoricalCrossEntropy,
+    Huber
 };
 
 enum class OptimizerType {
     SGD,
     Adam
+};
+
+enum class LrScheduleType {
+    None,
+    Cosine
 };
 
 std::string to_string(ActivationType type);
@@ -36,5 +42,8 @@ LossType parse_loss(const std::string& name);
 
 std::string to_string(OptimizerType type);
 OptimizerType parse_optimizer(const std::string& name);
+
+std::string to_string(LrScheduleType type);
+LrScheduleType parse_lr_schedule(const std::string& name);
 
 }  // namespace nn

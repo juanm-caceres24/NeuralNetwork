@@ -38,15 +38,16 @@ Core guiding principles:
 
 ### 3.2 Training Engine (Backpropagation)
 - Train networks from external datasets (CSV) or built-in synthetic dataset generators.
-- Configurable loss functions (`MSE`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`) and optimizers (`SGD`, `Adam`).
-- Backpropagation with configurable learning rate, mini-batch size, and optional train/validation splitting (random or chronological) with accuracy tracking and best-validation-model checkpointing.
+- Configurable loss functions (`MSE`, `Huber`, `BinaryCrossEntropy`, `CategoricalCrossEntropy`) and optimizers (`SGD`, `Adam`/`AdamW` with decoupled L2 weight decay excluding biases).
+- Regularization and training stability controls: deterministic inverted `Dropout` on hidden layers (disabled during validation/inference), `Cosine` learning rate schedule, global L2 gradient norm clipping, and `Early Stopping` (`patience` + `min_delta`) integrated with best-validation-model checkpointing.
+- Generic, domain-agnostic validation evaluation (`nn::metrics`) with leakage-free constant baselines (train prior / train mean), classification metrics (confusion matrix, precision/recall/F1, macro-F1, mean predicted probabilities), regression metrics (`MAE`, `RMSE`, `R²` global & per-output), and optional structured JSON report export (`--report <path>`).
 - **Epoch-level dataset shuffling:** Randomize sample order between epochs by shuffling an index array (avoiding expensive copies of feature vectors) so models can be re-trained or resumed cleanly.
-- **Multi-threaded mini-batch parallelism:** Distribute samples within each mini-batch across a configurable number of worker threads, accumulate per-thread gradients lock-free, then reduce (sum) and apply one synchronized optimizer step at the end of the mini-batch.
+- **Multi-threaded mini-batch parallelism:** Distribute samples within each mini-batch across a configurable number of worker threads, accumulate per-thread gradients lock-free, then reduce (sum) and apply one synchronized optimizer step at the end of the mini-batch (preserving exact 1-vs-$N$ thread parity even with dropout enabled).
 - **Synthetic test generators:** Built-in generators for classic benchmarks (`XOR`, `AND`, `OR`, `NAND`, linear separable, concentric circle, and 4-class `quadrants`) for verifying learning and convergence.
 
 ### 3.3 Persistence & Configuration
 - **Model persistence (`model.json`):** Save and load the complete network state (format version, input size, layer sizes, per-layer activation functions, weights, and biases). Supports starting a process directly from a saved model, training further, and optionally saving updated parameters at the end.
-- **External configuration (`config.json`):** Store all runtime parameters outside source code, including layer topology, `init_seed`, `load_path`, `save_path`, `save_on_finish`, dataset path/generator, `loss`, `optimizer`, Adam parameters, `epochs`, `batch_size`, `learning_rate`, `shuffle`, `num_threads`, `seed`, validation split settings, logging frequency, and server `host`/`port`/`num_workers`. Unknown JSON keys are strictly rejected to catch configuration typos early.
+- **External configuration (`config.json`):** Store all runtime parameters outside source code, including layer topology, `init_seed`, `load_path`, `save_path`, `save_on_finish`, dataset path/generator, `loss` (`huber_delta`), `optimizer`, Adam parameters, `weight_decay`, `dropout_rate`, `lr_schedule`, `min_learning_rate`, `grad_clip_norm`, `epochs`, `batch_size`, `learning_rate`, `shuffle`, `num_threads`, `seed`, validation split settings, `early_stopping_patience`, `early_stopping_min_delta`, `report_path`, logging frequency, and server `host`/`port`/`num_workers`. Unknown JSON keys are strictly rejected to catch configuration typos early.
 
 ### 3.4 Inference Server API
 - Run the neural network as a standalone PC server listening on a configurable host and TCP port.
@@ -170,7 +171,7 @@ When `num_threads <= 1` or the mini-batch has 1 sample, execution runs directly 
 
 ### 4.7 Library vs. Executables Separation
 All reusable logic lives in static library **`libnn.a`** (no `main()`). Thin executables in `apps/` link against `libnn.a`:
-- `train_app` — reads `config.json`, loads/creates network, runs training + validation metrics, prints sample predictions (with optional `--compact` summary), and optionally saves `model.json`.
+- `train_app` — reads `config.json`, loads/creates network, runs training + generic evaluation metrics (`nn::metrics`), optionally exports a structured JSON report (`--report <path>` / `training.report_path`), prints sample predictions (with optional `--compact` summary), and optionally saves `model.json`.
 - `predict_app` — loads `model.json`, evaluates an input vector from CLI, prints outputs (full vector or `--compact` top index/value) and optional per-layer neuron states (`--show-neurons`).
 - `server_app` — loads `model.json` once into RAM, listens on `host:port`, and serves `/health`, `/info`, and `/predict`.
 - `bench_app` — measures single-sample inference latency/throughput (mean, p50, p95, p99), multi-threaded training scaling (speedup & efficiency), and live HTTP loopback round-trip latency.
@@ -189,23 +190,24 @@ NeuralNetwork/
 ├── configs/                    # Example configs: xor, circle, quadrants, tictactoe, btc_*_nn_config
 ├── third_party/cjson/          # Vendored cJSON v1.7.18 (cJSON.h, cJSON.c, LICENSE)
 ├── include/nn/                 # Public C++17 headers (namespace nn)
-│   ├── types.hpp               # Scalar, ActivationType, LossType, OptimizerType + parsers
+│   ├── types.hpp               # Scalar, ActivationType, LossType, OptimizerType, LrScheduleType + parsers
 │   ├── matrix.hpp              # Contiguous row-major Matrix & linear algebra ops
 │   ├── activation.hpp          # Activation functions and exact derivatives (incl. Softmax Jacobian)
-│   ├── workspace.hpp           # LayerState, LayerGrads, NetworkWorkspace
+│   ├── workspace.hpp           # LayerState (z, a, dropout_mask), LayerGrads, NetworkWorkspace
 │   ├── layer.hpp               # DenseLayer (weights, biases, forward, backward, backward_from_delta, apply_gradients)
-│   ├── network.hpp             # Network container (forward/predict const, backward, backward_from_output_delta, apply_gradients)
+│   ├── network.hpp             # Network container (forward/predict const, forward_train dropout, backward, backward_from_output_delta, apply_gradients)
 │   ├── serializer.hpp          # JSON model serialization/deserialization (cJSON)
-│   ├── loss.hpp                # Loss functions (MSE, BinaryCrossEntropy, CategoricalCrossEntropy)
-│   ├── optimizer.hpp           # Optimizer (SGD and Adam with bias correction)
+│   ├── loss.hpp                # Loss functions (MSE, Huber, BinaryCrossEntropy, CategoricalCrossEntropy)
+│   ├── optimizer.hpp           # Optimizer (SGD and Adam/AdamW, decoupled weight decay, global L2 grad clipping)
 │   ├── dataset.hpp             # Dataset (CSV, index shuffling, split) & synthetic generators
 │   ├── thread_pool.hpp         # Reusable ThreadPool with parallel_for_chunks()
-│   ├── trainer.hpp             # Trainer (mini-batch parallel backprop, fused Softmax+CCE, validation, tie-aware accuracy)
+│   ├── trainer.hpp             # Trainer (mini-batch parallel backprop, cosine LR, dropout, early stopping, validation)
+│   ├── metrics.hpp             # Generic classification/regression evaluation metrics, constant baselines, JSON report
 │   ├── config.hpp              # AppConfig structs + strict JSON loader + network/dataset builders
 │   └── server.hpp              # HTTP/1.1 + JSON InferenceServer over POSIX sockets
 ├── src/                        # Implementations mirroring include/nn/
 ├── apps/                       # train_app.cpp, predict_app.cpp, server_app.cpp, bench_app.cpp
-└── tests/                      # Zero-dependency unit & integration tests (36 test cases)
+└── tests/                      # Zero-dependency unit & integration tests (44 test cases)
 ```
 
 ---
@@ -220,4 +222,5 @@ NeuralNetwork/
 | **`v0.4.0`** | Completed | `InferenceServer` (POSIX TCP + HTTP/1.1 + JSON + worker pool), `server_app`, `scripts/test_api.sh`. | Router unit tests (`200`/`204`/`400`/`404`/`405`) + live TCP integration test with 160 concurrent client requests. |
 | **`v0.5.0`** | Completed | `CategoricalCrossEntropy`, `Adam` optimizer, `Dataset::split()` (random & chronological), validation metrics + best-model checkpointing, `quadrants` multiclass generator, `bench_app` + `scripts/benchmark.sh`. | `CCE + Softmax` numerical gradient check, `Adam` 1-vs-4 thread parity, multiclass validation convergence, release benchmark suite. |
 | **`v0.6.0`** | Completed | Numerically stable fused `Softmax + CCE` backward path (`backward_from_delta` / `backward_from_output_delta`), tie-aware soft-target accuracy in `Trainer::evaluate_accuracy()`, strict unknown-key rejection in `config.json`, `--compact` CLI flag in `train_app` & `predict_app`, external-CSV templates (`configs/tictactoe.json` and BTC TradingBot `24to6`/`24to7` configs on ports `8080`–`8085`). | Soft-target & extreme-logit (`p < 1e-10`) fused gradient check, tied soft-target accuracy & `NaN`/bounds hardening tests, strict config & BTC template schema tests (36/36 passing). |
-| **`v0.7.0+`** | Future | Optional extensions as needed: compact binary `.nn` format for very large models, HTTP Keep-Alive / `/predict_batch` endpoint, synthetic RC proximity-sensor dataset generator, ARM/Raspberry Pi cross-build guide. | Backwards-compatible with `v0.6.0` configs and `model.json` v1. |
+| **`v0.7.0`** | Completed | Domain-agnostic regularization, robust training, and structured validation reporting: `Huber` loss, decoupled L2 weight decay (`AdamW`/`SGD` excluding biases), stateless deterministic inverted `Dropout` on hidden layers, `Cosine` LR schedule, global L2 gradient clipping, `Early Stopping` (`patience` + `min_delta`), `nn::metrics` evaluation module (confusion matrix, precision/recall/F1, macro-F1, `MAE`/`RMSE`/`R²`, leakage-free baselines), and `--report <path>` JSON export in `train_app`. | Huber/dropout finite-difference gradient checks, exact AdamW/clipping/cosine/early-stop verification, 1-vs-4 thread parity with all regularization active, hand-verified metrics & JSON round-trips under debug/release/ASan+UBSan (44/44 passing). |
+| **`v0.8.0+`** | Future | Optional extensions as needed: compact binary `.nn` format for very large models, HTTP Keep-Alive / `/predict_batch` endpoint, synthetic RC proximity-sensor dataset generator, ARM/Raspberry Pi cross-build guide. | Backwards-compatible with `v0.7.0` configs and `model.json` v1. |

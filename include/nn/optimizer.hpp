@@ -16,15 +16,19 @@ struct OptimizerConfig {
     Scalar beta1 = Scalar{0.9f};     // Adam first-moment decay
     Scalar beta2 = Scalar{0.999f};   // Adam second-moment decay
     Scalar epsilon = Scalar{1e-8f};  // Adam numerical stability term
+    Scalar weight_decay = Scalar{0.0f};    // Decoupled L2 weight decay (weights only, 0 = off)
+    Scalar grad_clip_norm = Scalar{0.0f};  // Global L2 gradient norm clip (0 = off)
 };
 
-// Parameter update engine supporting SGD and Adam.
+// Parameter update engine supporting SGD and Adam/AdamW.
 // Keeps moment buffers outside Network so inference models carry zero optimizer overhead.
 class Optimizer {
 public:
     Optimizer(const Network& network, OptimizerConfig config);
 
     OptimizerType type() const noexcept { return config_.type; }
+    Scalar learning_rate() const noexcept { return config_.learning_rate; }
+    void set_learning_rate(Scalar lr);
     std::size_t step_count() const noexcept { return step_count_; }
 
     // Applies averaged mini-batch gradients stored in `grad_workspace` to `network`.

@@ -37,23 +37,67 @@ std::size_t argmax_index(const std::vector<Scalar>& vec) {
     return best;
 }
 
+bool is_classification_loss(LossType loss) noexcept {
+    return loss == LossType::BinaryCrossEntropy || loss == LossType::CategoricalCrossEntropy;
+}
+
+Scalar compute_epoch_learning_rate(const TrainingConfig& config, std::size_t epoch) noexcept {
+    if (config.lr_schedule == LrScheduleType::None || config.epochs <= 1) {
+        return config.learning_rate;
+    }
+
+    // Cosine annealing from learning_rate (epoch 1) to min_learning_rate (epoch == epochs)
+    constexpr double kPi = 3.14159265358979323846;
+    const double progress =
+        static_cast<double>(epoch - 1) / static_cast<double>(config.epochs - 1);
+    const double cosine = std::clamp(0.5 * (1.0 + std::cos(kPi * progress)), 0.0, 1.0);
+    const double lr = static_cast<double>(config.min_learning_rate) +
+                      static_cast<double>(config.learning_rate - config.min_learning_rate) * cosine;
+    return static_cast<Scalar>(lr);
+}
+
 }  // namespace
 
-Trainer::Trainer(TrainingConfig config) : config_(config) {
+Trainer::Trainer(TrainingConfig config) : config_(std::move(config)) {
     if (config_.epochs == 0) {
         throw std::invalid_argument("TrainingConfig::epochs must be > 0");
     }
     if (config_.batch_size == 0) {
         throw std::invalid_argument("TrainingConfig::batch_size must be > 0");
     }
-    if (config_.learning_rate <= Scalar{0}) {
-        throw std::invalid_argument("TrainingConfig::learning_rate must be > 0");
+    if (!std::isfinite(config_.learning_rate) || config_.learning_rate <= Scalar{0}) {
+        throw std::invalid_argument("TrainingConfig::learning_rate must be finite and > 0");
+    }
+    if (!std::isfinite(config_.min_learning_rate) || config_.min_learning_rate < Scalar{0} ||
+        config_.min_learning_rate > config_.learning_rate) {
+        throw std::invalid_argument(
+            "TrainingConfig::min_learning_rate must be finite and in [0, learning_rate]");
+    }
+    if (!std::isfinite(config_.huber_delta) || config_.huber_delta <= Scalar{0}) {
+        throw std::invalid_argument("TrainingConfig::huber_delta must be finite and > 0");
+    }
+    if (!std::isfinite(config_.weight_decay) || config_.weight_decay < Scalar{0}) {
+        throw std::invalid_argument("TrainingConfig::weight_decay must be finite and >= 0");
+    }
+    if (!std::isfinite(config_.dropout_rate) || config_.dropout_rate < Scalar{0} ||
+        config_.dropout_rate >= Scalar{1}) {
+        throw std::invalid_argument("TrainingConfig::dropout_rate must be finite and in [0, 1)");
+    }
+    if (!std::isfinite(config_.grad_clip_norm) || config_.grad_clip_norm < Scalar{0}) {
+        throw std::invalid_argument("TrainingConfig::grad_clip_norm must be finite and >= 0");
+    }
+    if (!std::isfinite(config_.early_stopping_min_delta) ||
+        config_.early_stopping_min_delta < Scalar{0}) {
+        throw std::invalid_argument(
+            "TrainingConfig::early_stopping_min_delta must be finite and >= 0");
     }
     if (config_.num_threads == 0) {
         throw std::invalid_argument("TrainingConfig::num_threads must be >= 1");
     }
-    if (config_.validation_split < Scalar{0} || config_.validation_split >= Scalar{1}) {
-        throw std::invalid_argument("TrainingConfig::validation_split must be in [0, 1)");
+    if (!std::isfinite(config_.validation_split) || config_.validation_split < Scalar{0} ||
+        config_.validation_split >= Scalar{1}) {
+        throw std::invalid_argument(
+            "TrainingConfig::validation_split must be finite and in [0, 1)");
     }
 }
 
@@ -91,9 +135,15 @@ TrainingResult Trainer::fit(Network& network,
     }
 
     const bool use_validation = (val_dataset != nullptr && !val_dataset->empty());
+    if (config_.early_stopping_patience > 0 && !use_validation) {
+        throw std::invalid_argument(
+            "Trainer::fit requires a validation dataset when early_stopping_patience > 0");
+    }
+
     const bool use_fused_softmax_cce =
         (config_.loss == LossType::CategoricalCrossEntropy &&
          network.layers().back().activation() == ActivationType::Softmax);
+    const bool use_dropout = (config_.dropout_rate > Scalar{0});
     const std::size_t num_samples = train_dataset.size();
 
     OptimizerConfig opt_cfg;
@@ -102,6 +152,8 @@ TrainingResult Trainer::fit(Network& network,
     opt_cfg.beta1 = config_.adam_beta1;
     opt_cfg.beta2 = config_.adam_beta2;
     opt_cfg.epsilon = config_.adam_epsilon;
+    opt_cfg.weight_decay = config_.weight_decay;
+    opt_cfg.grad_clip_norm = config_.grad_clip_norm;
     Optimizer optimizer(network, opt_cfg);
 
     ThreadPool pool(config_.num_threads);
@@ -121,14 +173,20 @@ TrainingResult Trainer::fit(Network& network,
     TrainingResult result;
     result.has_validation = use_validation;
     result.loss_history.reserve(config_.epochs);
+    result.lr_history.reserve(config_.epochs);
     if (use_validation) {
         result.val_loss_history.reserve(config_.epochs);
         result.best_val_loss = std::numeric_limits<Scalar>::infinity();
     }
 
     Network best_network;
+    std::size_t epochs_without_improvement = 0;
 
     for (std::size_t epoch = 1; epoch <= config_.epochs; ++epoch) {
+        const Scalar epoch_lr = compute_epoch_learning_rate(config_, epoch);
+        optimizer.set_learning_rate(epoch_lr);
+        result.lr_history.push_back(epoch_lr);
+
         if (config_.shuffle) {
             train_dataset.shuffle(rng);
         }
@@ -157,8 +215,11 @@ TrainingResult Trainer::fit(Network& network,
                         const std::vector<Scalar>& x = train_dataset.input_at(sample_idx);
                         const std::vector<Scalar>& t = train_dataset.target_at(sample_idx);
 
-                        const std::vector<Scalar>& pred = network.forward(x, ws);
-                        local_loss += loss::compute(config_.loss, pred, t);
+                        const std::vector<Scalar>& pred =
+                            use_dropout ? network.forward_train(x, ws, config_.dropout_rate,
+                                                                config_.seed, epoch, sample_idx)
+                                        : network.forward(x, ws);
+                        local_loss += loss::compute(config_.loss, pred, t, config_.huber_delta);
                         if (use_fused_softmax_cce) {
                             Scalar target_sum = Scalar{0};
                             for (Scalar tv : t) {
@@ -169,7 +230,7 @@ TrainingResult Trainer::fit(Network& network,
                             }
                             network.backward_from_output_delta(x, grad_out, ws);
                         } else {
-                            loss::gradient(config_.loss, pred, t, grad_out);
+                            loss::gradient(config_.loss, pred, t, grad_out, config_.huber_delta);
                             network.backward(x, grad_out, ws);
                         }
                     }
@@ -193,33 +254,64 @@ TrainingResult Trainer::fit(Network& network,
         result.epochs_completed = epoch;
 
         Scalar val_loss = Scalar{0};
+        bool should_early_stop = false;
         if (use_validation) {
-            val_loss = evaluate_loss(network, *val_dataset, config_.loss);
+            val_loss = evaluate_loss(network, *val_dataset, config_.loss, config_.huber_delta);
             result.val_loss_history.push_back(val_loss);
-            if (val_loss < result.best_val_loss) {
+            const Scalar effective_min_delta = (config_.early_stopping_patience > 0)
+                                                   ? config_.early_stopping_min_delta
+                                                   : Scalar{0};
+            const bool improved =
+                (result.best_val_epoch == 0)
+                    ? std::isfinite(val_loss)
+                    : (std::isfinite(val_loss) &&
+                       val_loss < result.best_val_loss - effective_min_delta);
+            if (improved) {
                 result.best_val_loss = val_loss;
                 result.best_val_epoch = epoch;
+                epochs_without_improvement = 0;
                 if (config_.keep_best_validation_model) {
                     best_network = network;
                 }
+            } else {
+                ++epochs_without_improvement;
+            }
+            if (config_.early_stopping_patience > 0 &&
+                epochs_without_improvement >= config_.early_stopping_patience) {
+                should_early_stop = true;
+                result.early_stopped = true;
             }
         }
 
         if (config_.log_every_epochs > 0 &&
-            (epoch == 1 || epoch % config_.log_every_epochs == 0 || epoch == config_.epochs)) {
+            (epoch == 1 || epoch % config_.log_every_epochs == 0 || epoch == config_.epochs ||
+             should_early_stop)) {
             std::cout << "[Epoch " << epoch << "/" << config_.epochs << "] train_loss="
                       << std::defaultfloat << std::setprecision(6) << epoch_avg_loss;
+            if (config_.lr_schedule != LrScheduleType::None) {
+                std::cout << " | lr=" << epoch_lr;
+            }
             if (use_validation) {
-                const Scalar val_acc = evaluate_accuracy(network, *val_dataset) * Scalar{100};
-                std::cout << " | val_loss=" << val_loss << " | val_acc=" << std::fixed
-                          << std::setprecision(1) << val_acc << "%" << std::defaultfloat
-                          << std::setprecision(6);
+                std::cout << " | val_loss=" << val_loss;
+                if (is_classification_loss(config_.loss)) {
+                    const Scalar val_acc =
+                        evaluate_accuracy(network, *val_dataset) * Scalar{100};
+                    std::cout << " | val_acc=" << std::fixed << std::setprecision(1) << val_acc
+                              << "%" << std::defaultfloat << std::setprecision(6);
+                }
+            }
+            if (should_early_stop) {
+                std::cout << " [early stop]";
             }
             std::cout << "\n";
         }
 
         if (on_epoch) {
             on_epoch(epoch, epoch_avg_loss);
+        }
+
+        if (should_early_stop) {
+            break;
         }
     }
 
@@ -228,10 +320,11 @@ TrainingResult Trainer::fit(Network& network,
     }
 
     result.initial_loss = result.loss_history.front();
-    result.final_loss = evaluate_loss(network, train_dataset, config_.loss);
+    result.final_loss = evaluate_loss(network, train_dataset, config_.loss, config_.huber_delta);
     result.final_train_accuracy = evaluate_accuracy(network, train_dataset);
     if (use_validation) {
-        result.final_val_loss = evaluate_loss(network, *val_dataset, config_.loss);
+        result.final_val_loss =
+            evaluate_loss(network, *val_dataset, config_.loss, config_.huber_delta);
         result.final_val_accuracy = evaluate_accuracy(network, *val_dataset);
     }
 
@@ -240,7 +333,8 @@ TrainingResult Trainer::fit(Network& network,
 
 Scalar Trainer::evaluate_loss(const Network& network,
                               const Dataset& dataset,
-                              LossType loss_type) {
+                              LossType loss_type,
+                              Scalar huber_delta) {
     if (network.empty() || dataset.empty()) {
         throw std::invalid_argument("evaluate_loss requires non-empty Network and Dataset");
     }
@@ -252,7 +346,7 @@ Scalar Trainer::evaluate_loss(const Network& network,
     Scalar total_loss = Scalar{0};
     for (std::size_t i = 0; i < dataset.size(); ++i) {
         const std::vector<Scalar>& pred = network.forward(dataset.raw_input(i), ws);
-        total_loss += loss::compute(loss_type, pred, dataset.raw_target(i));
+        total_loss += loss::compute(loss_type, pred, dataset.raw_target(i), huber_delta);
     }
     return total_loss / static_cast<Scalar>(dataset.size());
 }

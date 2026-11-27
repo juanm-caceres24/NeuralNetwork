@@ -152,12 +152,17 @@ AppConfig parse_config_json(const std::string& json_text) {
         }
         validate_allowed_keys(
             train_obj, "section 'training'",
-            {"loss", "optimizer", "epochs", "batch_size", "learning_rate", "adam_beta1",
-             "adam_beta2", "adam_epsilon", "shuffle", "num_threads", "seed", "log_every_epochs",
-             "validation_split", "validation_shuffle", "keep_best_validation_model", "dataset_path",
-             "dataset_has_header", "dataset_generator", "generator_samples", "generator_seed"});
+            {"loss", "huber_delta", "optimizer", "epochs", "batch_size", "learning_rate",
+             "lr_schedule", "min_learning_rate", "adam_beta1", "adam_beta2", "adam_epsilon",
+             "weight_decay", "dropout_rate", "grad_clip_norm", "shuffle", "num_threads", "seed",
+             "log_every_epochs", "validation_split", "validation_shuffle",
+             "keep_best_validation_model", "early_stopping_patience", "early_stopping_min_delta",
+             "report_path", "dataset_path", "dataset_has_header", "dataset_generator",
+             "generator_samples", "generator_seed"});
         const std::string loss_str = get_optional_string(train_obj, "loss", "mse");
         cfg.training.loss = parse_loss(loss_str);
+        cfg.training.huber_delta =
+            get_optional_scalar(train_obj, "huber_delta", cfg.training.huber_delta);
         const std::string opt_str = get_optional_string(train_obj, "optimizer", "sgd");
         cfg.training.optimizer = parse_optimizer(opt_str);
         cfg.training.epochs = get_optional_size(train_obj, "epochs", cfg.training.epochs);
@@ -165,12 +170,22 @@ AppConfig parse_config_json(const std::string& json_text) {
             get_optional_size(train_obj, "batch_size", cfg.training.batch_size);
         cfg.training.learning_rate =
             get_optional_scalar(train_obj, "learning_rate", cfg.training.learning_rate);
+        const std::string sched_str = get_optional_string(train_obj, "lr_schedule", "none");
+        cfg.training.lr_schedule = parse_lr_schedule(sched_str);
+        cfg.training.min_learning_rate =
+            get_optional_scalar(train_obj, "min_learning_rate", cfg.training.min_learning_rate);
         cfg.training.adam_beta1 =
             get_optional_scalar(train_obj, "adam_beta1", cfg.training.adam_beta1);
         cfg.training.adam_beta2 =
             get_optional_scalar(train_obj, "adam_beta2", cfg.training.adam_beta2);
         cfg.training.adam_epsilon =
             get_optional_scalar(train_obj, "adam_epsilon", cfg.training.adam_epsilon);
+        cfg.training.weight_decay =
+            get_optional_scalar(train_obj, "weight_decay", cfg.training.weight_decay);
+        cfg.training.dropout_rate =
+            get_optional_scalar(train_obj, "dropout_rate", cfg.training.dropout_rate);
+        cfg.training.grad_clip_norm =
+            get_optional_scalar(train_obj, "grad_clip_norm", cfg.training.grad_clip_norm);
         cfg.training.shuffle = get_optional_bool(train_obj, "shuffle", cfg.training.shuffle);
         cfg.training.num_threads =
             get_optional_size(train_obj, "num_threads", cfg.training.num_threads);
@@ -183,6 +198,12 @@ AppConfig parse_config_json(const std::string& json_text) {
             get_optional_bool(train_obj, "validation_shuffle", cfg.training.validation_shuffle);
         cfg.training.keep_best_validation_model = get_optional_bool(
             train_obj, "keep_best_validation_model", cfg.training.keep_best_validation_model);
+        cfg.training.early_stopping_patience = get_optional_size(
+            train_obj, "early_stopping_patience", cfg.training.early_stopping_patience);
+        cfg.training.early_stopping_min_delta = get_optional_scalar(
+            train_obj, "early_stopping_min_delta", cfg.training.early_stopping_min_delta);
+        cfg.training.report_path =
+            get_optional_string(train_obj, "report_path", cfg.training.report_path);
 
         // Allow dataset fields directly inside "training" for convenience
         cfg.data.dataset_path =

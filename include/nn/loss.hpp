@@ -8,16 +8,19 @@ namespace nn {
 namespace loss {
 
 // Computes scalar loss L(predicted, target).
-// MSE and BinaryCrossEntropy average across output dimensions; CategoricalCrossEntropy sums over classes.
+// MSE, BinaryCrossEntropy, and Huber average across output dimensions;
+// CategoricalCrossEntropy sums over classes.
 Scalar compute(LossType type,
                const std::vector<Scalar>& predicted,
-               const std::vector<Scalar>& target);
+               const std::vector<Scalar>& target,
+               Scalar huber_delta = Scalar{1.0f});
 
 // Computes dL/d(predicted) into `grad_out` matching the scaling of compute().
 void gradient(LossType type,
               const std::vector<Scalar>& predicted,
               const std::vector<Scalar>& target,
-              std::vector<Scalar>& grad_out);
+              std::vector<Scalar>& grad_out,
+              Scalar huber_delta = Scalar{1.0f});
 
 }  // namespace loss
 }  // namespace nn
