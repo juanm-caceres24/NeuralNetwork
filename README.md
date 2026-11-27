@@ -49,7 +49,7 @@ All project specifications, architecture decisions, math derivations, and workfl
 - [`docs/01-git-workflow.md`](docs/01-git-workflow.md) — Branching strategy, Conventional Commits, and merge conventions.
 - [`docs/02-core-math-and-primitives.md`](docs/02-core-math-and-primitives.md) — Design and mathematics behind `types`, `Matrix`, and `activation`.
 - [`docs/03-layers-workspace-and-network.md`](docs/03-layers-workspace-and-network.md) — Architecture and equations for `DenseLayer`, `NetworkWorkspace`, and `Network`.
-- [`docs/04-training-and-threading.md`](docs/04-training-and-threading.md) — Loss functions, `Dataset` CSV/shuffling/splitting, `ThreadPool`, and parallel mini-batch `SGD`/`Adam`.
+- [`docs/04-training-and-threading.md`](docs/04-training-and-threading.md) — Loss functions, `Dataset` CSV/shuffling/splitting, `ThreadPool`, and parallel mini-batch `SGD`/`Adam`/`AdamW`.
 - [`docs/05-config-and-serialization.md`](docs/05-config-and-serialization.md) — `cJSON` integration, `config.json` reference, `model.json` format, and CLI apps.
 - [`docs/06-inference-server-api.md`](docs/06-inference-server-api.md) — POSIX TCP + HTTP/1.1 REST inference server architecture, endpoints, and client examples.
 - [`docs/07-optimizers-validation-and-benchmarks.md`](docs/07-optimizers-validation-and-benchmarks.md) — Fused `Softmax + CategoricalCrossEntropy`, `Adam`, train/validation splitting, tie-aware soft-target accuracy metrics, and performance benchmarking.

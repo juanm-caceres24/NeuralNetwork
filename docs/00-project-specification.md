@@ -195,7 +195,7 @@ NeuralNetwork/
 │   ├── activation.hpp          # Activation functions and exact derivatives (incl. Softmax Jacobian)
 │   ├── workspace.hpp           # LayerState (z, a, dropout_mask), LayerGrads, NetworkWorkspace
 │   ├── layer.hpp               # DenseLayer (weights, biases, forward, backward, backward_from_delta, apply_gradients)
-│   ├── network.hpp             # Network container (forward/predict const, forward_train dropout, backward, apply_gradients)
+│   ├── network.hpp             # Network container (forward/predict const, forward_train dropout, backward, backward_from_output_delta, apply_gradients)
 │   ├── serializer.hpp          # JSON model serialization/deserialization (cJSON)
 │   ├── loss.hpp                # Loss functions (MSE, Huber, BinaryCrossEntropy, CategoricalCrossEntropy)
 │   ├── optimizer.hpp           # Optimizer (SGD and Adam/AdamW, decoupled weight decay, global L2 grad clipping)

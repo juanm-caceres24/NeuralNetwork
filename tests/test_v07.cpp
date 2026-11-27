@@ -286,6 +286,82 @@ TEST_CASE(dropout_deterministic_inverted_scaling_and_thread_parity) {
         }
     }
 
+    // 3b. Finite-difference gradient check through non-fused forward_train + Network::backward()
+    //     (regression Huber loss + Linear output + dropout on hidden layers)
+    {
+        std::mt19937 reg_rng(7777);
+        Network reg_net(3);
+        reg_net.add_layer(5, ActivationType::Tanh, reg_rng);
+        reg_net.add_layer(4, ActivationType::ReLU, reg_rng);
+        reg_net.add_layer(2, ActivationType::Linear, reg_rng);
+
+        const std::vector<Scalar> reg_t = {0.25f, -1.8f};
+        const Scalar h_delta = 0.5f;
+
+        NetworkWorkspace reg_grad_ws = reg_net.create_workspace(true);
+        reg_grad_ws.zero_gradients();
+        const auto& reg_pred = reg_net.forward_train(x, reg_grad_ws, 0.3f, 99, 2, 4);
+        std::vector<Scalar> reg_d_out;
+        nn::loss::gradient(LossType::Huber, reg_pred, reg_t, reg_d_out, h_delta);
+        reg_net.backward(x, reg_d_out, reg_grad_ws);
+
+        NetworkWorkspace reg_eval_ws = reg_net.create_workspace(true);
+        for (std::size_t l = 0; l < reg_net.num_layers(); ++l) {
+            auto& layer = reg_net.layer(l);
+            for (std::size_t r = 0; r < layer.output_size(); ++r) {
+                for (std::size_t c = 0; c < layer.input_size(); ++c) {
+                    const Scalar orig = layer.weight(r, c);
+                    layer.weight(r, c) = orig + eps;
+                    const Scalar lp = nn::loss::compute(
+                        LossType::Huber, reg_net.forward_train(x, reg_eval_ws, 0.3f, 99, 2, 4),
+                        reg_t, h_delta);
+                    layer.weight(r, c) = orig - eps;
+                    const Scalar lm = nn::loss::compute(
+                        LossType::Huber, reg_net.forward_train(x, reg_eval_ws, 0.3f, 99, 2, 4),
+                        reg_t, h_delta);
+                    layer.weight(r, c) = orig;
+                    CHECK_NEAR(reg_grad_ws.grads[l].grad_weights(r, c), (lp - lm) / (2.0f * eps),
+                               5e-3f);
+                }
+            }
+        }
+    }
+
+    // 3c. Hidden Softmax layer with dropout (must compute Softmax Jacobian from state.z)
+    {
+        std::mt19937 sm_rng(1357);
+        Network sm_net(3);
+        sm_net.add_layer(4, ActivationType::Softmax, sm_rng);
+        sm_net.add_layer(2, ActivationType::Linear, sm_rng);
+        const std::vector<Scalar> sm_t = {0.4f, -0.6f};
+
+        NetworkWorkspace sm_grad_ws = sm_net.create_workspace(true);
+        sm_grad_ws.zero_gradients();
+        const auto& sm_pred = sm_net.forward_train(x, sm_grad_ws, 0.3f, 11, 1, 2);
+        std::vector<Scalar> sm_d_out;
+        nn::loss::gradient(LossType::MSE, sm_pred, sm_t, sm_d_out);
+        sm_net.backward(x, sm_d_out, sm_grad_ws);
+
+        NetworkWorkspace sm_eval_ws = sm_net.create_workspace(true);
+        for (std::size_t l = 0; l < sm_net.num_layers(); ++l) {
+            auto& layer = sm_net.layer(l);
+            for (std::size_t r = 0; r < layer.output_size(); ++r) {
+                for (std::size_t c = 0; c < layer.input_size(); ++c) {
+                    const Scalar orig = layer.weight(r, c);
+                    layer.weight(r, c) = orig + eps;
+                    const Scalar lp = nn::loss::compute(
+                        LossType::MSE, sm_net.forward_train(x, sm_eval_ws, 0.3f, 11, 1, 2), sm_t);
+                    layer.weight(r, c) = orig - eps;
+                    const Scalar lm = nn::loss::compute(
+                        LossType::MSE, sm_net.forward_train(x, sm_eval_ws, 0.3f, 11, 1, 2), sm_t);
+                    layer.weight(r, c) = orig;
+                    CHECK_NEAR(sm_grad_ws.grads[l].grad_weights(r, c), (lp - lm) / (2.0f * eps),
+                               5e-3f);
+                }
+            }
+        }
+    }
+
     // 4. Exact 1 vs 4 thread parity with dropout + AdamW + cosine LR + grad clipping active
     std::mt19937 init_rng(2027);
     Network net1(2);
@@ -325,9 +401,12 @@ TEST_CASE(dropout_deterministic_inverted_scaling_and_thread_parity) {
     }
     CHECK(net1.approx_equal(net4, 1e-4f));
 
-    // Invalid dropout rates throw
+    // Invalid dropout rates and empty network throw
     CHECK_THROWS(net.forward_train(x, ws1, -0.1f, 1, 1, 0), std::invalid_argument);
     CHECK_THROWS(net.forward_train(x, ws1, 1.0f, 1, 1, 0), std::invalid_argument);
+    Network empty_net;
+    NetworkWorkspace empty_ws;
+    CHECK_THROWS(empty_net.forward_train(x, empty_ws, 0.2f, 1, 1, 0), std::logic_error);
 }
 
 TEST_CASE(cosine_lr_schedule_and_global_grad_clipping) {
@@ -337,6 +416,7 @@ TEST_CASE(cosine_lr_schedule_and_global_grad_clipping) {
     CHECK(nn::parse_lr_schedule("cosine") == LrScheduleType::Cosine);
     CHECK(nn::parse_lr_schedule("COSINE") == LrScheduleType::Cosine);
     CHECK(nn::parse_lr_schedule("none") == LrScheduleType::None);
+    CHECK_THROWS(nn::parse_lr_schedule("constant"), std::invalid_argument);
     CHECK_THROWS(nn::parse_lr_schedule("exponential"), std::invalid_argument);
 
     Dataset ds = nn::datasets::make_xor();
@@ -409,13 +489,70 @@ TEST_CASE(cosine_lr_schedule_and_global_grad_clipping) {
     CHECK_NEAR(noclip_net.layer(0).weight(0, 0), -0.3f, 1e-6f);
     CHECK_NEAR(noclip_net.layer(0).weight(0, 1), -0.4f, 1e-6f);
 
-    // Validation errors
+    // 3. Global L2 gradient clipping with AdamW and batch_size > 1:
+    //    Summed grads = (6, 8, 0) with batch_size = 2 -> averaged grads = (3, 4, 0), norm = 5.0.
+    //    With grad_clip_norm = 2.5 -> clip factor 0.5 -> effective grads = (1.5, 2.0, 0).
+    //    Result must match unclipped AdamW fed (3.0, 4.0, 0) with batch_size = 2 directly.
+    Matrix w_init(1, 2, 0.0f);
+    w_init(0, 0) = 1.0f;
+    w_init(0, 1) = -2.0f;
+    Network adamw_clipped(2);
+    adamw_clipped.add_layer(DenseLayer(w_init, {0.5f}, ActivationType::Linear));
+    Network adamw_ref = adamw_clipped;
+
+    NetworkWorkspace ws_raw = adamw_clipped.create_workspace(true);
+    ws_raw.zero_gradients();
+    ws_raw.grads[0].grad_weights(0, 0) = 6.0f;
+    ws_raw.grads[0].grad_weights(0, 1) = 8.0f;
+
+    NetworkWorkspace ws_scaled = adamw_ref.create_workspace(true);
+    ws_scaled.zero_gradients();
+    ws_scaled.grads[0].grad_weights(0, 0) = 3.0f;
+    ws_scaled.grads[0].grad_weights(0, 1) = 4.0f;
+
+    OptimizerConfig adamw_clip_cfg;
+    adamw_clip_cfg.type = OptimizerType::Adam;
+    adamw_clip_cfg.learning_rate = 0.05f;
+    adamw_clip_cfg.weight_decay = 0.1f;
+    adamw_clip_cfg.grad_clip_norm = 2.5f;
+
+    OptimizerConfig adamw_ref_cfg = adamw_clip_cfg;
+    adamw_ref_cfg.grad_clip_norm = 0.0f;
+
+    Optimizer opt_adamw_clip(adamw_clipped, adamw_clip_cfg);
+    Optimizer opt_adamw_ref(adamw_ref, adamw_ref_cfg);
+    opt_adamw_clip.step(adamw_clipped, ws_raw, 2);
+    opt_adamw_ref.step(adamw_ref, ws_scaled, 2);
+    CHECK(adamw_clipped.approx_equal(adamw_ref, 1e-6f));
+
+    // Optimizer::set_learning_rate validation guards
+    CHECK_THROWS(opt_adamw_clip.set_learning_rate(-0.01f), std::invalid_argument);
+    CHECK_THROWS(opt_adamw_clip.set_learning_rate(std::nanf("")), std::invalid_argument);
+    CHECK_THROWS(opt_adamw_clip.set_learning_rate(std::numeric_limits<Scalar>::infinity()),
+                 std::invalid_argument);
+
+    // Trainer validation errors
     TrainingConfig bad_min_lr = cfg;
     bad_min_lr.min_learning_rate = 0.2f;  // > learning_rate (0.1)
     CHECK_THROWS(Trainer(bad_min_lr), std::invalid_argument);
+    TrainingConfig neg_min_lr = cfg;
+    neg_min_lr.min_learning_rate = -0.01f;
+    CHECK_THROWS(Trainer(neg_min_lr), std::invalid_argument);
     TrainingConfig bad_clip = cfg;
     bad_clip.grad_clip_norm = -1.0f;
     CHECK_THROWS(Trainer(bad_clip), std::invalid_argument);
+    TrainingConfig bad_huber = cfg;
+    bad_huber.huber_delta = 0.0f;
+    CHECK_THROWS(Trainer(bad_huber), std::invalid_argument);
+    TrainingConfig bad_wd = cfg;
+    bad_wd.weight_decay = -0.1f;
+    CHECK_THROWS(Trainer(bad_wd), std::invalid_argument);
+    TrainingConfig bad_drop = cfg;
+    bad_drop.dropout_rate = 1.0f;
+    CHECK_THROWS(Trainer(bad_drop), std::invalid_argument);
+    TrainingConfig bad_min_delta = cfg;
+    bad_min_delta.early_stopping_min_delta = -0.01f;
+    CHECK_THROWS(Trainer(bad_min_delta), std::invalid_argument);
 }
 
 TEST_CASE(early_stopping_patience_min_delta_and_validation_guard) {
@@ -463,6 +600,33 @@ TEST_CASE(early_stopping_patience_min_delta_and_validation_guard) {
     CHECK(res.lr_history.size() == 4);
     CHECK_NEAR(res.final_val_loss, res.best_val_loss, 1e-6f);
     CHECK_NEAR(res.final_val_loss, res.val_loss_history[0], 1e-6f);
+
+    // 3. When early_stopping_patience == 0 (disabled), early_stopping_min_delta must NOT suppress
+    //    best_val_loss / keep_best_validation_model updates.
+    Network no_es_net = net;
+    Dataset no_es_ds = ds;
+    TrainingConfig no_es_cfg = es_cfg;
+    no_es_cfg.epochs = 15;
+    no_es_cfg.early_stopping_patience = 0;
+    no_es_cfg.early_stopping_min_delta = 100.0f;
+    const TrainingResult no_es_res = Trainer(no_es_cfg).fit(no_es_net, no_es_ds);
+    CHECK(!no_es_res.early_stopped);
+    CHECK(no_es_res.epochs_completed == 15);
+    CHECK(no_es_res.best_val_epoch > 1);
+    CHECK(no_es_res.best_val_loss < no_es_res.val_loss_history[0]);
+    CHECK_NEAR(no_es_res.final_val_loss, no_es_res.best_val_loss, 1e-6f);
+
+    // 4. Real improvements reset patience counter so training continues beyond (1 + patience)
+    Network reset_net = net;
+    Dataset reset_ds = ds;
+    TrainingConfig reset_cfg = es_cfg;
+    reset_cfg.epochs = 25;
+    reset_cfg.early_stopping_patience = 5;
+    reset_cfg.early_stopping_min_delta = 0.0f;
+    const TrainingResult reset_res = Trainer(reset_cfg).fit(reset_net, reset_ds);
+    CHECK(reset_res.best_val_epoch > 1);
+    CHECK(reset_res.epochs_completed > 6);
+    CHECK(reset_res.best_val_loss < reset_res.val_loss_history[0]);
 }
 
 TEST_CASE(metrics_classification_multiclass_binary_and_zero_division) {
@@ -569,6 +733,49 @@ TEST_CASE(metrics_classification_multiclass_binary_and_zero_division) {
     CHECK_NEAR(bin.per_class[1].precision, 2.0 / 3.0, 1e-6f);
     CHECK_NEAR(bin.per_class[1].recall, 1.0f, 1e-6f);
     CHECK_NEAR(bin.per_class[1].f1, 0.8f, 1e-6f);
+
+    // 3. NaN predictions must still count in ground-truth support and reduce recall/accuracy
+    const Scalar qnan = std::nanf("");
+    Dataset nan_eval(3, 3);
+    nan_eval.add_sample({0.9f, 0.05f, 0.05f}, {1, 0, 0});   // class 0 TP
+    nan_eval.add_sample({qnan, qnan, qnan}, {1, 0, 0});     // class 0 NaN -> FN (must count in support!)
+    nan_eval.add_sample({0.1f, 0.8f, 0.1f}, {0, 1, 0});     // class 1 TP
+    const auto nan_cm = nn::metrics::evaluate_classification(
+        id3, nan_eval, train3, LossType::CategoricalCrossEntropy);
+    CHECK(nan_cm.per_class[0].support == 2);
+    CHECK(nan_cm.per_class[1].support == 1);
+    CHECK(nan_cm.per_class[2].support == 0);
+    CHECK_NEAR(nan_cm.per_class[0].actual_frequency + nan_cm.per_class[1].actual_frequency +
+                   nan_cm.per_class[2].actual_frequency,
+               1.0f, 1e-6f);
+    CHECK_NEAR(nan_cm.per_class[0].recall, 0.5f, 1e-6f);
+    CHECK_NEAR(nan_cm.accuracy, 2.0 / 3.0, 1e-6f);
+
+    // 4. Tied soft-target classification accuracy
+    Dataset soft_eval(3, 3);
+    soft_eval.add_sample({0.1f, 0.8f, 0.1f}, {0.5f, 0.5f, 0.0f});  // hits second tied winner
+    soft_eval.add_sample({0.1f, 0.1f, 0.8f}, {0.5f, 0.5f, 0.0f});  // misses both tied winners
+    const auto soft_cm = nn::metrics::evaluate_classification(
+        id3, soft_eval, train3, LossType::CategoricalCrossEntropy);
+    CHECK_NEAR(soft_cm.accuracy, 0.5f, 1e-6f);
+
+    // 5. Validation error guards (empty / dimension mismatch)
+    CHECK_THROWS(
+        nn::metrics::evaluate_classification(Network(), eval3, train3,
+                                             LossType::CategoricalCrossEntropy),
+        std::invalid_argument);
+    CHECK_THROWS(
+        nn::metrics::evaluate_classification(id3, Dataset(3, 3), train3,
+                                             LossType::CategoricalCrossEntropy),
+        std::invalid_argument);
+    CHECK_THROWS(
+        nn::metrics::evaluate_classification(id3, eval1, train3,
+                                             LossType::CategoricalCrossEntropy),
+        std::invalid_argument);
+    CHECK_THROWS(
+        nn::metrics::evaluate_classification(id3, eval3, train1,
+                                             LossType::CategoricalCrossEntropy),
+        std::invalid_argument);
 }
 
 TEST_CASE(metrics_regression_mae_rmse_r2_and_constant_target) {
@@ -623,6 +830,31 @@ TEST_CASE(metrics_regression_mae_rmse_r2_and_constant_target) {
     CHECK_NEAR(reg_const.r2, 0.0f, 1e-7f);
     CHECK_NEAR(reg_const.per_output[0].r2, 0.0f, 1e-7f);
     CHECK_NEAR(reg_const.per_output[1].r2, 0.0f, 1e-7f);
+
+    // Non-finite predictions serialize cleanly as JSON null (never invalid JSON)
+    Dataset nan_reg(2, 2);
+    nan_reg.add_sample({std::nanf(""), 1.0f}, {1.0f, 2.0f});
+    TrainingConfig dummy_cfg;
+    dummy_cfg.loss = LossType::MSE;
+    TrainingResult dummy_res;
+    dummy_res.epochs_completed = 1;
+    dummy_res.loss_history = {std::nanf("")};
+    dummy_res.lr_history = {0.01f};
+    const auto nan_report =
+        nn::metrics::build_evaluation_report(id2, train2, &nan_reg, dummy_cfg, dummy_res, 1.0);
+    const std::string nan_json = nn::metrics::report_to_json(nan_report, false);
+    CJsonPtr nan_parsed(cJSON_Parse(nan_json.c_str()), &cJSON_Delete);
+    CHECK(nan_parsed != nullptr);
+    const cJSON* nan_eval_obj = cJSON_GetObjectItemCaseSensitive(nan_parsed.get(), "evaluation");
+    CHECK(cJSON_IsNull(cJSON_GetObjectItemCaseSensitive(nan_eval_obj, "mae")));
+
+    // Dimension / empty validation guards for evaluate_regression
+    CHECK_THROWS(nn::metrics::evaluate_regression(Network(), eval2, train2, LossType::MSE),
+                 std::invalid_argument);
+    Dataset wrong_reg(1, 1);
+    wrong_reg.add_sample({1.0f}, {1.0f});
+    CHECK_THROWS(nn::metrics::evaluate_regression(id2, wrong_reg, train2, LossType::MSE),
+                 std::invalid_argument);
 }
 
 TEST_CASE(v07_config_parsing_validation_and_report_json_roundtrip) {

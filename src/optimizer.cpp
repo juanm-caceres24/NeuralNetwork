@@ -79,7 +79,7 @@ void Optimizer::step(Network& network,
         }
         const double global_norm = std::sqrt(norm_sq);
         const double max_norm = static_cast<double>(config_.grad_clip_norm);
-        if (global_norm > max_norm) {
+        if (std::isfinite(global_norm) && global_norm > max_norm) {
             grad_scale = static_cast<Scalar>(inv_b * (max_norm / global_norm));
         }
     }

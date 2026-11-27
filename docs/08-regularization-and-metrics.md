@@ -81,6 +81,7 @@ Behavior:
 - Requires an active validation dataset (`validation_split > 0` or an explicit `val_dataset` passed to `Trainer::fit()`); otherwise `Trainer::fit()` throws `std::invalid_argument`.
 - Epoch 1 (if finite) establishes the initial `best_val_loss`. Subsequent epochs count as an improvement iff:
   $$\text{val\_loss} < \text{best\_val\_loss} - \text{min\_delta}$$
+  *(When `early_stopping_patience == 0`, early stopping is disabled and `early_stopping_min_delta` is ignored so `best_val_loss` / `keep_best_validation_model` always track the strictly lowest finite `val_loss`.)*
 - On improvement, `best_val_loss` and `best_val_epoch` update, the patience counter resets to `0`, and `best_network` is snapshotted when `keep_best_validation_model` is `true`.
 - When `epochs_without_improvement >= early_stopping_patience`, training stops cleanly, sets `TrainingResult::early_stopped = true`, and (when `keep_best_validation_model` is `true`) restores the best validation checkpoint.
 
@@ -116,7 +117,7 @@ Every evaluation computes a constant baseline predictor **fitted strictly on the
   - Global `mae`, `rmse`, `r2`
   - `per_output[k]`: `output_index`, `mae`, `rmse`, `r2`
 
-All denominators are zero-division safe: if a class has `0` support or `0` predicted samples, or if a regression target is constant ($\text{SS}_{\text{tot}} = 0$), the corresponding ratio returns finite `0.0` (never `NaN` or `Inf`).
+All denominators are zero-division safe: if a class has `0` support or `0` predicted samples, or if a regression target is constant ($\text{SS}_{\text{tot}} = 0$), the corresponding ratio returns finite `0.0` (never `NaN` or `Inf`). Non-finite (`NaN`/`Inf`) predictions in classification still count toward ground-truth `support` and `actual_frequency` so `recall` and `accuracy` properly penalize them as errors, while non-finite scalar metrics serialize safely as JSON `null`.
 
 ### CLI Usage & JSON Report Schema
 `train_app` always prints a concise, task-aware evaluation summary to stdout (omitting misleading `val_acc` on regression tasks). To export the full structured JSON report, pass `--report <path>` on the CLI or set `"report_path"` in `config.json` (`--report` overrides `config.json`):
@@ -134,7 +135,7 @@ Top-level JSON structure (`format_version: 1`):
   "model": {
     "input_size": 2,
     "output_size": 4,
-    "parameters": 340,
+    "parameters": 388,
     "topology": [
       { "size": 2 },
       { "size": 16, "activation": "relu" },
@@ -209,9 +210,9 @@ For regression tasks (`"task": "regression"`), `"evaluation"` contains `"num_out
 All `v0.7.0` features are covered by 8 dedicated unit tests (run in `debug`, `release`, and under AddressSanitizer + UndefinedBehaviorSanitizer):
 - Huber loss exact quadratic/linear values, finite-difference gradient check through a multi-layer network, and invalid `delta` guards.
 - Exact decoupled weight decay for both `SGD` and `AdamW`, verifying biases are never decayed.
-- Deterministic inverted dropout scaling (`0` / `1/(1-p)`), hidden-only enforcement, inference isolation, fixed-mask finite-difference gradient check, and exact `1 vs 4` thread parity with dropout + `AdamW` + Cosine LR + gradient clipping all active simultaneously.
-- Exact Cosine LR annealing values (including `min_learning_rate == 0.0` and `epochs == 1`) and non-mutating global L2 gradient clipping.
-- Early stopping patience/min-delta triggering, checkpoint restoration, and no-validation guard.
-- Hand-verified multiclass (`3x3`, including zero-prediction zero-division safety) and binary (`2x2`) classification metrics and leakage-free baselines.
-- Hand-verified multi-output regression metrics (`MAE`, `RMSE`, `R²`) for `MSE` and `Huber`, plus constant-target (`SS_tot == 0`) safety.
+- Deterministic inverted dropout scaling (`0` / `1/(1-p)`), hidden-only enforcement, inference isolation, fixed-mask finite-difference gradient checks (fused `backward_from_output_delta`, non-fused `Network::backward()` with `Huber`, and hidden `Softmax` + dropout), and exact `1 vs 4` thread parity with dropout + `AdamW` + Cosine LR + gradient clipping all active simultaneously.
+- Exact Cosine LR annealing values (including `min_learning_rate == 0.0` and `epochs == 1`) and non-mutating global L2 gradient clipping (`SGD` and `AdamW` with `batch_size > 1`), plus invalid parameter guards.
+- Early stopping patience/min-delta triggering, patience reset on real improvement, disabled-patience `min_delta` isolation, checkpoint restoration, and no-validation guard.
+- Hand-verified multiclass (`3x3`, including zero-prediction zero-division safety, `NaN` support/recall accounting, and tied soft targets) and binary (`2x2`) classification metrics, leakage-free baselines, and input dimension guards.
+- Hand-verified multi-output regression metrics (`MAE`, `RMSE`, `R²`) for `MSE` and `Huber`, constant-target (`SS_tot == 0`) safety, and `NaN` JSON `null` serialization.
 - Full `v0.7.0` config parsing, backwards-compatible defaults, and classification/regression JSON report round-trips via `cJSON`.

@@ -175,11 +175,11 @@ const std::vector<Scalar>& Network::forward_train(const std::vector<Scalar>& inp
     if (!std::isfinite(dropout_rate) || dropout_rate < Scalar{0} || dropout_rate >= Scalar{1}) {
         throw std::invalid_argument("Network::forward_train dropout_rate must be in [0, 1)");
     }
-    if (dropout_rate == Scalar{0} || layers_.size() <= 1) {
-        return forward(input, workspace);
-    }
     if (layers_.empty()) {
         throw std::logic_error("Cannot run forward_train() on an empty Network");
+    }
+    if (dropout_rate == Scalar{0} || layers_.size() <= 1) {
+        return forward(input, workspace);
     }
     if (input.size() != input_size_) {
         throw std::invalid_argument("Network::forward_train input size mismatch");
