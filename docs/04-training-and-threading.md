@@ -51,7 +51,7 @@ Deterministic Reduction:
   workspaces[0].grads += workspaces[1].grads + workspaces[2].grads + workspaces[3].grads
        │
        ▼
-Single Synchronized Optimizer Step (SGD or Adam):
+Single Synchronized Optimizer Step (SGD or Adam/AdamW):
   optimizer.step(network, workspaces[0], actual_batch_size)
 ```
 
