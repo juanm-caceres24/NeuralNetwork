@@ -108,6 +108,7 @@ When `"include_neurons": true` is passed, the response also includes a `"layers"
 
 ### 2. Query from Terminal (`curl` or helper script)
 ```bash
+# Sends GET /health, GET /info, and 2D XOR pairs to POST /predict (expects a 2-input model)
 ./scripts/test_api.sh 127.0.0.1 8080
 
 # Or a single manual request:
